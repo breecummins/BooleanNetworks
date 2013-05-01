@@ -1,5 +1,5 @@
 import numpy as np
-import os
+import os, glob
 import cPickle
 from functools import partial
 import modelNetworks as mN
@@ -30,6 +30,34 @@ def alterParams(Alist=[0.5,1.0,1.5,2.0],Blist=[-0.5,-1.0,-2.0]):
             mod5=partial(mN.model5,L0=L0,L4=L4)
             fname5=os.path.expanduser('~/temp/model5tracksA'+str(k)+'B'+str(j))
             partitionOrthant(mod5,fname5)
- 
+
+def sortTracks(lot):
+    numtracks = len(lot)
+    uniqtracks = set(lot)
+    uniqoneloops = []
+    oneloop = 0
+    for track in lot:
+        # if the last point in the track is equilibrium, if each of y1,y2,y3 were touched, and if x does not reinitiate, count the track as one loop
+        if np.all(track[-1,:]==0) and np.any(track[:,1] ==1) and np.any(track[:,2] ==1) and np.any(track[:,3] ==1) and np.all(tracks[tracks[:,0].argmin():,0]==0):
+            oneloop += 1
+            if track not in uniqoneloops:
+                uniqoneloops.append(track)
+    return oneloop,numtracks,uniqoneloops,uniqtracks
+
+def loadNSort(myfiles):
+    oneloops = []
+    numtracks = []
+    uoneloops = []
+    utracks = []
+    for f in glob.glob(myfiles):
+        print(f)
+        cPickle.load(f)
+        ol,nt,uol,ut = sortTracks(tracks)
+        oneloops.append(ol)
+        numtracks.append(nt)
+        uoneloops.append(uol)
+        utracks.append(ut)
+    return oneloops,numtracks,uoneloops,utracks
+
 if __name__ == "__main__":
         alterParams()
