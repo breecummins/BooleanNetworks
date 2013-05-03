@@ -33,14 +33,14 @@ def alterParams(Alist=[0.5,1.0,1.5,2.0],Blist=[-0.5,-1.0,-2.0]):
 
 def sortTracks(lot):
     numtracks = len(lot)
-    uniqtracks = set(lot)
+    uniqtracks = list(set([tuple(l.flatten()) for l in lot]))
     uniqoneloops = []
     oneloop = 0
     for track in lot:
         # if the last point in the track is equilibrium, if each of y1,y2,y3 were touched, and if x does not reinitiate, count the track as one loop
-        if np.all(track[-1,:]==0) and np.any(track[:,1] ==1) and np.any(track[:,2] ==1) and np.any(track[:,3] ==1) and np.all(tracks[tracks[:,0].argmin():,0]==0):
+        if np.all(track[-1,:]==0) and np.any(track[:,1] ==1) and np.any(track[:,2] ==1) and np.any(track[:,3] ==1) and np.all(track[track[:,0].argmin():,0]==0):
             oneloop += 1
-            if track not in uniqoneloops:
+            if np.all([np.any(track!=u) for u in uniqoneloops]):
                 uniqoneloops.append(track)
     return oneloop,numtracks,uniqoneloops,uniqtracks
 
@@ -51,7 +51,7 @@ def loadNSort(myfiles):
     utracks = []
     for f in glob.glob(myfiles):
         print(f)
-        cPickle.load(f)
+        tracks = cPickle.load(open(f,'r'))
         ol,nt,uol,ut = sortTracks(tracks)
         oneloops.append(ol)
         numtracks.append(nt)
