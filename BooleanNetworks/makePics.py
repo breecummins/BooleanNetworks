@@ -16,7 +16,7 @@ def preprocess(myfiles):
     print([len(u) for u in uoneloops])
     print('Number of unique tracks')
     print([len(u) for u in utracks])
-    return props    
+    return props, uoneloops, utracks   
 
 def plot2D(Alist,myfiles,titlestr='Model 1',xlabel='A',ylabel='proportion of single loops'):
     props = preprocess(myfiles)
@@ -29,7 +29,7 @@ def plot2D(Alist,myfiles,titlestr='Model 1',xlabel='A',ylabel='proportion of sin
 
 
 def plot3D(Alist,Blist,myfiles,titlestr='Model 2',xlabel='A',ylabel='B',zlabel='proportion of single loops'):
-    props = preprocess(myfiles)
+    props, uoneloops, utracks = preprocess(myfiles)
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     # make sure order is preserved with glob
@@ -47,9 +47,10 @@ def plot3D(Alist,Blist,myfiles,titlestr='Model 2',xlabel='A',ylabel='B',zlabel='
 if __name__ == "__main__":
     # make sure order is preserved with glob
     import os
-    myfiles = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset1/model1*')
-    plot2D([0.5,1.0,1.5,2.0],myfiles)
-    myfiles = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset1/model2*')
-    plot3D([0.5,1.0,1.5,2.0],[-0.5,-1.0,-2.0],myfiles)
-    myfiles = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset1/model5*')
-    plot3D([0.5,1.0,1.5,2.0],[-0.5,-1.0,-2.0],myfiles,'Model 5')
+    # myfiles = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset1/model1*')
+    # plot2D([0.5,1.0,1.5,2.0],myfiles)
+    # myfiles = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset1/model2*')
+    # plot3D([0.5,1.0,1.5,2.0],[-0.5,-1.0,-2.0],myfiles)
+    myfiles = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset1/model3*')
+    props, uoneloops, utracks = preprocess(myfiles)
+    # plot3D([0.5,1.0,1.5,2.0],[-0.5,-1.0,-2.0],myfiles,'Model 3')

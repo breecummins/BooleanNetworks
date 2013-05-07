@@ -27,9 +27,9 @@ def alterParams(Alist=[0.5,1.0,1.5,2.0],Blist=[-0.5,-1.0,-2.0]):
             fname2=os.path.expanduser('~/temp/model2tracksA'+str(k)+'B'+str(j))
             mod2=partial(mN.model2,L0=L0,L4=L4)
             partitionOrthant(mod2,fname2)
-            mod5=partial(mN.model5,L0=L0,L4=L4)
-            fname5=os.path.expanduser('~/temp/model5tracksA'+str(k)+'B'+str(j))
-            partitionOrthant(mod5,fname5)
+            mod3=partial(mN.model3,L0=L0,L4=L4)
+            fname3=os.path.expanduser('~/temp/model3tracksA'+str(k)+'B'+str(j))
+            partitionOrthant(mod3,fname3)
 
 def sortTracks(lot):
     numtracks = len(lot)
