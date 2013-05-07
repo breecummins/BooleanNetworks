@@ -4,12 +4,12 @@ import cPickle
 from functools import partial
 import modelNetworks as mN
 
-def partitionOrthant(model=mN.model1,fname=os.path.expanduser('~/temp/model1tracks'),orthrange = np.arange(0.0,-2.1,-0.2),finaltime=5.0):
+def partitionOrthant(model=mN.model1,fname=os.path.expanduser('~/temp/model1tracks'),orthrange = np.arange(0.1,-2.2,-0.2),finaltime=5.0):
     tracks = []
     for i in orthrange:
-        for j in orthrange:
-            for k in orthrange:
-                for l in orthrange:
+        for j in orthrange+0.005:
+            for k in orthrange+0.01:
+                for l in orthrange+0.015:
                     init = np.array([1.0,i,j,k,l])
                     ts = mN.solveModel(init,finaltime,model)
                     tracks.append(mN.translateToOrthants(ts))
@@ -30,6 +30,10 @@ def alterParams(Alist=[0.5,1.0,1.5,2.0],Blist=[-0.5,-1.0,-2.0]):
             mod3=partial(mN.model3,L0=L0,L4=L4)
             fname3=os.path.expanduser('~/temp/model3tracksA'+str(k)+'B'+str(j))
             partitionOrthant(mod3,fname3)
+            newL4=partial(mN.L4,B0=B)
+            mod4=partial(mN.model4,L0=L0,L4=newL4)
+            fname4=os.path.expanduser('~/temp/model4tracksA'+str(k)+'B'+str(j))
+            partitionOrthant(mod4,fname4)
 
 def sortTracks(lot):
     numtracks = len(lot)

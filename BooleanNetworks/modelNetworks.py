@@ -18,7 +18,7 @@ def L0(y,z,A0=1.0,B0=-1.0,C0=-1.0,D0=-2.0):
     else:
         return D0
 
-def L4(x,y2,y3,A0=1.0,B0=-1.0,C0=-1.0,D0=-2.0):
+def L4(x,y2,y3,A0=1.0,B0=-2.0,C0=2.0,D0=1.0,A1=-1.0,C1=-0.5,D1=-1.0):
     if y3 <=0: #repression off
         if x >0 and y2 <=0:
             return A0
@@ -30,13 +30,13 @@ def L4(x,y2,y3,A0=1.0,B0=-1.0,C0=-1.0,D0=-2.0):
             return D0
     elif y3 > 0: #repression on
         if x >0 and y2 <=0:
-            return A0 - 1.0
+            return A1
         elif x <=0 and y2<=0:
             return B0 -1.0
         elif x>0 and y2>0:
-            return C0 -1.0
+            return C1
         else:
-            return D0 -1.0
+            return D1
 
 def model1(t,y,L0=L0, L1=L1, L2=L1, L3=L1, L4=L1):
     dy = -y
@@ -115,11 +115,13 @@ if __name__=='__main__':
     #     print('Model 2, initial x = ' + str(i))
     #     print(s)
     #     print('******************')
-    init=np.array([1.0,-0.2,-0.2,-0.2,-0.2])
-    ts = solveModel(init,finaltime,model3)
-    s = translateToOrthants(ts)
+
+    # #symmetry
+    # init=np.array([1.0,-0.2,-0.2,-0.2,-0.2])
+    # ts = solveModel(init,finaltime,model3)
+    # s = translateToOrthants(ts)
     # print(ts[:20,:])
-    print(s)
+    # print(s)
 
     # init=np.array([1.0,-0.1,-0.2,-0.2,-0.2])
     # ts = solveModel(init,finaltime,model3)
@@ -127,20 +129,20 @@ if __name__=='__main__':
     # print(ts[:20,:])
     # print(s)
 
-    # init=np.array([1.0,-0.2,-0.2,-0.2,-0.2])
-    # ts = solveModel(init,finaltime,model4)
-    # s = translateToOrthants(ts)
-    # print(ts[:20,:])
-    # print(s)
+    init=np.array([1.0,-0.2,-0.2,-0.2,-0.2])
+    ts = solveModel(init,finaltime,model4)
+    s = translateToOrthants(ts)
+    print(ts[:20,:])
+    print(s)
 
-    # init=np.array([1.0,-0.2,-0.2,-0.1,-0.2])
-    # ts = solveModel(init,finaltime,model4)
-    # s = translateToOrthants(ts)
-    # print(ts[:20,:])
-    # print(s)
+    init=np.array([1.0,-0.2,-0.2,-0.1,-0.2])
+    ts = solveModel(init,finaltime,model4)
+    s = translateToOrthants(ts)
+    print(ts[:20,:])
+    print(s)
 
-    # init=np.array([1.0,-0.1,-0.1,-0.1,-0.2])
-    # ts = solveModel(init,finaltime,model4)
-    # s = translateToOrthants(ts)
-    # print(ts[:20,:])
-    # print(s)
+    init=np.array([1.0,-0.1,-0.1,-0.1,-0.2])
+    ts = solveModel(init,finaltime,model4)
+    s = translateToOrthants(ts)
+    print(ts[:20,:])
+    print(s)
