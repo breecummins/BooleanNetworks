@@ -1,16 +1,17 @@
 import numpy as np
-import os, glob
-import cPickle
+import os, glob, random, cPickle
 from functools import partial
 import modelNetworks as mN
 
 def partitionOrthant(model=mN.model1,fname=os.path.expanduser('~/temp/model1tracks'),orthrange = np.arange(0.1,-2.2,-0.2),finaltime=5.0):
+    per=[0.0,0.005,0.01,0.015]
     tracks = []
     for i in orthrange:
-        for j in orthrange+0.005:
-            for k in orthrange+0.01:
-                for l in orthrange+0.015:
-                    init = np.array([1.0,i,j,k,l])
+        for j in orthrange:
+            for k in orthrange:
+                for l in orthrange:
+                    random.shuffle(per)
+                    init = np.array([1.0,i+per[0],j+per[1],k+per[2],l+per[3]])
                     ts = mN.solveModel(init,finaltime,model)
                     tracks.append(mN.translateToOrthants(ts))
     fname += '.pickle'
