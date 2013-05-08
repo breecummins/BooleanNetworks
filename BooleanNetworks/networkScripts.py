@@ -3,7 +3,7 @@ import os, glob, random, cPickle
 from functools import partial
 import modelNetworks as mN
 
-def partitionOrthant(model=mN.model1,fname=os.path.expanduser('~/temp/model1tracks'),orthrange = np.arange(0.1,-2.2,-0.2),finaltime=5.0):
+def partitionOrthant(model=mN.model1,fname=os.path.expanduser('~/temp/model1tracks'),orthrange = np.arange(-0.1,-2.2,-0.2),finaltime=5.0):
     per=[0.0,0.005,0.01,0.015]
     tracks = []
     for i in orthrange:
