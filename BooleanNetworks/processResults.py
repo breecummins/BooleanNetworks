@@ -2,8 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D 
 import networkScripts as nS
+import cPickle
 
-def preprocess(myfiles):
+def postprocess(myfiles,fname=None):
     oneloops,numtracks,uoneloops,utracks = nS.loadNSort(myfiles)
     props = np.array([float(oneloops[k])/numtracks[k] for k in range(len(oneloops))])
     print('Number of one-loop tracks')
@@ -16,10 +17,12 @@ def preprocess(myfiles):
     print([len(u) for u in uoneloops])
     print('Number of unique tracks')
     print([len(u) for u in utracks])
-    return props, uoneloops, utracks   
+    if fname:
+        cPickle.dump({'oneloops':oneloops,'numtracks':numtracks,'props':props,'uoneloops':uoneloops,'utracks':utracks},open(fname+'.pickle','w'))
+    return props
 
 def plot2D(Alist,myfiles,titlestr='Model 1',xlabel='A',ylabel='proportion of single loops'):
-    props = preprocess(myfiles)
+    props = postprocess(myfiles)
     plt.figure()
     plt.plot(np.array(Alist),props)
     plt.title(titlestr)
@@ -29,7 +32,7 @@ def plot2D(Alist,myfiles,titlestr='Model 1',xlabel='A',ylabel='proportion of sin
 
 
 def plot3D(Alist,Blist,myfiles,titlestr='Model 2',xlabel='A',ylabel='B',zlabel='proportion of single loops'):
-    props, uoneloops, utracks = preprocess(myfiles)
+    props = postprocess(myfiles)
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     # make sure order is preserved with glob
@@ -53,11 +56,8 @@ if __name__ == "__main__":
     # plot3D([0.5,1.0,1.5,2.0],[-0.5,-1.0,-2.0],myfiles)
     # myfiles = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset1/model3*')
     # plot3D([0.5,1.0,1.5,2.0],[-0.5,-1.0,-2.0],myfiles,'Model 3')
-    myfiles = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset2/model1*')
-    props, uoneloops, utracks = preprocess(myfiles)
-    myfiles = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset2/model2*')
-    props, uoneloops, utracks = preprocess(myfiles)
-    myfiles = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset2/model3*')
-    props, uoneloops, utracks = preprocess(myfiles)
-    myfiles = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset2/model4*')
-    props, uoneloops, utracks = preprocess(myfiles)
+    maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset2/')
+    postprocess(maindir + 'model1*',maindir + 'model1Results')
+    postprocess(maindir + 'model2*',maindir + 'model2Results')
+    postprocess(maindir + 'model3*',maindir + 'model3Results')
+    postprocess(maindir + 'model4*',maindir + 'model4Results')

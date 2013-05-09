@@ -4,7 +4,7 @@ from functools import partial
 import modelNetworks as mN
 
 def partitionOrthant(model=mN.model1,fname=os.path.expanduser('~/temp/model1tracks'),orthrange = np.arange(-0.1,-2.2,-0.2),finaltime=5.0):
-    per=[0.0,0.005,0.01,0.015]
+    per=[0.0,-0.01,0.01,0.02]
     tracks = []
     for i in orthrange:
         for j in orthrange:
@@ -23,18 +23,18 @@ def alterParams(Alist=[0.5,1.0,1.5,2.0],Blist=[-0.5,-1.0,-2.0]):
         fname1=os.path.expanduser('~/temp/model1tracksA'+str(k))
         mod1 = partial(mN.model1,L0=L0)
         partitionOrthant(mod1,fname1)
-        for j,B in enumerate(Blist):
-            L4 =partial(mN.L0,A0=1.0,B0=B,C0=2.0,D0=1.0)
-            fname2=os.path.expanduser('~/temp/model2tracksA'+str(k)+'B'+str(j))
-            mod2=partial(mN.model2,L0=L0,L4=L4)
-            partitionOrthant(mod2,fname2)
-            mod3=partial(mN.model3,L0=L0,L4=L4)
-            fname3=os.path.expanduser('~/temp/model3tracksA'+str(k)+'B'+str(j))
-            partitionOrthant(mod3,fname3)
-            newL4=partial(mN.L4,B0=B)
-            mod4=partial(mN.model4,L0=L0,L4=newL4)
-            fname4=os.path.expanduser('~/temp/model4tracksA'+str(k)+'B'+str(j))
-            partitionOrthant(mod4,fname4)
+        # for j,B in enumerate(Blist):
+        #     L4 =partial(mN.L0,A0=1.0,B0=B,C0=2.0,D0=1.0)
+        #     fname2=os.path.expanduser('~/temp/model2tracksA'+str(k)+'B'+str(j))
+        #     mod2=partial(mN.model2,L0=L0,L4=L4)
+        #     partitionOrthant(mod2,fname2)
+        #     mod3=partial(mN.model3,L0=L0,L4=L4)
+        #     fname3=os.path.expanduser('~/temp/model3tracksA'+str(k)+'B'+str(j))
+        #     partitionOrthant(mod3,fname3)
+        #     newL4=partial(mN.L4,B0=B)
+        #     mod4=partial(mN.model4,L0=L0,L4=newL4)
+        #     fname4=os.path.expanduser('~/temp/model4tracksA'+str(k)+'B'+str(j))
+        #     partitionOrthant(mod4,fname4)
 
 def sortTracks(lot):
     numtracks = len(lot)

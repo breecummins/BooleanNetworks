@@ -74,7 +74,7 @@ def model4(t,y,L0=L0, L1=L1, L2=L1, L3=L1, L4=L4):
     dy[4] += L4(y[0],y[2],y[3])
     return dy
 
-def solveModel(init,finaltime,model=model1,dt=0.01):
+def solveModel(init,finaltime,model=model1,dt=0.001):
     times = np.arange(0,finaltime,dt)
     timeseries = np.zeros((len(times),len(init)))
     timeseries[0,:] = init
@@ -129,10 +129,10 @@ if __name__=='__main__':
     # print(ts[:20,:])
     # print(s)
 
-    init=np.array([1.0,-0.21,-0.2,-0.215,-0.205])
-    ts = solveModel(init,finaltime,model3)
+    init=np.array([1.0,-0.19,-0.2,-0.22,-0.21])
+    ts = solveModel(init,finaltime,model1)
     s = translateToOrthants(ts)
-    print(ts[:20,:])
+    # print(ts[60:80,:])
     print(s)
 
     # init=np.array([1.0,-0.2,-0.2,-0.1,-0.2])
