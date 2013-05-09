@@ -20,20 +20,20 @@ def partitionOrthant(model=mN.model1,fname=os.path.expanduser('~/temp/model1trac
 def alterParams(Alist=[0.5,1.0,1.5,2.0],Blist=[-0.5,-1.0,-2.0]):
     for k,A in enumerate(Alist):
         L0 = partial(mN.L0,A0=A)
-        fname1=os.path.expanduser('~/temp/dataset4/model1tracksA'+str(k))
+        fname1=os.path.expanduser('~/temp/dataset3/model1tracksA'+str(k))
         mod1 = partial(mN.model1,L0=L0)
         partitionOrthant(mod1,fname1)
         # for j,B in enumerate(Blist):
         #     L4 =partial(mN.L0,A0=1.0,B0=B,C0=2.0,D0=1.0)
-        #     fname2=os.path.expanduser('~/temp/dataset4/model2tracksA'+str(k)+'B'+str(j))
+        #     fname2=os.path.expanduser('~/temp/dataset3/model2tracksA'+str(k)+'B'+str(j))
         #     mod2=partial(mN.model2,L0=L0,L4=L4)
         #     partitionOrthant(mod2,fname2)
         #     mod3=partial(mN.model3,L0=L0,L4=L4)
-        #     fname3=os.path.expanduser('~/temp/dataset4/model3tracksA'+str(k)+'B'+str(j))
+        #     fname3=os.path.expanduser('~/temp/dataset3/model3tracksA'+str(k)+'B'+str(j))
         #     partitionOrthant(mod3,fname3)
         #     newL4=partial(mN.L4,B0=B)
         #     mod4=partial(mN.model4,L0=L0,L4=newL4)
-        #     fname4=os.path.expanduser('~/temp/dataset4/model4tracksA'+str(k)+'B'+str(j))
+        #     fname4=os.path.expanduser('~/temp/dataset3/model4tracksA'+str(k)+'B'+str(j))
         #     partitionOrthant(mod4,fname4)
 
 def sortTracks(lot):
