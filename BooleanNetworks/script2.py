@@ -3,4 +3,4 @@
 import networkScripts as nS
 import os
 
-nS.alterParams(os.path.expanduser('~/temp/dataset3/'),dt=0.0005)
+nS.alterParams(os.path.expanduser('~/temp/dataset_dt/'),dt=0.0001)
