@@ -57,7 +57,7 @@ if __name__ == "__main__":
     # plot3D([0.5,1.0,1.5,2.0],[-0.5,-1.0,-2.0],myfiles)
     # myfiles = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset1/model3*')
     # plot3D([0.5,1.0,1.5,2.0],[-0.5,-1.0,-2.0],myfiles,'Model 3')
-    maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset3/')
+    maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset4/')
     postprocess(maindir + 'model1tracks*',maindir + 'model1Results')
     # postprocess(maindir + 'model2tracks*',maindir + 'model2Results')
     # postprocess(maindir + 'model3tracks*',maindir + 'model3Results')
