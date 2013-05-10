@@ -1,5 +1,5 @@
 import numpy as np
-import os, glob, random, cPickle
+import os, random, cPickle
 from functools import partial
 import modelNetworks as mN
 
@@ -48,7 +48,7 @@ def partitionOrthantRandInits(inits,model=mN.model1,fname=os.path.expanduser('~/
 
 def randInits(maindir,Alist=[0.5,1.0,1.5,2.0],Blist=[-0.5,-1.0,-2.0],dt=0.01):
     inits = -2.1 + 2*np.random.random((2000,4))
-    cPickle.dump({'inits':inits},open(os.path.join(maindir,'inits'),'w'))
+    cPickle.dump({'inits':inits},open(os.path.join(maindir,'inits.pickle'),'w'))
     for k,A in enumerate(Alist):
         L0 = partial(mN.L0,A0=A)
         fname1=os.path.join(maindir,'model1tracksA'+str(k))
@@ -66,34 +66,6 @@ def randInits(maindir,Alist=[0.5,1.0,1.5,2.0],Blist=[-0.5,-1.0,-2.0],dt=0.01):
             mod4=partial(mN.model4,L0=L0,L4=newL4)
             fname4=os.path.join(maindir,'model4tracksA'+str(k)+'B'+str(j))
             partitionOrthantRandInits(inits,mod4,fname4)
-
-def sortTracks(lot):
-    numtracks = len(lot)
-    uniqtracks = list(set([tuple(l.flatten()) for l in lot]))
-    uniqoneloops = []
-    oneloop = 0
-    for track in lot:
-        # if the last point in the track is equilibrium, if each of y1,y2,y3 were touched, and if x does not reinitiate, count the track as one loop
-        if np.all(track[-1,:]==0) and np.any(track[:,1] ==1) and np.any(track[:,2] ==1) and np.any(track[:,3] ==1) and np.all(track[track[:,0].argmin():,0]==0):
-            oneloop += 1
-            if np.all([np.any(track!=u) for u in uniqoneloops]):
-                uniqoneloops.append(track)
-    return oneloop,numtracks,uniqoneloops,uniqtracks
-
-def loadNSort(myfiles):
-    oneloops = []
-    numtracks = []
-    uoneloops = []
-    utracks = []
-    for f in glob.glob(myfiles):
-        print(f)
-        tracks = cPickle.load(open(f,'r'))
-        ol,nt,uol,ut = sortTracks(tracks)
-        oneloops.append(ol)
-        numtracks.append(nt)
-        uoneloops.append(uol)
-        utracks.append(ut)
-    return oneloops,numtracks,uoneloops,utracks
 
 if __name__ == "__main__":
         alterParams()
