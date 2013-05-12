@@ -59,15 +59,44 @@ def postprocessThrowOut(myfiles,maindir,fname=None):
     print([len(u) for u in uoneloops])
     print('Number of tracks for each unique one-loop')
     print(uoneloopnums)
-    print('Bad track inds')
-    print(badinds)
-    # print('Good one-loop tracks')
+    # print('Bad track inds')
+    # print(badinds)
+    # # print('Good one-loop tracks')
     # print(uoneloops)
     # print('Good tracks')
     # print(utracks)
     # print('Bad tracks')
     # print(badtracks)
     return props
+
+def postprocessThrowOutCombineParams(myfiles,maindir,numinits,fname=None):
+    numtracks,goodinds,goodtracks,badinds,badtracks,oneloops,oneloopnums,onelooptotal,noloops,noloopnums,nolooptotal,periodic,periodicnums,periodictotal,broadperiodic,broadperiodicnums,broadperiodictotal,stuckloops,stuckloopnums,stucklooptotal,misc,miscnums,misctotal = loadNSortThrowOutCombineParams(myfiles,numinits)
+    olprops = np.array([float(ol)/numtracks for ol in onelooptotal])
+    noprops = np.array([float(no)/numtracks for no in nolooptotal])
+    plprops = np.array([float(pl)/numtracks for pl in periodictotal])
+    bpprops = np.array([float(bp)/numtracks for bp in broadperiodictotal])
+    slprops = np.array([float(sl)/numtracks for sl in stucklooptotal])
+    mlprops = np.array([float(ml)/numtracks for ml in misctotal])
+    print('Number of good tracks')
+    print(numtracks)
+    print('Number of bad tracks')
+    print(len(badinds))
+    print('Number and prop of one-loop tracks; number of unique one loops')
+    print((onelooptotal,olprops,[len(ol) for ol in oneloops]))
+    print(oneloops)
+    print('Number and prop of no-loop tracks; number of unique no loops')
+    print((nolooptotal,noprops,[len(ol) for ol in noloops]))
+    print('Number and prop of periodic tracks; number of unique periodic tracks')
+    print((periodictotal,plprops,[len(ol) for ol in periodic]))
+    print('Number and prop of (broadly) periodic tracks; number of unique (broadly) periodic tracks')
+    print((broadperiodictotal,bpprops,[len(ol) for ol in broadperiodic]))
+    # print(broadperiodic)
+    print('Number and prop of stuck-in-a-loop tracks; number of unique stuck-in-a-loop tracks')
+    print((stucklooptotal,slprops,[len(ol) for ol in stuckloops]))
+    # print(stuckloops)
+    print('Number and prop of misc tracks; number of unique misc tracks')
+    print((misctotal,mlprops,[len(ol) for ol in misc]))
+    # print(misc)
 
 def testBitChanges(uol):
     bitchanges=[]
@@ -147,12 +176,21 @@ def throwMeOutCombineParams(lot):
     oneloops = []
     oneloopnums = []
     onelooptotal = 0
+    noloops = []
+    noloopnums = []
+    nolooptotal = 0
     periodic = []
     periodicnums = []
     periodictotal = 0
     stuckloops = []
     stuckloopnums = []
     stucklooptotal = 0
+    misc = []
+    miscnums = []
+    misctotal = 0
+    broadperiodic = []
+    broadperiodicnums = []
+    broadperiodictotal = 0
     def addme(track,loop,nums,total):
         total += 1
         if np.all([np.any(track!=o) for o in loop]):
@@ -163,17 +201,26 @@ def throwMeOutCombineParams(lot):
                 if np.all(track==u):
                     nums[k] += 1
                     break
+        return loop,nums,total
     for track in lot:
         # if the last point in the track is equilibrium, if each of y1,y2,y3 were touched, and if x does not reinitiate, count the track as one loop
         if np.all(track[-1,:]==0) and np.any(track[:,1] ==1) and np.any(track[:,2] ==1) and np.any(track[:,3] ==1) and np.all(track[track[:,0].argmin():,0]==0):
-            addme(track,oneloops,oneloopnums,onelooptotal)
+            oneloops,oneloopnums,onelooptotal = addme(track,oneloops,oneloopnums,onelooptotal)
+        # if not a single loop is completed, count as no loops
+        elif np.all(track[track[:,0].argmin():,0]==0) and (np.all(track[:,1] ==0) or np.all(track[:,2] ==0) or np.all(track[:,3] ==0)):
+            noloops,noloopnums,nolooptotal = addme(track,noloops,noloopnums,nolooptotal)
         # if the initial condition is reached again and if each of y1,y2,y3 were touched, count as periodic
-        elif np.any(track[:,1] ==1) and np.any(track[:,2] ==1) and np.any(track[:,3] ==1) and np.any(np.all(track[track[:,0].argmin():,:] == [1,0,0,0,0])):
-            addme(track,periodic,periodicnums,periodictotal)
+        elif np.any(track[:,1] ==1) and np.any(track[:,2] ==1) and np.any(track[:,3] ==1) and np.any([np.all(t == np.array([1,0,0,0,0])) for t in track[track[:,0].argmin():,:]]):
+            periodic,periodicnums,periodictotal = addme(track,periodic,periodicnums,periodictotal)
+        # if x is reinitialized and if each of y1,y2,y3 were touched and the last point is at equilibrium, count as periodic (in a broad sense)
+        elif np.any(track[:,1] ==1) and np.any(track[:,2] ==1) and np.any(track[:,3] ==1) and np.any(track[track[:,0].argmin():,0] == 1) and np.all(track[-1,:]==0):
+            broadperiodic,broadperiodicnums,broadperiodictotal = addme(track,broadperiodic,broadperiodicnums,broadperiodictotal)
         # if the last time step is not at equilibrium, count as stuck in a subloop
         elif np.any(track[-1,:] != 0):
-            addme(track,stuckloops,stuckloopnums,stucklooptotal)
-     return oneloops,oneloopnums,onelooptotal,periodic,periodicnums,periodictotal,stuckloops,stuckloopnums,stucklooptotal
+            stuckloops,stuckloopnums,stucklooptotal = addme(track,stuckloops,stuckloopnums,stucklooptotal)
+        else:
+            misc,miscnums,misctotal = addme(track,misc,miscnums,misctotal)
+    return oneloops,oneloopnums,onelooptotal,noloops,noloopnums,nolooptotal,periodic,periodicnums,periodictotal,broadperiodic,broadperiodicnums,broadperiodictotal,stuckloops,stuckloopnums,stucklooptotal,misc,miscnums,misctotal
 
 def loadNSortThrowOut(myfiles):
     oneloops = []
@@ -224,42 +271,75 @@ def loadNSort(myfiles):
         badtracks.append(bt)
     return oneloops,numtracks,uoneloops,uoneloopnums,utracks,bitchanges,badoneloopinds,badtrackinds,badtracks
 
-def loadNSortThrowOutComdineParams(myfiles):
-    oneloops = []
+def loadNSortThrowOutCombineParams(myfiles,numinits):
     numtracks = []
-    uoneloops = []
-    uoneloopnums = []
     goodinds = []
     goodtracks = []
     badinds = []
     badtracks = []
+    oneloops = []
+    oneloopnums = []
+    onelooptotal = []
+    noloops = []
+    noloopnums = []
+    nolooptotal = []
+    periodic = []
+    periodicnums = []
+    periodictotal = []
+    broadperiodic = []
+    broadperiodicnums = []
+    broadperiodictotal = []
+    stuckloops = []
+    stuckloopnums = []
+    stucklooptotal = []
+    misc = []
+    miscnums = []
+    misctotal = []
+    alltracks = []
+    print('Loading...')
     for f in glob.glob(myfiles):
         print(f)
         tracks = cPickle.load(open(f,'r'))
+        alltracks.append(tracks)
         for t,track in enumerate(tracks):
             if not oneBitFlip(track):
-                badinds.extend(t)
+                badinds.append(t)
                 if np.all([np.any(track!=b) for b in badtracks]):
-                    badtracks.extend(track)
+                    badtracks.append(track)
                 continue
             else:
-                goodinds.extend(t)
                 if np.all([np.any(track!=g) for g in goodtracks]):
-                    goodtracks.extend(track)
+                    goodtracks.append(track)
     badinds = sorted(list(set(badinds)))
-    goodinds = sorted(list(set(goodinds)))
-    badtracks = list(set([tuple(b) for b in badtracks]))
-    goodtracks = list(set([tuple(u) for u in utracks]))
+    goodinds = range(numinits)
+    for b in badinds:
+        goodinds.remove(b)
+    badtracks = list(set([tuple(b.flatten()) for b in badtracks]))
+    goodtracks = list(set([tuple(g.flatten()) for g in goodtracks]))
     numtracks = len(goodinds)
-    for f in glob.glob(myfiles):
-        print(f)
-        tracks = cPickle.load(open(f,'r'))
-        ol,uol,uoln = throwMeOutCombineParams(tracks[goodinds])
-        oneloops.extend(ol)
-        numtracks.extend(nt)
-        uoneloops.extend(uol)
-        uoneloopnums.extend(uoln)
-    return oneloops,numtracks,uoneloops,uoneloopnums,goodinds,goodtracks,badinds,badtracks
+    print('Analyzing...')
+    for tracks in alltracks:
+        newtracks = [tracks[k] for k in goodinds]
+        ol,oln,olt,nl,nln,nlt,pl,pln,plt,bp,bpn,bpt,sl,sln,slt,ml,mln,mlt = throwMeOutCombineParams(newtracks)
+        oneloops.append(ol)
+        oneloopnums.append(oln)
+        onelooptotal.append(olt)
+        noloops.append(nl)
+        noloopnums.append(nln)
+        nolooptotal.append(nlt)
+        periodic.append(pl)
+        periodicnums.append(pln)
+        periodictotal.append(plt)
+        broadperiodic.append(bp)
+        broadperiodicnums.append(bpn)
+        broadperiodictotal.append(bpt)
+        stuckloops.append(sl)
+        stuckloopnums.append(sln)
+        stucklooptotal.append(slt)
+        misc.append(ml)
+        miscnums.append(mln)
+        misctotal.append(mlt)
+    return numtracks,goodinds,goodtracks,badinds,badtracks,oneloops,oneloopnums,onelooptotal,noloops,noloopnums,nolooptotal,periodic,periodicnums,periodictotal,broadperiodic,broadperiodicnums,broadperiodictotal,stuckloops,stuckloopnums,stucklooptotal,misc,miscnums,misctotal
 
 def plot2D(Alist,myfiles,titlestr='Model 1',xlabel='A',ylabel='proportion of single loops'):
     props = postprocess(myfiles)
@@ -297,11 +377,17 @@ if __name__ == "__main__":
     # myfiles = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset1/model3*')
     # plot3D([0.5,1.0,1.5,2.0],[-0.5,-1.0,-2.0],myfiles,'Model 3')
     maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_randinits/')
+    idict=cPickle.load(open(os.path.join(maindir,'inits.pickle'),'r'))
+    numinits = idict['inits'].shape[0]
     # postprocess(maindir + 'model1tracks*',maindir,'model1Results')
     # postprocess(maindir + 'model2tracks*',maindir,'model2Results')
     # postprocess(maindir + 'model3tracks*',maindir, 'model3Results')
     # postprocess(maindir + 'model4tracks*',maindir,'model4Results')
-    postprocessThrowOut(maindir + 'model1tracks*',maindir,'model1Results')
+    # postprocessThrowOut(maindir + 'model1tracks*',maindir,'model1Results')
     # postprocessThrowOut(maindir + 'model2tracks*',maindir,'model2Results')
     # postprocessThrowOut(maindir + 'model3tracks*',maindir,'model3Results')
     # postprocessThrowOut(maindir + 'model4tracks*',maindir,'model4Results')
+    # postprocessThrowOutCombineParams(maindir + 'model1tracks*',maindir,numinits,'model1Results')
+    # postprocessThrowOutCombineParams(maindir + 'model2tracks*',maindir,numinits,'model2Results')    
+    postprocessThrowOutCombineParams(maindir + 'model3tracks*',maindir,numinits,'model3Results')    
+    # postprocessThrowOutCombineParams(maindir + 'model4tracks*',maindir,numinits,'model4Results')
