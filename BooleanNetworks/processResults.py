@@ -59,6 +59,14 @@ def postprocessThrowOut(myfiles,maindir,fname=None):
     print([len(u) for u in uoneloops])
     print('Number of tracks for each unique one-loop')
     print(uoneloopnums)
+    print('Bad track inds')
+    print(badinds)
+    # print('Good one-loop tracks')
+    # print(uoneloops)
+    # print('Good tracks')
+    # print(utracks)
+    # print('Bad tracks')
+    # print(badtracks)
     return props
 
 def testBitChanges(uol):
@@ -135,6 +143,38 @@ def throwMeOut(lot):
     numtracks = len(goodtrackinds)
     return oneloop,numtracks,uniqoneloops,uniqoneloopnums,goodtrackinds,uniqtracks,badtrackinds,badtracks
 
+def throwMeOutCombineParams(lot):
+    oneloops = []
+    oneloopnums = []
+    onelooptotal = 0
+    periodic = []
+    periodicnums = []
+    periodictotal = 0
+    stuckloops = []
+    stuckloopnums = []
+    stucklooptotal = 0
+    def addme(track,loop,nums,total):
+        total += 1
+        if np.all([np.any(track!=o) for o in loop]):
+            loop.append(track)
+            nums.append(1)
+        else:
+            for k,u in enumerate(loop):
+                if np.all(track==u):
+                    nums[k] += 1
+                    break
+    for track in lot:
+        # if the last point in the track is equilibrium, if each of y1,y2,y3 were touched, and if x does not reinitiate, count the track as one loop
+        if np.all(track[-1,:]==0) and np.any(track[:,1] ==1) and np.any(track[:,2] ==1) and np.any(track[:,3] ==1) and np.all(track[track[:,0].argmin():,0]==0):
+            addme(track,oneloops,oneloopnums,onelooptotal)
+        # if the initial condition is reached again and if each of y1,y2,y3 were touched, count as periodic
+        elif np.any(track[:,1] ==1) and np.any(track[:,2] ==1) and np.any(track[:,3] ==1) and np.any(np.all(track[track[:,0].argmin():,:] == [1,0,0,0,0])):
+            addme(track,periodic,periodicnums,periodictotal)
+        # if the last time step is not at equilibrium, count as stuck in a subloop
+        elif np.any(track[-1,:] != 0):
+            addme(track,stuckloops,stuckloopnums,stucklooptotal)
+     return oneloops,oneloopnums,onelooptotal,periodic,periodicnums,periodictotal,stuckloops,stuckloopnums,stucklooptotal
+
 def loadNSortThrowOut(myfiles):
     oneloops = []
     numtracks = []
@@ -184,6 +224,43 @@ def loadNSort(myfiles):
         badtracks.append(bt)
     return oneloops,numtracks,uoneloops,uoneloopnums,utracks,bitchanges,badoneloopinds,badtrackinds,badtracks
 
+def loadNSortThrowOutComdineParams(myfiles):
+    oneloops = []
+    numtracks = []
+    uoneloops = []
+    uoneloopnums = []
+    goodinds = []
+    goodtracks = []
+    badinds = []
+    badtracks = []
+    for f in glob.glob(myfiles):
+        print(f)
+        tracks = cPickle.load(open(f,'r'))
+        for t,track in enumerate(tracks):
+            if not oneBitFlip(track):
+                badinds.extend(t)
+                if np.all([np.any(track!=b) for b in badtracks]):
+                    badtracks.extend(track)
+                continue
+            else:
+                goodinds.extend(t)
+                if np.all([np.any(track!=g) for g in goodtracks]):
+                    goodtracks.extend(track)
+    badinds = sorted(list(set(badinds)))
+    goodinds = sorted(list(set(goodinds)))
+    badtracks = list(set([tuple(b) for b in badtracks]))
+    goodtracks = list(set([tuple(u) for u in utracks]))
+    numtracks = len(goodinds)
+    for f in glob.glob(myfiles):
+        print(f)
+        tracks = cPickle.load(open(f,'r'))
+        ol,uol,uoln = throwMeOutCombineParams(tracks[goodinds])
+        oneloops.extend(ol)
+        numtracks.extend(nt)
+        uoneloops.extend(uol)
+        uoneloopnums.extend(uoln)
+    return oneloops,numtracks,uoneloops,uoneloopnums,goodinds,goodtracks,badinds,badtracks
+
 def plot2D(Alist,myfiles,titlestr='Model 1',xlabel='A',ylabel='proportion of single loops'):
     props = postprocess(myfiles)
     plt.figure()
@@ -220,7 +297,7 @@ if __name__ == "__main__":
     # myfiles = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset1/model3*')
     # plot3D([0.5,1.0,1.5,2.0],[-0.5,-1.0,-2.0],myfiles,'Model 3')
     maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_randinits/')
-    postprocess(maindir + 'model1tracks*',maindir,'model1Results')
+    # postprocess(maindir + 'model1tracks*',maindir,'model1Results')
     # postprocess(maindir + 'model2tracks*',maindir,'model2Results')
     # postprocess(maindir + 'model3tracks*',maindir, 'model3Results')
     # postprocess(maindir + 'model4tracks*',maindir,'model4Results')
