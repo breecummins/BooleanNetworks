@@ -36,7 +36,7 @@ def printme(results=None,fname=None):
     print((results['broadperiodictotal'],results['broadperprops'],[len(ol) for ol in results['broadperiodic']]))
     print('Number and prop of stuck-in-a-loop tracks; number of unique stuck-in-a-loop tracks')
     print((results['stucklooptotal'],results['stuckloopprops'],[len(ol) for ol in results['stuckloops']]))
-    print(results['stuckloops'])
+    # print(results['stuckloops'])
     print('Number and prop of misc tracks; number of unique misc tracks')
     print((results['misctotal'],results['miscprops'],[len(ol) for ol in results['misc']]))
 
