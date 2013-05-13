@@ -3,107 +3,60 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D 
 import cPickle,glob, os
 
-def postprocess(myfiles,maindir,fname=None):
-    oneloops,numtracks,uoneloops,uoneloopnums,utracks,bitchanges,badoneloopinds,badtrackinds,badtracks = loadNSort(myfiles)
-    props = np.array([float(oneloops[k])/numtracks[k] for k in range(len(oneloops))])
-    print('Number of tracks')
-    print(numtracks)
-    print('Number of one-loop tracks')
-    print(oneloops)
-    print('Proportions of one-loops')
-    print(props)
-    print('Number of unique tracks (including one loops)')
-    print([len(u) for u in utracks])
-    print('Number of unique bad tracks (including one loops)')
-    olinds=[len(j) for j in bitchanges]
-    btinds=[len(j) for j in badtracks]
-    print((len(olinds),len(btinds)))
-    numbaddies = [olinds[k] + btinds[k] for k in range(len(olinds))]
-    print(numbaddies)
-    print('Number of unique one-loops')
-    print([len(u) for u in uoneloops])
-    print('Number of tracks for each unique one-loop')
-    print(uoneloopnums)
-    print('Index of problem unique one-loops')
-    print(bitchanges)
-    print('Problem unique one loops')
-    for j in range(len(uoneloops)):
-        print([uoneloops[j][bitchanges[j][k]] for k in range(len(bitchanges[j]))])
+def postprocess(myfiles,maindir,numinits,fname=None):
+    results = loadNSort(myfiles,numinits)
+    N = results['numtracks']
+    results['oneloopprops'] = np.array([float(ol)/N for ol in results['onelooptotal']])
+    results['noloopprops'] = np.array([float(no)/N for no in results['nolooptotal']])
+    results['perprops'] = np.array([float(pl)/N for pl in results['periodictotal']])
+    results['broadperprops'] = np.array([float(bp)/N for bp in results['broadperiodictotal']])
+    results['stuckloopprops'] = np.array([float(sl)/N for sl in results['stucklooptotal']])
+    results['miscprops'] = np.array([float(ml)/N for ml in results['misctotal']])
     if fname:
-        cPickle.dump({'oneloops':oneloops,'numtracks':numtracks,'props':props,'uoneloops':uoneloops,'uoneloopnums':uoneloopnums,'utracks':utracks},open(os.path.join(maindir,fname+'.pickle'),'w'))
-    print('Indices of problem initial conditions in one loops')
-    print(badoneloopinds)
-    print('Unique indices of problem initial conditions')
-    idict = cPickle.load(open(os.path.join(maindir,'inits.pickle'),'r'))
-    inits=idict['inits']
-    badinds = sorted(list(set([k for j in range(len(badtrackinds)) for k in badtrackinds[j]])))
-    print(badinds)
-    print('Problem initial conditions')
-    print([inits[k,:] for k in badinds])
-    return props
+        cPickle.dump(results,open(os.path.join(maindir,fname+'.pickle'),'w'))
+    printme(results)
 
-def postprocessThrowOut(myfiles,maindir,fname=None):
-    oneloops,numtracks,uoneloops,uoneloopnums,goodinds,utracks,badinds,badtracks = loadNSortThrowOut(myfiles)
-    props = np.array([float(oneloops[k])/numtracks[k] for k in range(len(oneloops))])
-    print('Number of good tracks')
-    print(numtracks)
-    print('Number of good one-loop tracks')
-    print(oneloops)
-    print('Proportions of good one-loops')
-    print(props)
+def printme(results=None,fname=None):
+    if fname:
+        results = cPickle.load(open(fname,'r'))
+    print('Number of good initial conditions')
+    print(results['numtracks'])
     print('Number of unique good tracks')
-    print([len(u) for u in utracks])
+    print(len(results['goodtracks']))
+    print('Number of bad initial conditions')
+    print(len(results['badinds']))
     print('Number of unique bad tracks')
-    print([len(b) for b in badtracks])
-    print('Number of unique one-loops')
-    print([len(u) for u in uoneloops])
-    print('Number of tracks for each unique one-loop')
-    print(uoneloopnums)
-    # print('Bad track inds')
-    # print(badinds)
-    # # print('Good one-loop tracks')
-    # print(uoneloops)
-    # print('Good tracks')
-    # print(utracks)
-    # print('Bad tracks')
-    # print(badtracks)
-    return props
-
-def postprocessThrowOutCombineParams(myfiles,maindir,numinits,fname=None):
-    numtracks,goodinds,goodtracks,badinds,badtracks,oneloops,oneloopnums,onelooptotal,noloops,noloopnums,nolooptotal,periodic,periodicnums,periodictotal,broadperiodic,broadperiodicnums,broadperiodictotal,stuckloops,stuckloopnums,stucklooptotal,misc,miscnums,misctotal = loadNSortThrowOutCombineParams(myfiles,numinits)
-    olprops = np.array([float(ol)/numtracks for ol in onelooptotal])
-    noprops = np.array([float(no)/numtracks for no in nolooptotal])
-    plprops = np.array([float(pl)/numtracks for pl in periodictotal])
-    bpprops = np.array([float(bp)/numtracks for bp in broadperiodictotal])
-    slprops = np.array([float(sl)/numtracks for sl in stucklooptotal])
-    mlprops = np.array([float(ml)/numtracks for ml in misctotal])
-    print('Number of good tracks')
-    print(numtracks)
-    print('Number of bad tracks')
-    print(len(badinds))
+    print(len(results['badtracks']))
     print('Number and prop of one-loop tracks; number of unique one loops')
-    print((onelooptotal,olprops,[len(ol) for ol in oneloops]))
-    print(oneloops)
+    print((results['onelooptotal'],results['oneloopprops'],[len(ol) for ol in results['oneloops']]))
     print('Number and prop of no-loop tracks; number of unique no loops')
-    print((nolooptotal,noprops,[len(ol) for ol in noloops]))
+    print((results['nolooptotal'],results['noloopprops'],[len(ol) for ol in results['noloops']]))
     print('Number and prop of periodic tracks; number of unique periodic tracks')
-    print((periodictotal,plprops,[len(ol) for ol in periodic]))
+    print((results['periodictotal'],results['perprops'],[len(ol) for ol in results['periodic']]))
     print('Number and prop of (broadly) periodic tracks; number of unique (broadly) periodic tracks')
-    print((broadperiodictotal,bpprops,[len(ol) for ol in broadperiodic]))
-    # print(broadperiodic)
+    print((results['broadperiodictotal'],results['broadperprops'],[len(ol) for ol in results['broadperiodic']]))
     print('Number and prop of stuck-in-a-loop tracks; number of unique stuck-in-a-loop tracks')
-    print((stucklooptotal,slprops,[len(ol) for ol in stuckloops]))
-    # print(stuckloops)
+    print((results['stucklooptotal'],results['stuckloopprops'],[len(ol) for ol in results['stuckloops']]))
+    print(results['stuckloops'])
     print('Number and prop of misc tracks; number of unique misc tracks')
-    print((misctotal,mlprops,[len(ol) for ol in misc]))
-    # print(misc)
+    print((results['misctotal'],results['miscprops'],[len(ol) for ol in results['misc']]))
 
-def testBitChanges(uol):
-    bitchanges=[]
-    for j,u in enumerate(uol):
-        if not oneBitFlip(u):
-            bitchanges.append(j)
-    return bitchanges
+def combineParamsWithinModel(results=None,fname=None):
+    if fname:
+        results = cPickle.load(open(fname,'r'))
+    N = float(results['numtracks']*len(results['onelooptotal']))
+    percentoneloops = sum(results['onelooptotal'])*100.0 / N
+    percentnoloops = sum(results['nolooptotal'])*100.0 / N
+    percentperiodic = (sum(results['periodictotal'])+sum(results['broadperiodictotal']))*100.0 / N  
+    percentcrash = sum(results['stucklooptotal'])*100.0 / N
+    print('Percentage of one loops')
+    print("%0.2f %%" % percentoneloops)
+    print('Percentage of no loops')
+    print("%0.2f %%" % percentnoloops)
+    print('Percentage of periodic loops')
+    print("%0.2f %%" % percentperiodic)
+    print('Percentage of crashes')
+    print("%0.2f %%" % percentcrash)
 
 def oneBitFlip(ol):
     for k in range(1,ol.shape[0]):
@@ -111,68 +64,7 @@ def oneBitFlip(ol):
             return False
     return True
 
-
 def sortTracks(lot):
-    numtracks = len(lot)
-    uniqtracks = list(set([tuple(l.flatten()) for l in lot]))
-    uniqoneloops = []
-    uniqoneloopnums = []
-    oneloop = 0
-    badtrackinds = []
-    badtracks = []
-    badoneloopinds = []
-    for t,track in enumerate(lot):
-        # if the last point in the track is equilibrium, if each of y1,y2,y3 were touched, and if x does not reinitiate, count the track as one loop
-        if np.all(track[-1,:]==0) and np.any(track[:,1] ==1) and np.any(track[:,2] ==1) and np.any(track[:,3] ==1) and np.all(track[track[:,0].argmin():,0]==0):
-            oneloop += 1
-            if not oneBitFlip(track):
-                badoneloopinds.append(t)
-            if np.all([np.any(track!=u) for u in uniqoneloops]):
-                uniqoneloops.append(track)
-                uniqoneloopnums.append(1)
-            else:
-                for k,u in enumerate(uniqoneloops):
-                    if np.all(track==u):
-                        uniqoneloopnums[k] += 1
-        elif not oneBitFlip(track):
-            badtrackinds.append(t)
-            if np.all([np.any(track!=b) for b in badtracks]):
-                badtracks.append(track)
-    return oneloop,numtracks,uniqoneloops,uniqoneloopnums,uniqtracks,badoneloopinds,badtrackinds, badtracks
-
-def throwMeOut(lot):
-    uniqtracks = []
-    goodtrackinds = []
-    badtrackinds = []
-    badtracks = []
-    uniqoneloops = []
-    uniqoneloopnums = []
-    oneloop = 0
-    for t,track in enumerate(lot):
-        # if the track has more than one binary flip per change, throw it out
-        if not oneBitFlip(track):
-            badtrackinds.append(t)
-            if np.all([np.any(track!=b) for b in badtracks]):
-                badtracks.append(track)
-            continue
-        else:
-            goodtrackinds.append(t)
-            if np.all([np.any(track!=u) for u in uniqtracks]):
-                uniqtracks.append(track)
-        # if the last point in the track is equilibrium, if each of y1,y2,y3 were touched, and if x does not reinitiate, count the track as one loop
-        if np.all(track[-1,:]==0) and np.any(track[:,1] ==1) and np.any(track[:,2] ==1) and np.any(track[:,3] ==1) and np.all(track[track[:,0].argmin():,0]==0):
-            oneloop += 1
-            if np.all([np.any(track!=u) for u in uniqoneloops]):
-                uniqoneloops.append(track)
-                uniqoneloopnums.append(1)
-            else:
-                for k,u in enumerate(uniqoneloops):
-                    if np.all(track==u):
-                        uniqoneloopnums[k] += 1
-    numtracks = len(goodtrackinds)
-    return oneloop,numtracks,uniqoneloops,uniqoneloopnums,goodtrackinds,uniqtracks,badtrackinds,badtracks
-
-def throwMeOutCombineParams(lot):
     oneloops = []
     oneloopnums = []
     onelooptotal = 0
@@ -222,56 +114,7 @@ def throwMeOutCombineParams(lot):
             misc,miscnums,misctotal = addme(track,misc,miscnums,misctotal)
     return oneloops,oneloopnums,onelooptotal,noloops,noloopnums,nolooptotal,periodic,periodicnums,periodictotal,broadperiodic,broadperiodicnums,broadperiodictotal,stuckloops,stuckloopnums,stucklooptotal,misc,miscnums,misctotal
 
-def loadNSortThrowOut(myfiles):
-    oneloops = []
-    numtracks = []
-    uoneloops = []
-    uoneloopnums = []
-    goodinds = []
-    utracks = []
-    badinds = []
-    badtracks = []
-    for f in glob.glob(myfiles):
-        print(f)
-        tracks = cPickle.load(open(f,'r'))
-        ol,nt,uol,uoln,gti,ut,bti,bt = throwMeOut(tracks)
-        oneloops.append(ol)
-        numtracks.append(nt)
-        uoneloops.append(uol)
-        uoneloopnums.append(uoln)
-        goodinds.append(gti)
-        utracks.append(ut)
-        badinds.append(bti)
-        badtracks.append(bt)
-    return oneloops,numtracks,uoneloops,uoneloopnums,goodinds,utracks,badinds,badtracks
-
-def loadNSort(myfiles):
-    oneloops = []
-    numtracks = []
-    uoneloops = []
-    uoneloopnums = []
-    utracks = []
-    bitchanges = []
-    badoneloopinds = []
-    badtrackinds = []
-    badtracks = []
-    for f in glob.glob(myfiles):
-        print(f)
-        tracks = cPickle.load(open(f,'r'))
-        ol,nt,uol,uoln,ut,boli,bti,bt = sortTracks(tracks)
-        bc = testBitChanges(uol)
-        oneloops.append(ol)
-        numtracks.append(nt)
-        uoneloops.append(uol)
-        uoneloopnums.append(uoln)
-        utracks.append(ut)
-        bitchanges.append(bc)
-        badoneloopinds.append(boli)
-        badtrackinds.append(bti)
-        badtracks.append(bt)
-    return oneloops,numtracks,uoneloops,uoneloopnums,utracks,bitchanges,badoneloopinds,badtrackinds,badtracks
-
-def loadNSortThrowOutCombineParams(myfiles,numinits):
+def loadNSort(myfiles,numinits):
     numtracks = []
     goodinds = []
     goodtracks = []
@@ -315,12 +158,16 @@ def loadNSortThrowOutCombineParams(myfiles,numinits):
     for b in badinds:
         goodinds.remove(b)
     badtracks = list(set([tuple(b.flatten()) for b in badtracks]))
+    bt = [np.array(t).reshape(-1,5) for t in badtracks]
+    badtracks = bt
     goodtracks = list(set([tuple(g.flatten()) for g in goodtracks]))
+    gt = [np.array(t).reshape(-1,5) for t in goodtracks]
+    goodtracks = gt
     numtracks = len(goodinds)
     print('Analyzing...')
     for tracks in alltracks:
         newtracks = [tracks[k] for k in goodinds]
-        ol,oln,olt,nl,nln,nlt,pl,pln,plt,bp,bpn,bpt,sl,sln,slt,ml,mln,mlt = throwMeOutCombineParams(newtracks)
+        ol,oln,olt,nl,nln,nlt,pl,pln,plt,bp,bpn,bpt,sl,sln,slt,ml,mln,mlt = sortTracks(newtracks)
         oneloops.append(ol)
         oneloopnums.append(oln)
         onelooptotal.append(olt)
@@ -339,55 +186,39 @@ def loadNSortThrowOutCombineParams(myfiles,numinits):
         misc.append(ml)
         miscnums.append(mln)
         misctotal.append(mlt)
-    return numtracks,goodinds,goodtracks,badinds,badtracks,oneloops,oneloopnums,onelooptotal,noloops,noloopnums,nolooptotal,periodic,periodicnums,periodictotal,broadperiodic,broadperiodicnums,broadperiodictotal,stuckloops,stuckloopnums,stucklooptotal,misc,miscnums,misctotal
-
-def plot2D(Alist,myfiles,titlestr='Model 1',xlabel='A',ylabel='proportion of single loops'):
-    props = postprocess(myfiles)
-    plt.figure()
-    plt.plot(np.array(Alist),props)
-    plt.title(titlestr)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    plt.show()
-
-
-def plot3D(Alist,Blist,myfiles,titlestr='Model 2',xlabel='A',ylabel='B',zlabel='proportion of single loops'):
-    props = postprocess(myfiles)
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    # make sure order is preserved with glob
-    newB = Blist*len(Alist)
-    newA = []
-    for k in range(len(Alist)):
-        newA.extend([Alist[k]]*len(Blist))
-    ax.plot(np.array(newA),np.array(newB),props)
-    plt.title(titlestr)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
-    ax.set_zlabel(zlabel)
-    plt.show()
+    results = {'oneloops':oneloops,'oneloopnums':oneloopnums,'onelooptotal':onelooptotal,'noloops':noloops,'noloopnums':noloopnums,'nolooptotal':nolooptotal,'periodic':periodic,'periodicnums':periodicnums,'periodictotal':periodictotal,'broadperiodic':broadperiodic,'broadperiodicnums':broadperiodicnums,'broadperiodictotal':broadperiodictotal,'stuckloops':stuckloops,'stuckloopnums':stuckloopnums,'stucklooptotal':stucklooptotal,'misc':misc,'miscnums':miscnums,'misctotal':misctotal,'numtracks':numtracks,'goodinds':goodinds,'goodtracks':goodtracks,'badinds':badinds,'badtracks':badtracks}
+    return results
 
 if __name__ == "__main__":
-    # make sure order is preserved with glob
-    import os
-    # myfiles = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset1/model1*')
-    # plot2D([0.5,1.0,1.5,2.0],myfiles)
-    # myfiles = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset1/model2*')
-    # plot3D([0.5,1.0,1.5,2.0],[-0.5,-1.0,-2.0],myfiles)
-    # myfiles = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset1/model3*')
-    # plot3D([0.5,1.0,1.5,2.0],[-0.5,-1.0,-2.0],myfiles,'Model 3')
     maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_randinits/')
     idict=cPickle.load(open(os.path.join(maindir,'inits.pickle'),'r'))
     numinits = idict['inits'].shape[0]
-    # postprocess(maindir + 'model1tracks*',maindir,'model1Results')
-    # postprocess(maindir + 'model2tracks*',maindir,'model2Results')
-    # postprocess(maindir + 'model3tracks*',maindir, 'model3Results')
-    # postprocess(maindir + 'model4tracks*',maindir,'model4Results')
-    # postprocessThrowOut(maindir + 'model1tracks*',maindir,'model1Results')
-    # postprocessThrowOut(maindir + 'model2tracks*',maindir,'model2Results')
-    # postprocessThrowOut(maindir + 'model3tracks*',maindir,'model3Results')
-    # postprocessThrowOut(maindir + 'model4tracks*',maindir,'model4Results')
-    # postprocessThrowOutCombineParams(maindir + 'model1tracks*',maindir,numinits,'model1Results')
-    # postprocessThrowOutCombineParams(maindir + 'model2tracks*',maindir,numinits,'model2Results')    
-    postprocessThrowOutCombineParams(maindir + 'model3tracks*',maindir,numinits,'model3Results')    
-    # postprocessThrowOutCombineParams(maindir + 'model4tracks*',maindir,numinits,'model4Results')
+    # postprocess(maindir + 'model1tracks*',maindir,numinits,'model1Results')
+    # postprocess(maindir + 'model2tracks*',maindir,numinits,'model2Results')    
+    # postprocess(maindir + 'model3tracks*',maindir,numinits,'model3Results')    
+    # postprocess(maindir + 'model4tracks*',maindir,numinits,'model4Results')
+    # print('#########################################################')
+    # print('Model 1')
+    # printme(fname=maindir + 'model1Results.pickle')
+    # print('#########################################################')
+    # print('Model 2')
+    # printme(fname=maindir + 'model2Results.pickle')
+    # print('#########################################################')
+    # print('Model 3')
+    # printme(fname=maindir + 'model3Results.pickle')
+    print('#########################################################')
+    print('Model 4')
+    printme(fname=maindir + 'model4Results.pickle')
+    # print('#########################################################')
+    # print('Model 1')
+    # combineParamsWithinModel(fname=maindir + 'model1Results.pickle')
+    # print('#########################################################')
+    # print('Model 2')
+    # combineParamsWithinModel(fname=maindir + 'model2Results.pickle')
+    # print('#########################################################')
+    # print('Model 3')
+    # combineParamsWithinModel(fname=maindir + 'model3Results.pickle')
+    # print('#########################################################')
+    # print('Model 4')
+    # combineParamsWithinModel(fname=maindir + 'model4Results.pickle')
+    
