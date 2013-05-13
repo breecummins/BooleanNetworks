@@ -192,7 +192,7 @@ if __name__ == "__main__":
     # maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_randinits/')
     # idict=cPickle.load(open(os.path.join(maindir,'inits.pickle'),'r'))
     # numinits = idict['inits'].shape[0]
-    maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_perdt/')
+    maindir = os.path.expanduser('~/temp/dataset_perdt/')
     numinits = 14641
     postprocess(maindir + 'model1tracks*',maindir,numinits,'model1Results')
     postprocess(maindir + 'model2tracks*',maindir,numinits,'model2Results')    
