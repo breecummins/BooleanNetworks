@@ -46,10 +46,10 @@ def partitionOrthantRandInits(xinit,inits,model=mN.model1,fname=os.path.expandus
     fname += '.pickle'
     cPickle.dump(tracks,open(fname,'w'))
 
-def randInits(maindir,Alist=[0.5,1.0,1.5,2.0],Blist=[-0.5,-1.0,-2.0],dt=0.01,xinit=1.0):
+def randInits(maindir,Alist=[0.5,1.0,1.5,2.0],Blist=[-0.5,-1.0,-2.0],dt=0.01,xinit=1.0,numinits=2000):
     if 'inits.pickle' not in os.listdir(maindir):
         print('Generating new initial conditions...')
-        inits = -2.1 + 2*np.random.random((2000,4))
+        inits = -2.1 + 2*np.random.random((numinits,4))
         cPickle.dump({'inits':inits},open(os.path.join(maindir,'inits.pickle'),'w'))
     else:
         print('Using existing initial conditions file...')
