@@ -3,4 +3,4 @@
 import networkScripts as nS
 import os
 
-nS.randInits(os.path.expanduser('~/temp/dataset_randinits_biggerx/'),dt=0.001,xinit=3.0)
+nS.randInits(os.path.expanduser('~/temp/dataset_randinits_biggerx5/'),dt=0.001,xinit=5.0)

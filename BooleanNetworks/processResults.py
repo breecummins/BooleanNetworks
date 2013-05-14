@@ -190,15 +190,15 @@ def loadNSort(myfiles,numinits):
     return results
 
 if __name__ == "__main__":
-    # maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_randinits/')
-    # idict=cPickle.load(open(os.path.join(maindir,'inits.pickle'),'r'))
-    # numinits = idict['inits'].shape[0]
-    maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_perdt/')
-    numinits = 14641
-    # postprocess(maindir + 'model1tracks*',maindir,numinits,'model1Results')
-    # postprocess(maindir + 'model2tracks*',maindir,numinits,'model2Results')    
-    # postprocess(maindir + 'model3tracks*',maindir,numinits,'model3Results')    
-    # postprocess(maindir + 'model4tracks*',maindir,numinits,'model4Results')
+    maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_randinits_biggerx/')
+    idict=cPickle.load(open(os.path.join(maindir,'inits.pickle'),'r'))
+    numinits = idict['inits'].shape[0]
+    # maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_perdt/')
+    # numinits = 14641
+    postprocess(maindir + 'model1tracks*',maindir,numinits,'model1Results')
+    postprocess(maindir + 'model2tracks*',maindir,numinits,'model2Results')    
+    postprocess(maindir + 'model3tracks*',maindir,numinits,'model3Results')    
+    postprocess(maindir + 'model4tracks*',maindir,numinits,'model4Results')
     # print('#########################################################')
     # print('Model 1')
     # printme(fname=maindir + 'model1Results.pickle')
@@ -206,9 +206,9 @@ if __name__ == "__main__":
     # print('Model 2')
     # printme(fname=maindir + 'model2Results.pickle')
     # print('#########################################################')
-    print('Model 3')
-    printme(fname=maindir + 'model3Results.pickle')
-    print('#########################################################')
+    # print('Model 3')
+    # printme(fname=maindir + 'model3Results.pickle')
+    # print('#########################################################')
     # print('Model 4')
     # printme(fname=maindir + 'model4Results.pickle')
     # print('#########################################################')
