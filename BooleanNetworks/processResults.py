@@ -1,5 +1,5 @@
 import numpy as np
-import cPickle,glob, os
+import cPickle,glob, os, itertools
 
 def postprocess(myfiles,maindir,numinits,fname=None):
     results = loadNSort(myfiles,numinits)
@@ -55,8 +55,111 @@ def combineParamsWithinModel(results=None,fname=None):
     print("%0.2f %%" % percentnoloops)
     print('Percentage of periodic loops')
     print("%0.2f %%" % percentperiodic)
-    print('Percentage of crashes')
+    print('Percentage of crashes')  
     print("%0.2f %%" % percentcrash)
+
+def broadWaves(results=None,fname=None):
+    if fname:
+        results = cPickle.load(open(fname,'r'))
+    broadwave = np.ones(5)
+    uniqoneloopbroadwaves = []
+    totaloneloopbroadwaves = 0
+    for j,lol in enumerate(results['oneloops']):
+        for k,ol in enumerate(lol):
+            if np.any([np.all(step == broadwave) for step in ol]):
+                totaloneloopbroadwaves += results['oneloopnums'][j][k]
+                if np.all([np.any(ol!=u) for u in uniqoneloopbroadwaves]):
+                    uniqoneloopbroadwaves.append(ol)
+    uniqperiodicbroadwaves = []
+    totalperiodicbroadwaves = 0
+    for j,lol in enumerate(results['periodic']):
+        for k,ol in enumerate(lol):
+            if np.any([np.all(step == broadwave) for step in ol]):
+                totalperiodicbroadwaves += results['periodicnums'][j][k]
+                if np.all([np.any(ol!=u) for u in uniqperiodicbroadwaves]):
+                    uniqperiodicbroadwaves.append(ol)
+    for j,lol in enumerate(results['broadperiodic']):
+        for k,ol in enumerate(lol):
+            if np.any([np.all(step == broadwave) for step in ol]):
+                totalperiodicbroadwaves += results['broadperiodicnums'][j][k]
+                if np.all([np.any(ol!=u) for u in uniqperiodicbroadwaves]):
+                    uniqperiodicbroadwaves.append(ol)
+    numparams = len(results['onelooptotal'])
+    N = float(results['numtracks']*numparams)
+    print('Number of unique one loop broad waves')
+    print(len(uniqoneloopbroadwaves))
+    print('Total number of one loop broad waves in the (good) population')
+    print(totaloneloopbroadwaves)
+    print('Proportion of one loop broad waves in the (good) population')
+    print(totaloneloopbroadwaves/N)
+    numoneloop = float(sum([sum(results['oneloopnums'][j]) for j in range(numparams)]))
+    if numoneloop > 0:
+        print('Proportion of one loop broad waves in the (good) one loop population')
+        print(totaloneloopbroadwaves/numoneloop)
+    print('Number of unique periodic broad waves')
+    print(len(uniqperiodicbroadwaves))
+    print('Total number of periodic broad waves in the (good) population')
+    print(totalperiodicbroadwaves)
+    print('Proportion of periodic broad waves in the (good) population')
+    print(totalperiodicbroadwaves/N)
+    numperiodic = float(sum([sum(results['periodicnums'][j]) for j in range(numparams)])+sum([sum(results['broadperiodicnums'][j]) for j in range(numparams)]))
+    if numperiodic >0:
+        print('Proportion of periodic broad waves in the (good) periodic population')
+        print(totalperiodicbroadwaves/numperiodic)
+ 
+def eqClasses(results=None,fname=None):
+    if fname:
+        results = cPickle.load(open(fname,'r'))
+    equivcls = []
+    for b in results['badtracks']:
+        inds = []
+        steps = []
+        # find where b is bad and calculate intermediate steps
+        for k in range(1,b.shape[0]):
+            diff = b[k,:]-b[k-1,:]
+            localinds = np.nonzero(diff)[0]
+            N = len(localinds)
+            if N > 1:
+                inds.append(k)
+                perms = itertools.permutations(localinds)
+                templist = []
+                for p in perms:
+                    temp = np.zeros((N-1,b.shape[1]))
+                    temp += b[k-1,:] 
+                    for i,j in enumerate(p[:-1]):
+                        temp[i:,j] += diff[j]
+                    templist.append(temp)
+                steps.append(templist)
+        # make a template for the equivalence classes of b
+        newpts = [s[0].shape[0] for s in steps]
+        template = np.zeros((b.shape[0]+sum(newpts),b.shape[1]))
+        replinds = []
+        for k in range(len(inds)):
+            replinds.append((inds[k]+sum(newpts[:k]),inds[k]+sum(newpts[:k+1]))) 
+        myinds = [0]+inds+[b.shape[0]]
+        for k,i in enumerate(myinds[1:]):
+            template[myinds[k]+sum(newpts[:k]):i+sum(newpts[:k]),:] = b[myinds[k]:i,:]
+        # construct the equivalence classes for b
+        blist = []
+        stepinds = [range(len(s)) for s in steps]
+        combos=itertools.product(*stepinds)
+        for c in combos:
+            tp = template.copy()
+            for k in range(len(replinds)):
+                r = replinds[k]
+                step = steps[k]
+                tp[r[0]:r[1],:] = step[c[k]]
+            blist.append(tp)
+        if len(inds) > 1:
+            print('More than one bad step')
+            print(b)
+            print(blist)
+        if any([len(s) > 2 for s in steps]):
+            print('More than two bit flips')
+            print(b)  
+            print(blist)          
+        equivcls.append(blist)
+    return equivcls
 
 def oneBitFlip(ol):
     for k in range(1,ol.shape[0]):
@@ -190,15 +293,15 @@ def loadNSort(myfiles,numinits):
     return results
 
 if __name__ == "__main__":
-    maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_randinits_biggerx/')
-    idict=cPickle.load(open(os.path.join(maindir,'inits.pickle'),'r'))
-    numinits = idict['inits'].shape[0]
+    maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_randinits/')
+    # idict=cPickle.load(open(os.path.join(maindir,'inits.pickle'),'r'))
+    # numinits = idict['inits'].shape[0]
     # maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_perdt/')
     # numinits = 14641
-    postprocess(maindir + 'model1tracks*',maindir,numinits,'model1Results')
-    postprocess(maindir + 'model2tracks*',maindir,numinits,'model2Results')    
-    postprocess(maindir + 'model3tracks*',maindir,numinits,'model3Results')    
-    postprocess(maindir + 'model4tracks*',maindir,numinits,'model4Results')
+    # postprocess(maindir + 'model1tracks*',maindir,numinits,'model1Results')
+    # postprocess(maindir + 'model2tracks*',maindir,numinits,'model2Results')    
+    # postprocess(maindir + 'model3tracks*',maindir,numinits,'model3Results')    
+    # postprocess(maindir + 'model4tracks*',maindir,numinits,'model4Results')
     # print('#########################################################')
     # print('Model 1')
     # printme(fname=maindir + 'model1Results.pickle')
@@ -223,4 +326,44 @@ if __name__ == "__main__":
     # print('#########################################################')
     # print('Model 4')
     # combineParamsWithinModel(fname=maindir + 'model4Results.pickle')
-    
+    # print('#########################################################')
+    # print('Model 1')
+    # broadWaves(fname=maindir + 'model1Results.pickle')
+    # print('#########################################################')
+    # print('Model 2')
+    # broadWaves(fname=maindir + 'model2Results.pickle')
+    # print('#########################################################')
+    # print('Model 3')
+    # broadWaves(fname=maindir + 'model3Results.pickle')
+    # print('#########################################################')
+    # print('Model 4')
+    # broadWaves(fname=maindir + 'model4Results.pickle')
+    # print('#########################################################')
+    # print('Model 1')
+    # results = cPickle.load(open(maindir + 'model1Results.pickle','r'))
+    # eqc = eqClasses(results)
+    # for k in range(len(eqc)):
+    #     print(results['badtracks'][k])
+    #     print(eqc[k])
+    # print('#########################################################')
+    # print('Model 2')
+    # results = cPickle.load(open(maindir + 'model2Results.pickle','r'))
+    # eqc = eqClasses(results)
+    # for k in range(len(eqc)):
+    #     print(results['badtracks'][k])
+    #     print(eqc[k])
+    print('#########################################################')
+    print('Model 3')
+    results = cPickle.load(open(maindir + 'model3Results.pickle','r'))
+    eqc = eqClasses(results)
+    # for k in range(len(eqc)):
+    #     print(results['badtracks'][k])
+    #     print(eqc[k])
+    # print('#########################################################')
+    # print('Model 4')
+    # results = cPickle.load(open(maindir + 'model4Results.pickle','r'))
+    # eqc = eqClasses(results)
+    # for k in range(len(eqc)):
+    #     print(results['badtracks'][k])
+    #     print(eqc[k])
+    # 
