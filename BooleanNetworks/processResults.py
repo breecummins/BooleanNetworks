@@ -61,12 +61,12 @@ def combineParamsWithinModel(results=None,fname=None):
 def broadWaves(results=None,fname=None):
     if fname:
         results = cPickle.load(open(fname,'r'))
-    broadwave = np.ones(5)
+    broadwave = np.ones(4)
     uniqoneloopbroadwaves = []
     totaloneloopbroadwaves = 0
     for j,lol in enumerate(results['oneloops']):
         for k,ol in enumerate(lol):
-            if np.any([np.all(step == broadwave) for step in ol]):
+            if np.any([np.all(step[:-1] == broadwave) for step in ol]):
                 totaloneloopbroadwaves += results['oneloopnums'][j][k]
                 if np.all([np.any(ol!=u) for u in uniqoneloopbroadwaves]):
                     uniqoneloopbroadwaves.append(ol)
@@ -74,13 +74,13 @@ def broadWaves(results=None,fname=None):
     totalperiodicbroadwaves = 0
     for j,lol in enumerate(results['periodic']):
         for k,ol in enumerate(lol):
-            if np.any([np.all(step == broadwave) for step in ol]):
+            if np.any([np.all(step[:-1] == broadwave) for step in ol]):
                 totalperiodicbroadwaves += results['periodicnums'][j][k]
                 if np.all([np.any(ol!=u) for u in uniqperiodicbroadwaves]):
                     uniqperiodicbroadwaves.append(ol)
     for j,lol in enumerate(results['broadperiodic']):
         for k,ol in enumerate(lol):
-            if np.any([np.all(step == broadwave) for step in ol]):
+            if np.any([np.all(step[:-1] == broadwave) for step in ol]):
                 totalperiodicbroadwaves += results['broadperiodicnums'][j][k]
                 if np.all([np.any(ol!=u) for u in uniqperiodicbroadwaves]):
                     uniqperiodicbroadwaves.append(ol)
@@ -88,21 +88,25 @@ def broadWaves(results=None,fname=None):
     N = float(results['numtracks']*numparams)
     print('Number of unique one loop broad waves')
     print(len(uniqoneloopbroadwaves))
-    print('Total number of one loop broad waves in the (good) population')
+    print('Total number of one loop broad waves in the population of ' + str(int(N)) + ' good tracks')
     print(totaloneloopbroadwaves)
-    print('Proportion of one loop broad waves in the (good) population')
-    print(totaloneloopbroadwaves/N)
+    print('Total number of one loops  in the population of ' + str(int(N)) + ' good tracks')
     numoneloop = float(sum([sum(results['oneloopnums'][j]) for j in range(numparams)]))
+    print(int(numoneloop))
+    print('Proportion of one loop broad waves in the population of ' + str(int(N)) + ' good tracks')
+    print(totaloneloopbroadwaves/N)
     if numoneloop > 0:
         print('Proportion of one loop broad waves in the (good) one loop population')
         print(totaloneloopbroadwaves/numoneloop)
     print('Number of unique periodic broad waves')
     print(len(uniqperiodicbroadwaves))
-    print('Total number of periodic broad waves in the (good) population')
+    print('Total number of periodic broad waves in the population of ' + str(int(N)) + ' good tracks')
     print(totalperiodicbroadwaves)
-    print('Proportion of periodic broad waves in the (good) population')
-    print(totalperiodicbroadwaves/N)
+    print('Total number of periodic waves  in the population of ' + str(int(N)) + ' good tracks')
     numperiodic = float(sum([sum(results['periodicnums'][j]) for j in range(numparams)])+sum([sum(results['broadperiodicnums'][j]) for j in range(numparams)]))
+    print(int(numperiodic))
+    print('Proportion of periodic broad waves in the population of ' + str(int(N)) + ' good tracks')
+    print(totalperiodicbroadwaves/N)
     if numperiodic >0:
         print('Proportion of periodic broad waves in the (good) periodic population')
         print(totalperiodicbroadwaves/numperiodic)
@@ -121,6 +125,7 @@ def eqClasses(results=None,fname=None):
             N = len(localinds)
             if N > 1:
                 inds.append(k)
+                # FIXME: add swap check
                 perms = itertools.permutations(localinds)
                 templist = []
                 for p in perms:
@@ -153,11 +158,11 @@ def eqClasses(results=None,fname=None):
         if len(inds) > 1:
             print('More than one bad step')
             print(b)
-            print(blist)
+            # print(blist)
         if any([len(s) > 2 for s in steps]):
             print('More than two bit flips')
             print(b)  
-            print(blist)          
+            # print(blist)          
         equivcls.append(blist)
     return equivcls
 
@@ -293,7 +298,7 @@ def loadNSort(myfiles,numinits):
     return results
 
 if __name__ == "__main__":
-    maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_randinits/')
+    maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_randinits_biggerx/')
     # idict=cPickle.load(open(os.path.join(maindir,'inits.pickle'),'r'))
     # numinits = idict['inits'].shape[0]
     # maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_perdt/')
@@ -326,18 +331,18 @@ if __name__ == "__main__":
     # print('#########################################################')
     # print('Model 4')
     # combineParamsWithinModel(fname=maindir + 'model4Results.pickle')
-    # print('#########################################################')
-    # print('Model 1')
-    # broadWaves(fname=maindir + 'model1Results.pickle')
-    # print('#########################################################')
-    # print('Model 2')
-    # broadWaves(fname=maindir + 'model2Results.pickle')
-    # print('#########################################################')
-    # print('Model 3')
-    # broadWaves(fname=maindir + 'model3Results.pickle')
-    # print('#########################################################')
-    # print('Model 4')
-    # broadWaves(fname=maindir + 'model4Results.pickle')
+    print('#########################################################')
+    print('Model 1')
+    broadWaves(fname=maindir + 'model1Results.pickle')
+    print('#########################################################')
+    print('Model 2')
+    broadWaves(fname=maindir + 'model2Results.pickle')
+    print('#########################################################')
+    print('Model 3')
+    broadWaves(fname=maindir + 'model3Results.pickle')
+    print('#########################################################')
+    print('Model 4')
+    broadWaves(fname=maindir + 'model4Results.pickle')
     # print('#########################################################')
     # print('Model 1')
     # results = cPickle.load(open(maindir + 'model1Results.pickle','r'))
@@ -352,10 +357,10 @@ if __name__ == "__main__":
     # for k in range(len(eqc)):
     #     print(results['badtracks'][k])
     #     print(eqc[k])
-    print('#########################################################')
-    print('Model 3')
-    results = cPickle.load(open(maindir + 'model3Results.pickle','r'))
-    eqc = eqClasses(results)
+    # print('#########################################################')
+    # print('Model 3')
+    # results = cPickle.load(open(maindir + 'model3Results.pickle','r'))
+    # eqc = eqClasses(results)
     # for k in range(len(eqc)):
     #     print(results['badtracks'][k])
     #     print(eqc[k])
