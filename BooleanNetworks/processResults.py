@@ -114,6 +114,10 @@ def broadWaves(results=None,fname=None):
 def eqClasses(results=None,fname=None):
     if fname:
         results = cPickle.load(open(fname,'r'))
+    # pre-sort good tracks for comparison
+    # gtracks = sorted(results['goodtracks'],key=len)
+    glens = np.array(sorted(list(set([len(g) for g in results['goodtracks']]))))
+    gtracks = [[g for g in results['goodtracks'] if len(g)==k] for k in glens]
     equivcls = []
     for b in results['badtracks']:
         inds = []
@@ -125,7 +129,6 @@ def eqClasses(results=None,fname=None):
             N = len(localinds)
             if N > 1:
                 inds.append(k)
-                # FIXME: add swap check
                 perms = itertools.permutations(localinds)
                 templist = []
                 for p in perms:
@@ -133,6 +136,12 @@ def eqClasses(results=None,fname=None):
                     temp += b[k-1,:] 
                     for i,j in enumerate(p[:-1]):
                         temp[i:,j] += diff[j]
+                    # # remove disallowed tracks - can't go through equilibrium and can't go immediately back through the prior step
+                    # # Now doing this by comparing to good tracks, which I have to do anyway 
+                    # if np.all([np.any(temp[j,:] != 0) for j in range(temp.shape[0])]):
+                    #     if k == 1 or np.any(temp[0,:] != b[k-2,:]):
+                    #         if k == b.shape[0]-1 or np.any(temp[-1,:] != b[k+1,:]):
+                    #             templist.append(temp)
                     templist.append(temp)
                 steps.append(templist)
         # make a template for the equivalence classes of b
@@ -144,7 +153,8 @@ def eqClasses(results=None,fname=None):
         myinds = [0]+inds+[b.shape[0]]
         for k,i in enumerate(myinds[1:]):
             template[myinds[k]+sum(newpts[:k]):i+sum(newpts[:k]),:] = b[myinds[k]:i,:]
-        # construct the equivalence classes for b
+        # construct the equivalence classes for b and remove ones not in goodtracks
+        gind = np.nonzero(glens == template.shape[0])[0]
         blist = []
         stepinds = [range(len(s)) for s in steps]
         combos=itertools.product(*stepinds)
@@ -154,7 +164,8 @@ def eqClasses(results=None,fname=None):
                 r = replinds[k]
                 step = steps[k]
                 tp[r[0]:r[1],:] = step[c[k]]
-            blist.append(tp)
+            if np.any([np.all(tp==g) for g in gtracks[gind]]):
+                blist.append(tp)
         if len(inds) > 1:
             print('More than one bad step')
             print(b)
@@ -331,22 +342,23 @@ if __name__ == "__main__":
     # print('#########################################################')
     # print('Model 4')
     # combineParamsWithinModel(fname=maindir + 'model4Results.pickle')
-    print('#########################################################')
-    print('Model 1')
-    broadWaves(fname=maindir + 'model1Results.pickle')
-    print('#########################################################')
-    print('Model 2')
-    broadWaves(fname=maindir + 'model2Results.pickle')
-    print('#########################################################')
-    print('Model 3')
-    broadWaves(fname=maindir + 'model3Results.pickle')
-    print('#########################################################')
-    print('Model 4')
-    broadWaves(fname=maindir + 'model4Results.pickle')
+    # print('#########################################################')
+    # print('Model 1')
+    # broadWaves(fname=maindir + 'model1Results.pickle')
+    # print('#########################################################')
+    # print('Model 2')
+    # broadWaves(fname=maindir + 'model2Results.pickle')
+    # print('#########################################################')
+    # print('Model 3')
+    # broadWaves(fname=maindir + 'model3Results.pickle')
+    # print('#########################################################')
+    # print('Model 4')
+    # broadWaves(fname=maindir + 'model4Results.pickle')
     # print('#########################################################')
     # print('Model 1')
     # results = cPickle.load(open(maindir + 'model1Results.pickle','r'))
     # eqc = eqClasses(results)
+    # print('All corrected tracks')
     # for k in range(len(eqc)):
     #     print(results['badtracks'][k])
     #     print(eqc[k])
@@ -354,20 +366,28 @@ if __name__ == "__main__":
     # print('Model 2')
     # results = cPickle.load(open(maindir + 'model2Results.pickle','r'))
     # eqc = eqClasses(results)
+    # print('All corrected tracks')
     # for k in range(len(eqc)):
     #     print(results['badtracks'][k])
     #     print(eqc[k])
-    # print('#########################################################')
-    # print('Model 3')
-    # results = cPickle.load(open(maindir + 'model3Results.pickle','r'))
-    # eqc = eqClasses(results)
-    # for k in range(len(eqc)):
-    #     print(results['badtracks'][k])
-    #     print(eqc[k])
+    print('#########################################################')
+    print('Model 3')
+    results = cPickle.load(open(maindir + 'model3Results.pickle','r'))
+    eqc = eqClasses(results)
+    print('All corrected tracks')
+    ingoodtracks = [np.zeros(len(eqc[k])) for k in range(len(eqc))]
+    for k in range(len(eqc)):
+        print(results['badtracks'][k])
+        print(eqc[k])
+    #     for j,e in enumerate(eqc[k]):
+    #         if np.any([np.all(e == g) for g in results['goodtracks']]):
+    #             ingoodtracks[k][j] += 1
+    # print(ingoodtracks)
     # print('#########################################################')
     # print('Model 4')
     # results = cPickle.load(open(maindir + 'model4Results.pickle','r'))
     # eqc = eqClasses(results)
+    # print('All corrected tracks')
     # for k in range(len(eqc)):
     #     print(results['badtracks'][k])
     #     print(eqc[k])
