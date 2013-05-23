@@ -37,50 +37,19 @@ def printme(results=None,fname=None):
     print('Total number of untranslated bad tracks')
     print(emptycount)
 
-    print('Number of unique sharp one loops')
-    print(len(results['sharponeloop']))
-    # print(results['sharponeloop'])
-    print('Number of unique broad one-loops')
-    print(len(results['oneloop']))
-    print('Number of unique sharp periodic loops')
-    print(len(results['sharpperiodic']))
-    # print(results['sharpperiodic'])
-    print('Number of unique broad periodic loops')
-    print(len(results['periodic']))
-    # print(results['periodic'])
-    print('Number of unique no loops')
-    print(len(results['noloop']))
-    print('Number of unique overlapped loops')
-    print(len(results['overlapped']))
-    print('Number of unique tracks in a different equilibrium (stuck in a subloop or nonzero fixed point')
-    print(len(results['diffequilib']))
-    print('Number of unique unclassified loops')
-    print(len(results['unclassified']))
+    Keys = ['sharponeloop','oneloop','sharpperiodictwowaves','sharpperiodic','periodictwowaves','periodic','overlappedtwowaves','overlapped','diffequilibwithwave','diffequilib','noloop','unclassified']
 
-    if len(results['sharponeloop']) > 0:
-        print('Sharp one loops: # good tracks; prop in good tracks; # good + translated; prop in total')
-        print((results['sharponeloopcount'],results['sharponeloopcount']/Ng,results['sharponeloopcountmodified'],results['sharponeloopcountmodified']/N))
-    if len(results['oneloop']) > 0:
-        print('Broad one loops: # good tracks; prop in good tracks; # good + translated; prop in total')
-        print((results['oneloopcount'],results['oneloopcount']/Ng,results['oneloopcountmodified'],results['oneloopcountmodified']/N))
-    if len(results['sharpperiodic']) > 0:
-        print('Sharp periodic loops: # good tracks; prop in good tracks; # good + translated; prop in total')
-        print((results['sharpperiodiccount'],results['sharpperiodiccount']/Ng,results['sharpperiodiccountmodified'],results['sharpperiodiccountmodified']/N))
-    if len(results['periodic']) > 0:
-        print('Broad periodic: : # good tracks; prop in good tracks; # good + translated; prop in total')
-        print((results['periodiccount'],results['periodiccount']/Ng,results['periodiccountmodified'],results['periodiccountmodified']/N))
-    if len(results['overlapped']) > 0:
-        print('Overlapped waves: # good tracks; prop in good tracks; # good + translated; prop in total')
-        print((results['overlappedcount'],results['overlappedcount']/Ng,results['overlappedcountmodified'],results['overlappedcountmodified']/N))
-    if len(results['diffequilib']) > 0:
-        print('Different equilibria (other fixed point or stuck in a subloop): # good tracks; prop in good tracks; # good + translated; prop in total')
-        print((results['diffequilibcount'],results['diffequilibcount']/Ng,results['diffequilibcountmodified'],results['diffequilibcountmodified']/N))
-    if len(results['noloop']) > 0:
-        print('Incomplete loops: # good tracks; prop in good tracks; # good + translated; prop in total')
-        print((results['noloopcount'],results['noloopcount']/Ng,results['noloopcountmodified'],results['noloopcountmodified']/N))
-    if len(results['unclassified']) > 0:
-        print('Unclassified loops: : # good tracks; prop in good tracks; # good + translated; prop in total')
-        print((results['unclassifiedcount'],results['unclassifiedcount']/Ng,results['unclassifiedcountmodified'],results['unclassifiedcountmodified']/N))
+    for k in Keys:
+        if 'count' not in k and 'note' not in k:
+            print('Number of unique ' + results['classes'][k + 'note'])
+            print(len(results['classes'][k]))
+            # if k == 'diffequilibwithwave':
+            #     print(results['classes'][k])
+
+    for k in Keys:
+        if 'count' not in k and 'note' not in k and len(results['classes'][k]) > 0:
+            print(results['classes'][k + 'note'] + ': # good tracks; prop in good tracks; # good + translated; prop in total')
+            print((results['classes'][k+'count'],results['classes'][k+'count']/Ng,results['classes'][k + 'countmodified'],results['classes'][k + 'countmodified']/(N-emptycount)))
 
 def eqClasses(badtrack):
     '''
@@ -141,38 +110,80 @@ def eqClasses(badtrack):
     #     print(b)  
     return equivcls
 
+def classifyTrack(track):
+    # find index of x's first zero (if there are no zeros, firstzero = 0) and first reinitialization of x (if it doesn't occur, nextone = firstzero)
+    firstzero = track[:,0].argmin()
+    nextone = firstzero + track[firstzero:,0].argmax()
+    # define a function that can identify a completed wave
+    def completedwave(track=track, firstzero=firstzero, nextone=nextone):
+        # x has to turn off
+        if firstzero == 0:
+            return False
+        # y1, y2, and y3 have to turn on
+        if np.any(track[firstzero:nextone,1] == 1) and np.any(track[firstzero:nextone,2] == 1) and np.any(track[firstzero:nextone,3] == 1):
+            return True
+        else:
+            return False
+    # function to identify sharp waves (no more than two of x,y1,y2,y3 are activated at a time)
+    def issharp(track):
+        if np.all(np.sum(track[:,:-1],1) < 3):
+            return True
+        else:
+            return False
+    ###### Now classify the track ######
+    # if not a single loop is completed, count as no loops 
+    if not completedwave(nextone=track.shape[0]):
+        return 'noloop'
+    # if the last time step is not at [0,0,0,0,0], then the track is either stuck in a subloop (unstable limit cycle) or is at a different fixed pt (I assume sufficient simulation time)
+    elif np.any(track[-1,:] != 0):
+        # if there is a completed wave at the beginning, record it
+        if completedwave():
+            return 'diffequilibwithwave'
+        else:
+            return 'diffequilib'
+    # if x does not reinitiate, count the track as one loop
+    elif nextone == firstzero:
+        # if the wave is sharp, record it
+        if issharp(track):
+            return 'sharponeloop'
+        else:    
+            return 'oneloop'
+    # if the initial condition is reached after first wave, count as periodic
+    elif np.all(track[nextone+1,:] == np.array([1,0,0,0,0])):
+        # if there are at least two completed loops, record it
+        subtrack = track[nextone+1:,:]
+        stfz = subtrack.argmin()
+        stno = stfz + subtrack[stfz:,0].argmax()
+        if completedwave(subtrack,stfz,stno):
+            # if the wave is sharp, record it
+            if issharp(track):
+                return 'sharpperiodictwowaves'
+            else:    
+                return 'periodictwowaves'
+        else:
+            # if the wave is sharp, record it
+            if issharp(track):
+                return 'sharpperiodic'
+            else:    
+                return 'periodic'
+    # if x is reinitialized but initial condition does not recur immediately after the first wave, count as overlapping wave (last wave didn't finish before new one began)
+    elif np.any(track[firstzero:,0]) == 1:
+        # if there are at least two completed loops, record it
+        subtrack = track[nextone+1:,:]
+        stfz = subtrack.argmin()
+        stno = stfz + subtrack[stfz:,0].argmax()
+        if completedwave(subtrack,stfz,stno):
+            return 'overlappedtwowaves'
+        else:
+            return 'overlapped'
+    else:
+        return 'unclassified'
+
 def oneBitFlip(ol):
     for k in range(1,ol.shape[0]):
         if (np.abs(ol[k,:]-ol[k-1,:])).sum() > 1:
             return False
     return True
-
-def classifyTrack(track):
-    # if the last point in the track is equilibrium, if each of y1,y2,y3 were touched, and if x does not reinitiate, count the track as one loop
-    if np.all(track[-1,:]==0) and np.any(track[:,1] ==1) and np.any(track[:,2] ==1) and np.any(track[:,3] ==1) and np.all(track[track[:,0].argmin():,0]==0):
-        # if the wave is sharp, record it
-        if np.all(np.sum(track[:,:-1],1) < 3):
-            return 'sharponeloop'
-        else:    
-            return 'oneloop'
-    # if not a single loop is completed, count as no loops
-    elif np.all(track[track[:,0].argmin():,0]==0) and (np.all(track[:,1] ==0) or np.all(track[:,2] ==0) or np.all(track[:,3] ==0)):
-        return 'noloop'
-    # if the initial condition is reached again and if each of y1,y2,y3 were touched, count as periodic
-    elif np.any(track[:,1] ==1) and np.any(track[:,2] ==1) and np.any(track[:,3] ==1) and np.any([np.all(t == np.array([1,0,0,0,0])) for t in track[track[:,0].argmin():,:]]):
-        # if the wave is sharp, record it
-        if np.all(np.sum(track[:,:-1],1) < 3):
-            return 'sharpperiodic'
-        else:    
-            return 'periodic'
-    # if x is reinitialized and if each of y1,y2,y3 were touched and the last point is at equilibrium, count as overlapping wave (last wave didn't finish before new one began)
-    elif np.any(track[:,1] ==1) and np.any(track[:,2] ==1) and np.any(track[:,3] ==1) and np.any(track[track[:,0].argmin():,0] == 1) and np.all(track[-1,:]==0):
-        return 'overlapped'
-    # if the last time step is not at [0,0,0,0,0] and the track is not periodic, then the track is either stuck in a subloop (unstable limit cycle) or is at a different fixed pt
-    elif np.any(track[-1,:] != 0):
-        return 'diffequilib'
-    else:
-        return 'unclassified'
 
 def separateBadTracks(myfiles):
     '''
@@ -221,12 +232,21 @@ def loadNSort(myfiles):
     print('Analyzing...')
     uniqgoodtracks,goodcounted = countClass(allgoodtracks)
     uniqbadtracks,badcounted = countClass(allbadtracks)
+    import modelNetworks as mN
+    ugt = [mN.encodeInts(g) for g in uniqgoodtracks]
+    ubt = [mN.encodeInts(b) for b in uniqbadtracks]
+    print(ugt)
+    print(goodcounted)
+    print(ubt)
+    print(badcounted)
+    return ugt, goodcounted, ubt, badcounted
     # separate unique bad tracks into equivalence classes, weed out ones not in uniqgoodtracks, and add fractional numbers to good counted
     translatedbadtracks = []
     modifiedgoodcounted = list(goodcounted)
     longestgoodtrack = max([len(g) for g in uniqgoodtracks])
     for k,b in enumerate(uniqbadtracks):
-        if b.shape[0] >= min(longestgoodtrack,400):
+        if b.shape[0] >= longestgoodtrack:
+            print('Bad track of length ' + str(b.shape[0]) + ' is too long. Skipping track ' + str(k) + '.')
             translatedbadtracks.append([])
             continue
         eqtracks = eqClasses(b)
@@ -239,6 +259,10 @@ def loadNSort(myfiles):
                     neweq.append(t)
                     ginds.append(i)
                     break
+        if neweq ==[]:
+            print('No good tracks found for bad track ' + str(k) + '.')
+            if b.shape[0] < 30:
+                print(b)
         # save the acceptable tracks
         translatedbadtracks.append(neweq)
         # equally distribute count across allowable tracks
@@ -247,20 +271,20 @@ def loadNSort(myfiles):
             for i in ginds:
                 modifiedgoodcounted[i] += prop*badcounted[k]
     # create dict to store results
-    results = {'allgoodtracks':allgoodtracks,'allbadtracks':allbadtracks,'uniqgoodtracks':uniqgoodtracks,'uniqbadtracks':uniqbadtracks,'translatedbadtracks':translatedbadtracks,'goodcounted':goodcounted,'modifiedgoodcounted':modifiedgoodcounted,'badcounted':badcounted,'oneloop': [],'oneloopcount': 0,'oneloopcountmodified': 0,'sharponeloop': [],'sharponeloopcount': 0,'sharponeloopcountmodified': 0,'noloop': [],'noloopcount': 0,'noloopcountmodified': 0,'periodic': [],'periodiccount': 0,'periodiccountmodified': 0,'sharpperiodic': [],'sharpperiodiccount': 0,'sharpperiodiccountmodified': 0,'overlapped': [],'overlappedcount': 0,'overlappedcountmodified': 0,'diffequilib':[],'diffequilibcount': 0,'diffequilibcountmodified': 0,'unclassified': [],'unclassifiedcount': 0,'unclassifiedcountmodified': 0}
+    results = {'allgoodtracks':allgoodtracks,'allbadtracks':allbadtracks,'uniqgoodtracks':uniqgoodtracks,'uniqbadtracks':uniqbadtracks,'translatedbadtracks':translatedbadtracks,'goodcounted':goodcounted,'modifiedgoodcounted':modifiedgoodcounted,'badcounted':badcounted,'classes':{'oneloop': [],'oneloopcount': 0,'oneloopcountmodified': 0,'oneloopnote':'Broad One Loops', 'sharponeloop': [],'sharponeloopcount': 0,'sharponeloopcountmodified': 0,'sharponeloopnote':'Sharp One Loops','noloop': [],'noloopcount': 0,'noloopcountmodified': 0,'noloopnote':'Incomplete Loops','periodic': [],'periodiccount': 0,'periodiccountmodified': 0,'periodicnote':'Broad Periodic Loops with < 2 waves','sharpperiodic': [],'sharpperiodiccount': 0,'sharpperiodiccountmodified': 0,'sharpperiodicnote':'Sharp Periodic Loops with < 2 waves','periodictwowaves': [],'periodictwowavescount': 0,'periodictwowavescountmodified': 0,'periodictwowavesnote':'Broad Periodic Loops with >= 2 waves','sharpperiodictwowaves': [],'sharpperiodictwowavescount': 0,'sharpperiodictwowavescountmodified': 0,'sharpperiodictwowavesnote':'Sharp Periodic Loops with >= 2 waves','overlapped': [],'overlappedcount': 0,'overlappedcountmodified': 0,'overlappednote':'Periodic Loops that overlap (double bump waves) with < 2 waves','overlappedtwowaves': [],'overlappedtwowavescount': 0,'overlappedtwowavescountmodified': 0,'overlappedtwowavesnote':'Periodic Loops that overlap (double bump waves) with >= 2 waves','diffequilib':[],'diffequilibcount': 0,'diffequilibcountmodified': 0,'diffequilibnote':'Different Equilibria (stuck in a subloop or at a different fixed pt) with < 1 wave','diffequilibwithwave':[],'diffequilibwithwavecount': 0,'diffequilibwithwavecountmodified': 0,'diffequilibwithwavenote':'Different Equilibria (stuck in a subloop or at a different fixed pt) with >= 1 wave','unclassified': [],'unclassifiedcount': 0,'unclassifiedcountmodified': 0,'unclassifiednote':'Unclassified Tracks'}}
     # only classify unique good tracks
     for k,track in enumerate(uniqgoodtracks):
         classstr = classifyTrack(track)
-        results[classstr].append(track)
-        results[classstr+'count'] += goodcounted[k]
-        results[classstr+'countmodified'] += modifiedgoodcounted[k]
+        results['classes'][classstr].append(track)
+        results['classes'][classstr+'count'] += goodcounted[k]
+        results['classes'][classstr+'countmodified'] += modifiedgoodcounted[k]
     return results
 
 if __name__ == "__main__":
     maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_randinits_biggerx/')
     # maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_perdt/')
-    postprocess(maindir+'model1tracks*',maindir+'model1Results')
-    # postprocess(maindir+'model2tracks*',maindir+'model2Results')    
+    # postprocess(maindir+'model1tracks*',maindir+'model1Results')
+    postprocess(maindir+'model2tracks*',maindir+'model2Results')    
     # postprocess(maindir+'model3tracks*',maindir+'model3Results')    
     # postprocess(maindir+'model4tracks*',maindir+'model4Results')
     # print('#########################################################')

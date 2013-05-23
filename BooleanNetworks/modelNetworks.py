@@ -83,12 +83,31 @@ def solveModel(init,finaltime,model=model1,dt=0.01):
     return timeseries
 
 def translateToOrthants(timeseries):
-    trajectory = (timeseries > 0).astype(int)
+    trajectory = np.int8(timeseries > 0)
     short = trajectory[0,:].reshape((1,timeseries.shape[1]))
     for k in range(1,timeseries.shape[0]):
         if np.any(trajectory[k,:] != short[-1,:]):
             short = np.vstack([short,trajectory[k,:]])
     return short
+
+def encodeInts(track):
+    '''
+    Takes an nx5 numpy array of ones and zeros and returns an n-tuple of ints.
+    Each int is between 0 and 31 - the int representation of each row
+    read as a binary number.
+
+    '''
+    binstr = ''.join([str(i) for i in track.flat])
+    return tuple([int(binstr[5*k:5*(k+1)],2) for k in range(track.shape[0])])
+
+def decodeInts(tupints):
+    '''
+    Takes a tuple of integers in the range 0-31 and constructs an nx5 numpy
+    array. Each row is the binary representation of the corresponding int.
+
+    '''
+    los = map(lambda b: bin(b)[2:].zfill(5),tupints)
+    return np.array([[int(i[j]) for j in range(5)] for i in los])
 
 if __name__=='__main__':
     finaltime = 5.0
@@ -132,8 +151,12 @@ if __name__=='__main__':
     init=np.array([1.0,-0.19,-0.2,-0.22,-0.21])
     ts = solveModel(init,finaltime,model1)
     s = translateToOrthants(ts)
+    i = encodeInts(s)
+    si = decodeInts(i)
     # print(ts[60:80,:])
     print(s)
+    print(i)
+    print(si)
 
     # init=np.array([1.0,-0.2,-0.2,-0.1,-0.2])
     # ts = solveModel(init,finaltime,model4)
