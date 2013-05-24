@@ -75,7 +75,7 @@ def eqClasses(badtrack):
             steps.append(templist)
     # make a template for the equivalence classes of badtrack
     newpts = [s[0].shape[0] for s in steps]
-    template = np.zeros((badtrack.shape[0]+sum(newpts),badtrack.shape[1]))
+    template = np.zeros((badtrack.shape[0]+sum(newpts),badtrack.shape[1]),dtype=np.int8)
     myinds = [0]+inds+[badtrack.shape[0]]
     for k,i in enumerate(myinds[1:]):
         template[myinds[k]+sum(newpts[:k]):i+sum(newpts[:k]),:] = badtrack[myinds[k]:i,:]
@@ -187,13 +187,16 @@ def countClass(lot):
 
 def oneBitFlip(track):
     '''
-    Differences between successive integers are powers of 2 if there
-    is only one bit flip.
+    xor between successive steps is 2^n if there
+    is only one bit flip. xor between successive
+    steps is always integer > 0 by translation to 
+    orthants then binary numbers. An integer 
+    x > 0 is a power of 2 iff x & (x-1) == 0. 
 
     '''
     for k in range(1,len(track)):
-        #FIXME: there's an exception for some bit-swaps
-        if not ( np.log(np.abs(track[k]-track[k-1])) / np.log(2) ).is_integer():
+        adjxor = track[k]^track[k-1] 
+        if (adjxor & (adjxor-1))!=0:
             return False
     return True
 
@@ -211,12 +214,11 @@ def separateBadTracks(myfiles):
     allgoodtracks = []
     allbadtracks = []
     for f in glob.glob(myfiles):
-        print(f)
+        # print(f)
         of = open(f,'r')
         tracks = cPickle.load(of)
         of.close()
         for track in tracks:
-            track = mN.encodeInts(track)
             if not oneBitFlip(track):
                 allbadtracks.append(track)
             else:
@@ -230,37 +232,40 @@ def loadNSort(myfiles):
     print('Analyzing...')
     uniqgoodtracks,goodcounted = countClass(allgoodtracks)
     uniqbadtracks,badcounted = countClass(allbadtracks)
-    print(uniqgoodtracks)
-    print(goodcounted)
-    print(uniqbadtracks)
-    print(badcounted)
-    return uniqgoodtracks, goodcounted, uniqbadtracks, badcounted
+    # print(uniqgoodtracks)
+    # print(goodcounted)
+    # print(uniqbadtracks)
+    # print(badcounted)
+    # return uniqgoodtracks, goodcounted, uniqbadtracks, badcounted
     # separate unique bad tracks into equivalence classes, weed out ones not in uniqgoodtracks, and add fractional numbers to good counted
     translatedbadtracks = []
     modifiedgoodcounted = list(goodcounted) #this points to a new list
     longestgoodtrack = max([len(g) for g in uniqgoodtracks])
-    for k,b in enumerate(uniqbadtracks):
-        b = mN.decodeInts(b)
+    uniqgoodtracksdecoded = [mN.decodeInts(g) for g in uniqgoodtracks]
+    uniqbadtracksdecoded = [mN.decodeInts(b) for b in uniqbadtracks]
+    for k,b in enumerate(uniqbadtracksdecoded):
         if b.shape[0] >= longestgoodtrack:
-            print('Bad track of length ' + str(b.shape[0]) + ' is too long. Skipping track ' + str(k) + '.')
+            # print('Bad track of length ' + str(b.shape[0]) + ' is too long. Skipping track ' + str(k) + '.')
             translatedbadtracks.append([])
             continue
         eqtracks = eqClasses(b)
         neweq = []
         ginds = []
         for t in eqtracks:
-            for i,u in enumerate(uniqgoodtracks):
+            for i,u in enumerate(uniqgoodtracksdecoded):
                 # only keep the reconstructed tracks that are good tracks
                 if np.all(t==u):
                     neweq.append(t)
                     ginds.append(i)
                     break
         if neweq ==[]:
-            print('No good tracks found for bad track ' + str(k) + '.')
-            if b.shape[0] < 30:
-                print(b)
-        # save the acceptable tracks
-        translatedbadtracks.append(neweq)
+            # print('No good tracks found for bad track ' + str(k) + '.')
+            # if b.shape[0] < 30:
+            #     print(b)
+            translatedbadtracks.append([])
+        else:
+            # save the acceptable tracks
+            translatedbadtracks.append([mN.encodeInts(nt) for nt in neweq])
         # equally distribute count across allowable tracks
         if len(neweq) > 0:
             prop = 1.0 / len(neweq)
@@ -269,8 +274,7 @@ def loadNSort(myfiles):
     # create dict to store results
     results = {'allgoodtracks':allgoodtracks,'allbadtracks':allbadtracks,'uniqgoodtracks':uniqgoodtracks,'uniqbadtracks':uniqbadtracks,'translatedbadtracks':translatedbadtracks,'goodcounted':goodcounted,'modifiedgoodcounted':modifiedgoodcounted,'badcounted':badcounted,'classes':{'oneloop': [],'oneloopcount': 0,'oneloopcountmodified': 0,'oneloopnote':'Broad One Loops', 'sharponeloop': [],'sharponeloopcount': 0,'sharponeloopcountmodified': 0,'sharponeloopnote':'Sharp One Loops','noloop': [],'noloopcount': 0,'noloopcountmodified': 0,'noloopnote':'Incomplete Loops','periodic': [],'periodiccount': 0,'periodiccountmodified': 0,'periodicnote':'Broad Periodic Loops with < 2 waves','sharpperiodic': [],'sharpperiodiccount': 0,'sharpperiodiccountmodified': 0,'sharpperiodicnote':'Sharp Periodic Loops with < 2 waves','periodictwowaves': [],'periodictwowavescount': 0,'periodictwowavescountmodified': 0,'periodictwowavesnote':'Broad Periodic Loops with >= 2 waves','sharpperiodictwowaves': [],'sharpperiodictwowavescount': 0,'sharpperiodictwowavescountmodified': 0,'sharpperiodictwowavesnote':'Sharp Periodic Loops with >= 2 waves','overlapped': [],'overlappedcount': 0,'overlappedcountmodified': 0,'overlappednote':'Periodic Loops that overlap (double bump waves) with < 2 waves','overlappedtwowaves': [],'overlappedtwowavescount': 0,'overlappedtwowavescountmodified': 0,'overlappedtwowavesnote':'Periodic Loops that overlap (double bump waves) with >= 2 waves','diffequilib':[],'diffequilibcount': 0,'diffequilibcountmodified': 0,'diffequilibnote':'Different Equilibria (stuck in a subloop or at a different fixed pt) with < 1 wave','diffequilibwithwave':[],'diffequilibwithwavecount': 0,'diffequilibwithwavecountmodified': 0,'diffequilibwithwavenote':'Different Equilibria (stuck in a subloop or at a different fixed pt) with >= 1 wave','unclassified': [],'unclassifiedcount': 0,'unclassifiedcountmodified': 0,'unclassifiednote':'Unclassified Tracks'}}
     # only classify unique good tracks
-    for k,track in enumerate(uniqgoodtracks):
-        track = mN.decodeInts(track)
+    for k,track in enumerate(uniqgoodtracksdecoded):
         classstr = classifyTrack(track)
         results['classes'][classstr].append(track)
         results['classes'][classstr+'count'] += goodcounted[k]
@@ -283,13 +287,37 @@ def postprocess(myfiles,fname=None):
         cPickle.dump(results,open(fname+'.pickle','w'))
     printme(results)
 
+def cast2Ints(myfile,fname):
+    print(myfile)
+    of = open(myfile,'r')
+    tracks = cPickle.load(of)
+    of.close()
+    newtracks = []
+    for track in tracks:
+        track = mN.encodeInts(track)
+        newtracks.append(track)
+    nf = open(fname,'w')
+    cPickle.dump(newtracks,nf)
+    nf.close()
+
+def changeFileNames(maindir):
+    for f in glob.glob(maindir+'model*tracks*.pickle'):
+        if 'int' in f or 'array' in f:
+            continue
+        else:
+            os.rename(f,f[:-7]+'_arrays.pickle')
+
+
 if __name__ == "__main__":
     maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_randinits_biggerx/')
+    # for f in glob.glob(maindir+'model*tracks*'):
+    #     cast2Ints(f,f[:-7]+'_ints.pickle')
+    # changeFileNames(maindir)
     # maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_perdt/')
     # postprocess(maindir+'model1tracks*',maindir+'model1Results')
-    postprocess(maindir+'model2tracks*',maindir+'model2Results')    
-    # postprocess(maindir+'model3tracks*',maindir+'model3Results')    
-    # postprocess(maindir+'model4tracks*',maindir+'model4Results')
+    postprocess(maindir+'model2tracks*_ints.pickle',maindir+'model2Results_ints')    
+    # postprocess(maindir+'model3tracks*_ints',maindir+'model3Results')    
+    # postprocess(maindir+'model4tracks*_ints',maindir+'model4Results')
     # print('#########################################################')
     # print('Model 1')
     # printme(fname=maindir + 'model1Results.pickle')

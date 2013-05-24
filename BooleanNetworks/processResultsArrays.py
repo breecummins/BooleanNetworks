@@ -199,7 +199,7 @@ def separateBadTracks(myfiles):
     allgoodtracks = []
     allbadtracks = []
     for f in glob.glob(myfiles):
-        print(f)
+        # print(f)
         of = open(f,'r')
         tracks = cPickle.load(of)
         of.close()
@@ -232,21 +232,21 @@ def loadNSort(myfiles):
     print('Analyzing...')
     uniqgoodtracks,goodcounted = countClass(allgoodtracks)
     uniqbadtracks,badcounted = countClass(allbadtracks)
-    import modelNetworks as mN
-    ugt = [mN.encodeInts(g) for g in uniqgoodtracks]
-    ubt = [mN.encodeInts(b) for b in uniqbadtracks]
-    print(ugt)
-    print(goodcounted)
-    print(ubt)
-    print(badcounted)
-    return ugt, goodcounted, ubt, badcounted
+    # import modelNetworks as mN
+    # ugt = [mN.encodeInts(g) for g in uniqgoodtracks]
+    # ubt = [mN.encodeInts(b) for b in uniqbadtracks]
+    # print(ugt)
+    # print(goodcounted)
+    # print(ubt)
+    # print(badcounted)
+    # return ugt, goodcounted, ubt, badcounted
     # separate unique bad tracks into equivalence classes, weed out ones not in uniqgoodtracks, and add fractional numbers to good counted
     translatedbadtracks = []
     modifiedgoodcounted = list(goodcounted)
     longestgoodtrack = max([len(g) for g in uniqgoodtracks])
     for k,b in enumerate(uniqbadtracks):
         if b.shape[0] >= longestgoodtrack:
-            print('Bad track of length ' + str(b.shape[0]) + ' is too long. Skipping track ' + str(k) + '.')
+            # print('Bad track of length ' + str(b.shape[0]) + ' is too long. Skipping track ' + str(k) + '.')
             translatedbadtracks.append([])
             continue
         eqtracks = eqClasses(b)
@@ -259,10 +259,10 @@ def loadNSort(myfiles):
                     neweq.append(t)
                     ginds.append(i)
                     break
-        if neweq ==[]:
-            print('No good tracks found for bad track ' + str(k) + '.')
-            if b.shape[0] < 30:
-                print(b)
+        # if neweq ==[]:
+        #     print('No good tracks found for bad track ' + str(k) + '.')
+        #     if b.shape[0] < 30:
+        #         print(b)
         # save the acceptable tracks
         translatedbadtracks.append(neweq)
         # equally distribute count across allowable tracks

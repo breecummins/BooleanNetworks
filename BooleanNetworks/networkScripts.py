@@ -16,7 +16,9 @@ def partitionOrthant(model=mN.model1,fname=os.path.expanduser('~/temp/model1trac
                     t = mN.translateToOrthants(ts)
                     tracks.append(mN.encodeInts(t))
     fname += '.pickle'
-    cPickle.dump(tracks,open(fname,'w'))
+    of = open(fname,'w')
+    cPickle.dump(tracks,of)
+    of.close()
 
 def alterParams(maindir,Alist=[0.5,1.0,1.5,2.0],Blist=[-0.5,-1.0,-2.0],per=[0.0,-0.01,0.01,0.02],dt=0.01):
     for k,A in enumerate(Alist):
@@ -45,16 +47,22 @@ def partitionOrthantRandInits(xinit,inits,model=mN.model1,fname=os.path.expandus
         ts = mN.solveModel(inik,finaltime,model,dt)
         tracks.append(mN.translateToOrthants(ts))
     fname += '.pickle'
-    cPickle.dump(tracks,open(fname,'w'))
+    of = open(fname,'w')
+    cPickle.dump(tracks,of)
+    of.close()
 
 def randInits(maindir,Alist=[0.5,1.0,1.5,2.0],Blist=[-0.5,-1.0,-2.0],dt=0.01,xinit=1.0,numinits=2000):
     if 'inits.pickle' not in os.listdir(maindir):
         print('Generating new initial conditions...')
         inits = -2.1 + 2*np.random.random((numinits,4))
-        cPickle.dump({'inits':inits},open(os.path.join(maindir,'inits.pickle'),'w'))
+        of = open(os.path.join(maindir,'inits.pickle'),'w')
+        cPickle.dump({'inits':inits},of)
+        of.close()
     else:
         print('Using existing initial conditions file...')
-        idict=cPickle.load(open(os.path.join(maindir,'inits.pickle'),'r'))
+        of = open(os.path.join(maindir,'inits.pickle'),'r')
+        idict=cPickle.load(of)
+        of.close()
         inits=idict['inits']
     for k,A in enumerate(Alist):
         print('Model 1, A = ' + str(A))
