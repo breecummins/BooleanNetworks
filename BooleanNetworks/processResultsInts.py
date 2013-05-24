@@ -46,64 +46,49 @@ def printme(results=None,fname=None):
             print(results['classes'][k + 'note'] + ': # good tracks; prop in good tracks; # good + translated; prop in total')
             print((results['classes'][k+'count'],results['classes'][k+'count']/Ng,results['classes'][k + 'countmodified'],results['classes'][k + 'countmodified']/(N-emptycount)))
 
-def eqClasses(badtrack):
+def translateBadTrack(badtrack,goodtracks):
     '''
     Construct good tracks consistent with badtrack. 
     The minimal number of extra steps are added to badtrack
-    to ensure only one bit flip per step. Not all of these 
-    tracks will be consistent with the ODE solution.
+    to ensure only one bit flip per step. Only solutions also
+    found in goodtracks are accepted.
 
     '''
     inds = []
-    steps = []
-    # find all locations where more than one bit flip occurs and calculate consistent intermediate steps to be inserted at that location
-    for k in range(1,badtrack.shape[0]):
-        diff = badtrack[k,:]-badtrack[k-1,:]
-        localinds = np.nonzero(diff)[0]
-        N = len(localinds)
-        if N > 1:
+    newchunks = []
+    # find all locations where more than one bit flip occurs and calculate consistent intermediate steps to be inserted at each bad location
+    for k in range(1,len(badtrack)):
+        if not oneBitFlip(badtrack[k-1:k+1]):
             inds.append(k)
-            # make all possible permutations of the order of the single bit flips that need to be inserted immediately before index k
-            perms = itertools.permutations(localinds)
-            templist = []
-            for p in perms:
-                temp = np.zeros((N-1,badtrack.shape[1]))
-                temp += badtrack[k-1,:] 
-                for i,j in enumerate(p[:-1]):
-                    temp[i:,j] += diff[j]
-                templist.append(temp)
-            steps.append(templist)
-    # make a template for the equivalence classes of badtrack
-    newpts = [s[0].shape[0] for s in steps]
-    template = np.zeros((badtrack.shape[0]+sum(newpts),badtrack.shape[1]),dtype=np.int8)
-    myinds = [0]+inds+[badtrack.shape[0]]
-    for k,i in enumerate(myinds[1:]):
-        template[myinds[k]+sum(newpts[:k]):i+sum(newpts[:k]),:] = badtrack[myinds[k]:i,:]
-    # save the indices where new steps must be inserted
-    replinds = []
-    for k in range(len(inds)):
-        replinds.append((inds[k]+sum(newpts[:k]),inds[k]+sum(newpts[:k+1]))) 
-    # make all possible combinations of insertions at the different locations
-    stepinds = [range(len(s)) for s in steps]
-    combos=itertools.product(*stepinds)
+            adjxor = badtrack[k-1]^badtrack[k]
+            vals = [ v for v in map(lambda x: x & adjxor,[16,8,4,2,1]) if v > 0 ]
+            signedvals = [-v if v & badtrack[k-1] else v for v in vals]
+            perms = itertools.permutations(signedvals)
+            steps = [[badtrack[k-1]+sum(p[:j]) for j in range(1,len(p))] for p in perms]
+            newchunks.append(steps)
+    # cut the bad track into sections divided by the locations with > 1 bit flip
+    goodchunks = []
+    myinds = [0]+inds+[len(badtrack)]
+    for k in range(len(myinds)-1):
+        goodchunks.append(list(badtrack[myinds[k]:myinds[k+1]]))
     # construct the candidate good tracks
-    equivcls = []
+    stepopts = [range(len(c)) for c in newchunks]
+    combos=itertools.product(*stepopts)
+    newtracks = []
+    goodinds = []
     for c in combos:
-        tp = template.copy()
-        for k in range(len(replinds)):
-            r = replinds[k]
-            step = steps[k]
-            tp[r[0]:r[1],:] = step[c[k]]
-        equivcls.append(tp)
-        del(tp)
-        gc.collect()
-    # if len(inds) > 1:
-    #     print('More than one bad step')
-    #     print(b)
-    # if any([len(s) > 2 for s in steps]):
-    #     print('More than two bit flips')
-    #     print(b)  
-    return equivcls
+        t = list(goodchunks[0])
+        for k in range(len(newchunks)):
+            steps = newchunks[k]
+            t += steps[c[k]]
+            t += goodchunks[k+1]
+        tt = tuple(t)
+        for i,g in enumerate(goodtracks):
+            if tt == g:
+                newtracks.append(tt)
+                goodinds.append(i)
+                break
+    return newtracks, goodinds
 
 def classifyTrack(track):
     # find index of x's first zero (if there are no zeros, firstzero = 0) and first reinitialization of x (if it doesn't occur, nextone = firstzero)
@@ -242,34 +227,28 @@ def loadNSort(myfiles):
     modifiedgoodcounted = list(goodcounted) #this points to a new list
     longestgoodtrack = max([len(g) for g in uniqgoodtracks])
     uniqgoodtracksdecoded = [mN.decodeInts(g) for g in uniqgoodtracks]
-    uniqbadtracksdecoded = [mN.decodeInts(b) for b in uniqbadtracks]
-    for k,b in enumerate(uniqbadtracksdecoded):
-        if b.shape[0] >= longestgoodtrack:
-            # print('Bad track of length ' + str(b.shape[0]) + ' is too long. Skipping track ' + str(k) + '.')
+    for k,b in enumerate(uniqbadtracks):
+        if len(b) >= longestgoodtrack:
+            # print('Bad track of length ' + str(len(b)) + ' is too long. Skipping track ' + str(k) + '.')
             translatedbadtracks.append([])
             continue
-        eqtracks = eqClasses(b)
-        neweq = []
-        ginds = []
-        for t in eqtracks:
-            for i,u in enumerate(uniqgoodtracksdecoded):
-                # only keep the reconstructed tracks that are good tracks
-                if np.all(t==u):
-                    neweq.append(t)
-                    ginds.append(i)
-                    break
-        if neweq ==[]:
+        gtracks = [(i,g) for i,g in enumerate(uniqgoodtracks) if len(g) > len(b)]
+        goodtracks = [g[1] for g in gtracks]
+        goodinds = [g[0] for g in gtracks]
+        newtracks,ginds = translateBadTrack(b,goodtracks)
+        # save the acceptable tracks
+        translatedbadtracks.append(newtracks)
+        if newtracks ==[]:
+            pass
             # print('No good tracks found for bad track ' + str(k) + '.')
-            # if b.shape[0] < 30:
+            # if len(b) < 100:
             #     print(b)
-            translatedbadtracks.append([])
+            # print(len(goodtracks))
         else:
-            # save the acceptable tracks
-            translatedbadtracks.append([mN.encodeInts(nt) for nt in neweq])
-        # equally distribute count across allowable tracks
-        if len(neweq) > 0:
-            prop = 1.0 / len(neweq)
-            for i in ginds:
+            # equally distribute count across allowable tracks
+            realgoodinds = [goodinds[j] for j in ginds]
+            prop = 1.0 / len(newtracks)
+            for i in realgoodinds:
                 modifiedgoodcounted[i] += prop*badcounted[k]
     # create dict to store results
     results = {'allgoodtracks':allgoodtracks,'allbadtracks':allbadtracks,'uniqgoodtracks':uniqgoodtracks,'uniqbadtracks':uniqbadtracks,'translatedbadtracks':translatedbadtracks,'goodcounted':goodcounted,'modifiedgoodcounted':modifiedgoodcounted,'badcounted':badcounted,'classes':{'oneloop': [],'oneloopcount': 0,'oneloopcountmodified': 0,'oneloopnote':'Broad One Loops', 'sharponeloop': [],'sharponeloopcount': 0,'sharponeloopcountmodified': 0,'sharponeloopnote':'Sharp One Loops','noloop': [],'noloopcount': 0,'noloopcountmodified': 0,'noloopnote':'Incomplete Loops','periodic': [],'periodiccount': 0,'periodiccountmodified': 0,'periodicnote':'Broad Periodic Loops with < 2 waves','sharpperiodic': [],'sharpperiodiccount': 0,'sharpperiodiccountmodified': 0,'sharpperiodicnote':'Sharp Periodic Loops with < 2 waves','periodictwowaves': [],'periodictwowavescount': 0,'periodictwowavescountmodified': 0,'periodictwowavesnote':'Broad Periodic Loops with >= 2 waves','sharpperiodictwowaves': [],'sharpperiodictwowavescount': 0,'sharpperiodictwowavescountmodified': 0,'sharpperiodictwowavesnote':'Sharp Periodic Loops with >= 2 waves','overlapped': [],'overlappedcount': 0,'overlappedcountmodified': 0,'overlappednote':'Periodic Loops that overlap (double bump waves) with < 2 waves','overlappedtwowaves': [],'overlappedtwowavescount': 0,'overlappedtwowavescountmodified': 0,'overlappedtwowavesnote':'Periodic Loops that overlap (double bump waves) with >= 2 waves','diffequilib':[],'diffequilibcount': 0,'diffequilibcountmodified': 0,'diffequilibnote':'Different Equilibria (stuck in a subloop or at a different fixed pt) with < 1 wave','diffequilibwithwave':[],'diffequilibwithwavecount': 0,'diffequilibwithwavecountmodified': 0,'diffequilibwithwavenote':'Different Equilibria (stuck in a subloop or at a different fixed pt) with >= 1 wave','unclassified': [],'unclassifiedcount': 0,'unclassifiedcountmodified': 0,'unclassifiednote':'Unclassified Tracks'}}
@@ -314,19 +293,19 @@ if __name__ == "__main__":
     #     cast2Ints(f,f[:-7]+'_ints.pickle')
     # changeFileNames(maindir)
     # maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_perdt/')
-    # postprocess(maindir+'model1tracks*',maindir+'model1Results')
+    # postprocess(maindir+'model1tracks*',maindir+'model1Results_ints')
     postprocess(maindir+'model2tracks*_ints.pickle',maindir+'model2Results_ints')    
-    # postprocess(maindir+'model3tracks*_ints',maindir+'model3Results')    
-    # postprocess(maindir+'model4tracks*_ints',maindir+'model4Results')
+    postprocess(maindir+'model3tracks*_ints',maindir+'model3Results_ints')    
+    postprocess(maindir+'model4tracks*_ints',maindir+'model4Results_ints')
     # print('#########################################################')
     # print('Model 1')
-    # printme(fname=maindir + 'model1Results.pickle')
+    # printme(fname=maindir + 'model1Results_ints.pickle')
     # print('#########################################################')
     # print('Model 2')
-    # printme(fname=maindir + 'model2Results.pickle')
+    # printme(fname=maindir + 'model2Results_ints.pickle')
     # print('#########################################################')
     # print('Model 3')
-    # printme(fname=maindir + 'model3Results.pickle')
+    # printme(fname=maindir + 'model3Results_ints.pickle')
     # print('#########################################################')
     # print('Model 4')
-    # printme(fname=maindir + 'model4Results.pickle')
+    # printme(fname=maindir + 'model4Results_ints.pickle')
