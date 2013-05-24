@@ -71,23 +71,64 @@ def translateBadTrack(badtrack,goodtracks):
     myinds = [0]+inds+[len(badtrack)]
     for k in range(len(myinds)-1):
         goodchunks.append(list(badtrack[myinds[k]:myinds[k+1]]))
-    # construct the candidate good tracks
     stepopts = [range(len(c)) for c in newchunks]
-    combos=itertools.product(*stepopts)
     newtracks = []
     goodinds = []
-    for c in combos:
-        t = list(goodchunks[0])
-        for k in range(len(newchunks)):
-            steps = newchunks[k]
-            t += steps[c[k]]
-            t += goodchunks[k+1]
-        tt = tuple(t)
-        for i,g in enumerate(goodtracks):
-            if tt == g:
-                newtracks.append(tt)
-                goodinds.append(i)
-                break
+    testtoint = 10
+    if len(goodchunks) < testtoint:
+        # construct the candidate good tracks
+        stepopts = [range(len(c)) for c in newchunks]
+        combos=itertools.product(*stepopts)
+        for c in combos:
+            t = list(goodchunks[0])
+            for k in range(len(newchunks)):
+                steps = newchunks[k]
+                t += steps[c[k]]
+                t += goodchunks[k+1]
+            tt = tuple(t)
+            for i,g in enumerate(goodtracks):
+                if tt == g:
+                    newtracks.append(tt)
+                    goodinds.append(i)
+                    break
+    else:
+        def partialconstruction(tinds,newtracks,goodinds):
+            # construct the candidate good tracks
+            combos=itertools.product(*stepopts[tinds[0]:tinds[1]])
+            goodcombos = []
+            for c in combos:
+                flag = 'b'
+                t = list(goodchunks[0])
+                for k in range(tinds):
+                    steps = newchunks[k]
+                    t += steps[c[k]]
+                    t += goodchunks[k+1]
+                    for g in goodtracks:
+                        if g[:len(t)] == tuple(t):
+                            flag = 'c'
+                            break
+                    if flag == 'c':
+                        continue
+                    elif flag == 'b':
+                        break
+                if flag == 'c' and testtoint < len(newchunks):
+                    goodcombos.append
+                    break
+                elif flag == 'c' and testtoint == len(newchunks):  
+                    tt = tuple(t)
+                    for i,g in enumerate(goodtracks):
+                        if tt == g:
+                            print('Match found!')
+                            newtracks.append(tt)
+                            goodinds.append(i)
+                            break
+            return flag,newtracks,goodinds
+        
+        flag,newtracks,goodinds=partialconstruction([0,testtoint],newtracks,goodinds)
+        while flag == 'c':
+            print('**********************This track could have a match**********************    ')
+            testtoint = min(testtoint + 5,len(newchunks))
+            flag,newtracks,goodinds = partialconstruction(testtoint,newtracks,goodinds)
     return newtracks, goodinds
 
 def classifyTrack(track):
@@ -199,7 +240,7 @@ def separateBadTracks(myfiles):
     allgoodtracks = []
     allbadtracks = []
     for f in glob.glob(myfiles):
-        # print(f)
+        print(f)
         of = open(f,'r')
         tracks = cPickle.load(of)
         of.close()
@@ -217,7 +258,8 @@ def loadNSort(myfiles):
     print('Analyzing...')
     uniqgoodtracks,goodcounted = countClass(allgoodtracks)
     uniqbadtracks,badcounted = countClass(allbadtracks)
-    # print(uniqgoodtracks)
+    # print(len(uniqgoodtracks))
+    # print(len(uniqbadtracks))
     # print(goodcounted)
     # print(uniqbadtracks)
     # print(badcounted)
@@ -229,7 +271,7 @@ def loadNSort(myfiles):
     uniqgoodtracksdecoded = [mN.decodeInts(g) for g in uniqgoodtracks]
     for k,b in enumerate(uniqbadtracks):
         if len(b) >= longestgoodtrack:
-            # print('Bad track of length ' + str(len(b)) + ' is too long. Skipping track ' + str(k) + '.')
+            print('Bad track of length ' + str(len(b)) + ' is too long. Skipping track ' + str(k) + '.')
             translatedbadtracks.append([])
             continue
         gtracks = [(i,g) for i,g in enumerate(uniqgoodtracks) if len(g) > len(b)]
@@ -240,9 +282,9 @@ def loadNSort(myfiles):
         translatedbadtracks.append(newtracks)
         if newtracks ==[]:
             pass
-            # print('No good tracks found for bad track ' + str(k) + '.')
-            # if len(b) < 100:
-            #     print(b)
+            print('No good tracks found for bad track ' + str(k) + '.')
+            if len(b) < 30:
+                print(b)
             # print(len(goodtracks))
         else:
             # equally distribute count across allowable tracks
@@ -293,10 +335,10 @@ if __name__ == "__main__":
     #     cast2Ints(f,f[:-7]+'_ints.pickle')
     # changeFileNames(maindir)
     # maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_perdt/')
-    # postprocess(maindir+'model1tracks*',maindir+'model1Results_ints')
-    postprocess(maindir+'model2tracks*_ints.pickle',maindir+'model2Results_ints')    
-    postprocess(maindir+'model3tracks*_ints',maindir+'model3Results_ints')    
-    postprocess(maindir+'model4tracks*_ints',maindir+'model4Results_ints')
+    postprocess(maindir+'model1tracks*_ints.pickle',maindir+'model1Results_ints')
+    # postprocess(maindir+'model2tracks*_ints.pickle',maindir+'model2Results_ints')    
+    # postprocess(maindir+'model3tracks*_ints.pickle',maindir+'model3Results_ints')    
+    # postprocess(maindir+'model4tracks*_ints.pickle',maindir+'model4Results_ints')
     # print('#########################################################')
     # print('Model 1')
     # printme(fname=maindir + 'model1Results_ints.pickle')
