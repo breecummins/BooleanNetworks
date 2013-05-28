@@ -5,9 +5,9 @@ import os
 
 def checkme():
     maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_randinits_biggerx/')
-    resultsI = pRI.loadNSort(maindir+'model3tracks*_ints.pickle')  
+    resultsI = pRI.loadNSort(maindir+'model4tracks*_ints.pickle')  
     # pRI.printme(resultsI)  
-    resultsA = pRA.loadNSort(maindir+'model3tracks*_arrays.pickle')    
+    resultsA = pRA.loadNSort(maindir+'model4tracks*_arrays.pickle')    
     # pRA.printme(resultsA)
 
     # for i,u in enumerate(resultsA['uniqbadtracks']):

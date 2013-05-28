@@ -2,6 +2,8 @@ import numpy as np
 import cPickle, glob, os, itertools, gc
 import modelNetworks as mN
 
+#Note: This code might run into problems between little-endian and big-endian architectures. I haven't noticed any issues so far.
+
 def printme(results=None,fname=None):
     if fname:
         results = cPickle.load(open(fname,'r'))
@@ -38,8 +40,13 @@ def printme(results=None,fname=None):
         if 'count' not in k and 'note' not in k:
             print('Number of unique ' + results['classes'][k + 'note'])
             print(len(results['classes'][k]))
+            if len(results['classes'][k]) > 0:
+                ex = int(np.floor(len(results['classes'][k])*np.random.rand()))
+                print('Example: ' + str(results['classes'][k][ex]))
             # if k == 'diffequilibwithwave':
-            #     print(results['classes'][k])
+            #     for x in results['classes'][k]:
+            #         print(x)
+            #     # print([mN.decodeInts(x) for x in results['classes'][k]])
 
     for k in Keys:
         if 'count' not in k and 'note' not in k and len(results['classes'][k]) > 0:
@@ -61,7 +68,7 @@ def translateBadTrack(badtrack,goodtracks):
         if not oneBitFlip(badtrack[k-1:k+1]):
             inds.append(k)
             adjxor = badtrack[k-1]^badtrack[k]
-            vals = [ v for v in map(lambda x: x & adjxor,[16,8,4,2,1]) if v > 0 ]
+            vals = [ x & adjxor for x in [16,8,4,2,1] if x & adjxor > 0 ]
             signedvals = [-v if v & badtrack[k-1] else v for v in vals]
             perms = itertools.permutations(signedvals)
             steps = [[badtrack[k-1]+sum(p[:j]) for j in range(1,len(p))] for p in perms]
@@ -71,128 +78,113 @@ def translateBadTrack(badtrack,goodtracks):
     myinds = [0]+inds+[len(badtrack)]
     for k in range(len(myinds)-1):
         goodchunks.append(list(badtrack[myinds[k]:myinds[k+1]]))
-    stepopts = [range(len(c)) for c in newchunks]
+    # construct the candidate good tracks chunk by chunk and match to good tracks or quit
+    chunkinds = range(0,len(newchunks),2) + [len(newchunks)]
+    cands = [list(goodchunks[0])]
     newtracks = []
     goodinds = []
-    testtoint = 10
-    if len(goodchunks) < testtoint:
-        # construct the candidate good tracks
-        stepopts = [range(len(c)) for c in newchunks]
+    for k,i in enumerate(chunkinds[1:]):
+        newcands = []
+        subchunks = newchunks[chunkinds[k]:i]
+        stepopts = [range(len(c)) for c in subchunks]
         combos=itertools.product(*stepopts)
         for c in combos:
-            t = list(goodchunks[0])
-            for k in range(len(newchunks)):
-                steps = newchunks[k]
-                t += steps[c[k]]
-                t += goodchunks[k+1]
-            tt = tuple(t)
-            for i,g in enumerate(goodtracks):
-                if tt == g:
-                    newtracks.append(tt)
-                    goodinds.append(i)
-                    break
-    else:
-        def partialconstruction(tinds,newtracks,goodinds):
-            # construct the candidate good tracks
-            combos=itertools.product(*stepopts[tinds[0]:tinds[1]])
-            goodcombos = []
-            for c in combos:
-                flag = 'b'
-                t = list(goodchunks[0])
-                for k in range(tinds):
-                    steps = newchunks[k]
-                    t += steps[c[k]]
-                    t += goodchunks[k+1]
-                    for g in goodtracks:
-                        if g[:len(t)] == tuple(t):
-                            flag = 'c'
-                            break
-                    if flag == 'c':
-                        continue
-                    elif flag == 'b':
+            for poss in cands:
+                t = list(poss)
+                for j in range(len(subchunks)):
+                    steps = subchunks[j]
+                    t += steps[c[j]]
+                    t += goodchunks[chunkinds[k]+j+1]
+                tt = tuple(t)
+                for gi,g in enumerate(goodtracks):
+                    if i < len(newchunks) and tt == g[:len(tt)]:
+                        newcands.append(t)
                         break
-                if flag == 'c' and testtoint < len(newchunks):
-                    goodcombos.append
-                    break
-                elif flag == 'c' and testtoint == len(newchunks):  
-                    tt = tuple(t)
-                    for i,g in enumerate(goodtracks):
-                        if tt == g:
-                            print('Match found!')
-                            newtracks.append(tt)
-                            goodinds.append(i)
-                            break
-            return flag,newtracks,goodinds
-        
-        flag,newtracks,goodinds=partialconstruction([0,testtoint],newtracks,goodinds)
-        while flag == 'c':
-            print('**********************This track could have a match**********************    ')
-            testtoint = min(testtoint + 5,len(newchunks))
-            flag,newtracks,goodinds = partialconstruction(testtoint,newtracks,goodinds)
+                    elif i == len(newchunks) and tt == g:
+                        newtracks.append(tt)
+                        goodinds.append(gi)
+                        break
+        if newcands == []:
+            break
+        else:
+            cands = list(newcands)
     return newtracks, goodinds
 
+
 def classifyTrack(track):
-    # find index of x's first zero (if there are no zeros, firstzero = 0) and first reinitialization of x (if it doesn't occur, nextone = firstzero)
-    firstzero = track[:,0].argmin()
-    nextone = firstzero + track[firstzero:,0].argmax()
+    # define a function to find index of x's first zero and first reinitialization of x 
+    def findzeroone(track=track):
+        try:
+            firstzero = [16 & x for x in track].index(0) 
+        except:
+            firstzero = None
+        try:
+            nextone = firstzero + [16 & x for x in track[firstzero:]].index(16)
+        except:
+            nextone = None
+        return firstzero, nextone
+    ###### Find first x zero and first x reinitialization if they exist #######
+    firstzero, nextone = findzeroone()
     # define a function that can identify a completed wave
     def completedwave(track=track, firstzero=firstzero, nextone=nextone):
         # x has to turn off
-        if firstzero == 0:
+        if firstzero == None:
             return False
         # y1, y2, and y3 have to turn on
-        if np.any(track[firstzero:nextone,1] == 1) and np.any(track[firstzero:nextone,2] == 1) and np.any(track[firstzero:nextone,3] == 1):
+        if any([8 & x for x in track[firstzero:nextone]]) and any([4 & x for x in track[firstzero:nextone]]) and any([2 & x for x in track[firstzero:nextone]]):
             return True
         else:
             return False
     # function to identify sharp waves (no more than two of x,y1,y2,y3 are activated at a time)
-    def issharp(track):
-        if np.all(np.sum(track[:,:-1],1) < 3):
-            return True
-        else:
+    def issharp(track=track):
+        # Note that 13 and 11 are not checked because they are double-bump waves
+        newtrack = [ x >> 1 for x in track] #bit shift to remove z
+        if any([x & 14 == 14 for x in newtrack]): #x,y1,y2
             return False
+        elif any([x & 7 == 7 for x in newtrack]): #y1,y2,y3
+            return False
+        else:
+            return True
     ###### Now classify the track ######
     # if not a single loop is completed, count as no loops 
-    if not completedwave(nextone=track.shape[0]):
+    if not completedwave(nextone=len(track)):
         return 'noloop'
-    # if the last time step is not at [0,0,0,0,0], then the track is either stuck in a subloop (unstable limit cycle) or is at a different fixed pt (I assume sufficient simulation time)
-    elif np.any(track[-1,:] != 0):
+    # if the last track step is not at [0,0,0,0,0], then the track is either stuck in a subloop (unstable limit cycle) or is at a different fixed pt (I assume sufficient simulation time)
+    elif track[-1] != 0:
         # if there is a completed wave at the beginning, record it
         if completedwave():
             return 'diffequilibwithwave'
         else:
             return 'diffequilib'
     # if x does not reinitiate, count the track as one loop
-    elif nextone == firstzero:
+    elif nextone == None:
         # if the wave is sharp, record it
-        if issharp(track):
+        if issharp():
             return 'sharponeloop'
         else:    
             return 'oneloop'
     # if the initial condition is reached after first wave, count as periodic
-    elif np.all(track[nextone+1,:] == np.array([1,0,0,0,0])):
+    elif track[nextone+1] == 16:
         # if there are at least two completed loops, record it
-        subtrack = track[nextone+1:,:]
-        stfz = subtrack.argmin()
-        stno = stfz + subtrack[stfz:,0].argmax()
+        subtrack = track[nextone+1:]
+        stfz,stno= findzeroone(subtrack)
         if completedwave(subtrack,stfz,stno):
             # if the wave is sharp, record it
-            if issharp(track):
+            if issharp():
                 return 'sharpperiodictwowaves'
             else:    
                 return 'periodictwowaves'
         else:
             # if the wave is sharp, record it
-            if issharp(track):
+            if issharp():
                 return 'sharpperiodic'
             else:    
                 return 'periodic'
     # if x is reinitialized but initial condition does not recur immediately after the first wave, count as overlapping wave (last wave didn't finish before new one began)
-    elif np.any(track[firstzero:,0]) == 1:
+    elif any([x & 16 for x in track[firstzero:]]):
         # if there are at least two completed loops, record it
-        subtrack = track[nextone+1:,:]
-        stfz = subtrack.argmin()
-        stno = stfz + subtrack[stfz:,0].argmax()
+        subtrack = track[nextone+1:]
+        stfz,stno= findzeroone(subtrack)
         if completedwave(subtrack,stfz,stno):
             return 'overlappedtwowaves'
         else:
@@ -258,17 +250,9 @@ def loadNSort(myfiles):
     print('Analyzing...')
     uniqgoodtracks,goodcounted = countClass(allgoodtracks)
     uniqbadtracks,badcounted = countClass(allbadtracks)
-    # print(len(uniqgoodtracks))
-    # print(len(uniqbadtracks))
-    # print(goodcounted)
-    # print(uniqbadtracks)
-    # print(badcounted)
-    # return uniqgoodtracks, goodcounted, uniqbadtracks, badcounted
-    # separate unique bad tracks into equivalence classes, weed out ones not in uniqgoodtracks, and add fractional numbers to good counted
     translatedbadtracks = []
     modifiedgoodcounted = list(goodcounted) #this points to a new list
     longestgoodtrack = max([len(g) for g in uniqgoodtracks])
-    uniqgoodtracksdecoded = [mN.decodeInts(g) for g in uniqgoodtracks]
     for k,b in enumerate(uniqbadtracks):
         if len(b) >= longestgoodtrack:
             print('Bad track of length ' + str(len(b)) + ' is too long. Skipping track ' + str(k) + '.')
@@ -295,7 +279,7 @@ def loadNSort(myfiles):
     # create dict to store results
     results = {'allgoodtracks':allgoodtracks,'allbadtracks':allbadtracks,'uniqgoodtracks':uniqgoodtracks,'uniqbadtracks':uniqbadtracks,'translatedbadtracks':translatedbadtracks,'goodcounted':goodcounted,'modifiedgoodcounted':modifiedgoodcounted,'badcounted':badcounted,'classes':{'oneloop': [],'oneloopcount': 0,'oneloopcountmodified': 0,'oneloopnote':'Broad One Loops', 'sharponeloop': [],'sharponeloopcount': 0,'sharponeloopcountmodified': 0,'sharponeloopnote':'Sharp One Loops','noloop': [],'noloopcount': 0,'noloopcountmodified': 0,'noloopnote':'Incomplete Loops','periodic': [],'periodiccount': 0,'periodiccountmodified': 0,'periodicnote':'Broad Periodic Loops with < 2 waves','sharpperiodic': [],'sharpperiodiccount': 0,'sharpperiodiccountmodified': 0,'sharpperiodicnote':'Sharp Periodic Loops with < 2 waves','periodictwowaves': [],'periodictwowavescount': 0,'periodictwowavescountmodified': 0,'periodictwowavesnote':'Broad Periodic Loops with >= 2 waves','sharpperiodictwowaves': [],'sharpperiodictwowavescount': 0,'sharpperiodictwowavescountmodified': 0,'sharpperiodictwowavesnote':'Sharp Periodic Loops with >= 2 waves','overlapped': [],'overlappedcount': 0,'overlappedcountmodified': 0,'overlappednote':'Periodic Loops that overlap (double bump waves) with < 2 waves','overlappedtwowaves': [],'overlappedtwowavescount': 0,'overlappedtwowavescountmodified': 0,'overlappedtwowavesnote':'Periodic Loops that overlap (double bump waves) with >= 2 waves','diffequilib':[],'diffequilibcount': 0,'diffequilibcountmodified': 0,'diffequilibnote':'Different Equilibria (stuck in a subloop or at a different fixed pt) with < 1 wave','diffequilibwithwave':[],'diffequilibwithwavecount': 0,'diffequilibwithwavecountmodified': 0,'diffequilibwithwavenote':'Different Equilibria (stuck in a subloop or at a different fixed pt) with >= 1 wave','unclassified': [],'unclassifiedcount': 0,'unclassifiedcountmodified': 0,'unclassifiednote':'Unclassified Tracks'}}
     # only classify unique good tracks
-    for k,track in enumerate(uniqgoodtracksdecoded):
+    for k,track in enumerate(uniqgoodtracks):
         classstr = classifyTrack(track)
         results['classes'][classstr].append(track)
         results['classes'][classstr+'count'] += goodcounted[k]
@@ -335,9 +319,9 @@ if __name__ == "__main__":
     #     cast2Ints(f,f[:-7]+'_ints.pickle')
     # changeFileNames(maindir)
     # maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_perdt/')
-    postprocess(maindir+'model1tracks*_ints.pickle',maindir+'model1Results_ints')
+    # postprocess(maindir+'model1tracks*_ints.pickle',maindir+'model1Results_ints')
     # postprocess(maindir+'model2tracks*_ints.pickle',maindir+'model2Results_ints')    
-    # postprocess(maindir+'model3tracks*_ints.pickle',maindir+'model3Results_ints')    
+    postprocess(maindir+'model3tracks*_ints.pickle',maindir+'model3Results_ints')    
     # postprocess(maindir+'model4tracks*_ints.pickle',maindir+'model4Results_ints')
     # print('#########################################################')
     # print('Model 1')

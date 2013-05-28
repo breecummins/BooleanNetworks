@@ -154,6 +154,8 @@ def classifyTrack(track):
         subtrack = track[nextone+1:,:]
         stfz = subtrack.argmin()
         stno = stfz + subtrack[stfz:,0].argmax()
+        if stno == stfz:
+            stno = track.shape[0]
         if completedwave(subtrack,stfz,stno):
             # if the wave is sharp, record it
             if issharp(track):
@@ -172,6 +174,8 @@ def classifyTrack(track):
         subtrack = track[nextone+1:,:]
         stfz = subtrack.argmin()
         stno = stfz + subtrack[stfz:,0].argmax()
+        if stno == stfz:
+            stno = track.shape[0]
         if completedwave(subtrack,stfz,stno):
             return 'overlappedtwowaves'
         else:
@@ -284,7 +288,7 @@ if __name__ == "__main__":
     maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_randinits_biggerx/')
     # maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_perdt/')
     # postprocess(maindir+'model1tracks*',maindir+'model1Results')
-    postprocess(maindir+'model2tracks*',maindir+'model2Results')    
+    postprocess(maindir+'model2tracks*_arrays.pickle',maindir+'model2Results')    
     # postprocess(maindir+'model3tracks*',maindir+'model3Results')    
     # postprocess(maindir+'model4tracks*',maindir+'model4Results')
     # print('#########################################################')
