@@ -34,6 +34,8 @@ def printme(results=None,fname=None):
     print('Total number of untranslated bad tracks')
     print(emptycount)
 
+    Nmodified = N - emptycount
+
     Keys = ['sharponeloop','oneloop','sharpperiodictwowaves','sharpperiodic','periodictwowaves','periodic','overlappedtwowaves','overlapped','diffequilibwithwave','diffequilib','noloop','unclassified']
 
     for k in Keys:
@@ -51,7 +53,7 @@ def printme(results=None,fname=None):
     for k in Keys:
         if 'count' not in k and 'note' not in k and len(results['classes'][k]) > 0:
             print(results['classes'][k + 'note'] + ': # good tracks; prop in good tracks; # good + translated; prop in total')
-            print((results['classes'][k+'count'],results['classes'][k+'count']/Ng,results['classes'][k + 'countmodified'],results['classes'][k + 'countmodified']/(N-emptycount)))
+            print((results['classes'][k+'count'],results['classes'][k+'count']/Ng,results['classes'][k + 'countmodified'],results['classes'][k + 'countmodified']/Nmodified))
 
 def translateBadTrack(badtrack,goodtracks):
     '''
@@ -314,24 +316,24 @@ def changeFileNames(maindir):
 
 
 if __name__ == "__main__":
-    maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_randinits_biggerx/')
+    maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_randinits_x1to10/')
     # for f in glob.glob(maindir+'model*tracks*'):
     #     cast2Ints(f,f[:-7]+'_ints.pickle')
     # changeFileNames(maindir)
     # maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_perdt/')
-    # postprocess(maindir+'model1tracks*_ints.pickle',maindir+'model1Results_ints')
-    # postprocess(maindir+'model2tracks*_ints.pickle',maindir+'model2Results_ints')    
-    postprocess(maindir+'model3tracks*_ints.pickle',maindir+'model3Results_ints')    
-    # postprocess(maindir+'model4tracks*_ints.pickle',maindir+'model4Results_ints')
-    # print('#########################################################')
-    # print('Model 1')
-    # printme(fname=maindir + 'model1Results_ints.pickle')
-    # print('#########################################################')
-    # print('Model 2')
-    # printme(fname=maindir + 'model2Results_ints.pickle')
-    # print('#########################################################')
-    # print('Model 3')
-    # printme(fname=maindir + 'model3Results_ints.pickle')
-    # print('#########################################################')
-    # print('Model 4')
-    # printme(fname=maindir + 'model4Results_ints.pickle')
+    # postprocess(maindir+'model1tracks*.pickle',maindir+'model1Results')
+    # postprocess(maindir+'model2tracks*.pickle',maindir+'model2Results')    
+    # postprocess(maindir+'model3tracks*.pickle',maindir+'model3Results')    
+    # postprocess(maindir+'model4tracks*.pickle',maindir+'model4Results')
+    print('#########################################################')
+    print('Model 1')
+    printme(fname=maindir + 'model1Results.pickle')
+    print('#########################################################')
+    print('Model 2')
+    printme(fname=maindir + 'model2Results.pickle')
+    print('#########################################################')
+    print('Model 3')
+    printme(fname=maindir + 'model3Results.pickle')
+    print('#########################################################')
+    print('Model 4')
+    printme(fname=maindir + 'model4Results.pickle')
