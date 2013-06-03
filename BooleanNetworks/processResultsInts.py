@@ -233,9 +233,9 @@ def separateBadTracks(myfiles):
     '''
     allgoodtracks = []
     allbadtracks = []
-    for f in glob.glob(myfiles):
-        print(f)
-        of = open(f,'r')
+    try:
+        of = open(myfiles,'r')
+        print(myfiles)
         tracks = cPickle.load(of)
         of.close()
         for track in tracks:
@@ -243,6 +243,17 @@ def separateBadTracks(myfiles):
                 allbadtracks.append(track)
             else:
                 allgoodtracks.append(track)
+    except:     
+        for f in glob.glob(myfiles):
+            print(f)
+            of = open(f,'r')
+            tracks = cPickle.load(of)
+            of.close()
+            for track in tracks:
+                if not oneBitFlip(track):
+                    allbadtracks.append(track)
+                else:
+                    allgoodtracks.append(track)
     return allgoodtracks, allbadtracks
 
 def loadNSort(myfiles):
@@ -257,7 +268,7 @@ def loadNSort(myfiles):
     longestgoodtrack = max([len(g) for g in uniqgoodtracks])
     for k,b in enumerate(uniqbadtracks):
         if len(b) >= longestgoodtrack:
-            print('Bad track of length ' + str(len(b)) + ' is too long. Skipping track ' + str(k) + '.')
+            # print('Bad track of length ' + str(len(b)) + ' is too long. Skipping track ' + str(k) + '.')
             translatedbadtracks.append([])
             continue
         gtracks = [(i,g) for i,g in enumerate(uniqgoodtracks) if len(g) > len(b)]
@@ -268,9 +279,9 @@ def loadNSort(myfiles):
         translatedbadtracks.append(newtracks)
         if newtracks ==[]:
             pass
-            print('No good tracks found for bad track ' + str(k) + '.')
-            if len(b) < 30:
-                print(b)
+            # print('No good tracks found for bad track ' + str(k) + '.')
+            # if len(b) < 30:
+            #     print(b)
             # print(len(goodtracks))
         else:
             # equally distribute count across allowable tracks
@@ -317,23 +328,29 @@ def changeFileNames(maindir):
 
 if __name__ == "__main__":
     maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_randinits_x1to10/')
-    # for f in glob.glob(maindir+'model*tracks*'):
-    #     cast2Ints(f,f[:-7]+'_ints.pickle')
-    # changeFileNames(maindir)
-    # maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_perdt/')
-    # postprocess(maindir+'model1tracks*.pickle',maindir+'model1Results')
-    # postprocess(maindir+'model2tracks*.pickle',maindir+'model2Results')    
-    # postprocess(maindir+'model3tracks*.pickle',maindir+'model3Results')    
-    # postprocess(maindir+'model4tracks*.pickle',maindir+'model4Results')
-    print('#########################################################')
-    print('Model 1')
-    printme(fname=maindir + 'model1Results.pickle')
-    print('#########################################################')
-    print('Model 2')
-    printme(fname=maindir + 'model2Results.pickle')
-    print('#########################################################')
-    print('Model 3')
-    printme(fname=maindir + 'model3Results.pickle')
-    print('#########################################################')
-    print('Model 4')
-    printme(fname=maindir + 'model4Results.pickle')
+    for k in range(1,5):
+        for myfile in glob.glob(maindir+'model{0!s}tracks*.pickle'.format(k)):
+            if '_results' != myfile:
+                savefile = myfile[:-7] + '_results'
+                postprocess(myfile,savefile)
+
+    # # for f in glob.glob(maindir+'model*tracks*'):
+    # #     cast2Ints(f,f[:-7]+'_ints.pickle')
+    # # changeFileNames(maindir)
+    # # maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_perdt/')
+    # # postprocess(maindir+'model1tracks*.pickle',maindir+'model1Results')
+    # # postprocess(maindir+'model2tracks*.pickle',maindir+'model2Results')    
+    # # postprocess(maindir+'model3tracks*.pickle',maindir+'model3Results')    
+    # # postprocess(maindir+'model4tracks*.pickle',maindir+'model4Results')
+    # print('#########################################################')
+    # print('Model 1')
+    # printme(fname=maindir + 'model1Results.pickle')
+    # print('#########################################################')
+    # print('Model 2')
+    # printme(fname=maindir + 'model2Results.pickle')
+    # print('#########################################################')
+    # print('Model 3')
+    # printme(fname=maindir + 'model3Results.pickle')
+    # print('#########################################################')
+    # print('Model 4')
+    # printme(fname=maindir + 'model4Results.pickle')

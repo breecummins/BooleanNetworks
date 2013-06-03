@@ -3,7 +3,7 @@ import os, random, cPickle
 from functools import partial
 import modelNetworks as mN
 
-def partitionOrthant(model=mN.model1,fname=os.path.expanduser('~/temp/model1tracks'),orthrange = np.arange(-0.1,-2.2,-0.2),per=[0.0,-0.01,0.01,0.02],dt=0.01,finaltime=5.0):
+def partitionOrthant(model=mN.model1,fname=os.path.expanduser('~/temp/model1tracks'),orthrange = np.arange(-0.1,-2.2,-0.2),per=[0.0,-0.01,0.01,0.02],dt=0.01,finaltime=5.0,stoppingcriteria=[(0,0,0,0,0)]):
     
     tracks = []
     for i in orthrange:
@@ -12,7 +12,7 @@ def partitionOrthant(model=mN.model1,fname=os.path.expanduser('~/temp/model1trac
                 for l in orthrange:
                     random.shuffle(per)
                     init = np.array([1.0,i+per[0],j+per[1],k+per[2],l+per[3]])
-                    ts = mN.solveModel(init,finaltime,model,dt)
+                    ts = mN.solveModel(init,finaltime,model,dt,stoppingcriteria)
                     t = mN.translateToOrthants(ts)
                     tracks.append(mN.encodeInts(t))
     fname += '.pickle'
@@ -37,12 +37,12 @@ def alterParams(maindir,Alist=[0.5,1.0,1.5,2.0],Blist=[-0.5,-1.0,-2.0],per=[0.0,
             newL4=partial(mN.L4,B0=B)
             mod4=partial(mN.model4,L0=L0,L4=newL4)
             fname4=os.path.join(maindir,'model4tracksA'+str(k)+'B'+str(j))
-            partitionOrthant(mod4,fname4)
+            partitionOrthant(mod4,fname4,stoppingcriteria=[(0,0,0,0,0),(1,1,1,1,0)])
 
-def partitionOrthantRandInits(inits,model=mN.model1,fname=os.path.expanduser('~/temp/model1tracks'),dt=0.01,finaltime=5.0):    
+def partitionOrthantRandInits(inits,model=mN.model1,fname=os.path.expanduser('~/temp/model1tracks'),dt=0.01,finaltime=5.0,stoppingcriteria=[(0,0,0,0,0)]):    
     tracks = []
     for k in range(inits.shape[0]):
-        ts = mN.solveModel(inits[k,:],finaltime,model,dt)
+        ts = mN.solveModel(inits[k,:],finaltime,model,dt,stoppingcriteria)
         t = mN.translateToOrthants(ts)
         tracks.append(mN.encodeInts(t))
     fname += '.pickle'
@@ -87,7 +87,7 @@ def randInits(maindir,Alist=[0.5,1.0,1.5,2.0],Blist=[-0.5,-1.0,-2.0],dt=0.01,xin
             print('Model 4, A = ' + str(A) + ', B = ' + str(B))
             mod4=partial(mN.model4,L0=L0,L4=newL4)
             fname4=os.path.join(maindir,'model4tracksA'+str(k)+'B'+str(j))
-            partitionOrthantRandInits(inits,mod4,fname4)
+            partitionOrthantRandInits(inits,mod4,fname4,stoppingcriteria=[(0,0,0,0,0),(1,1,1,1,0)])
 
 def randInitsWithX(maindir,Alist=[0.5,1.0,1.5,2.0],Blist=[-0.5,-1.0,-2.0],dt=0.01,numinits=20000):
     if 'inits.pickle' not in os.listdir(maindir):

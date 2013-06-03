@@ -74,13 +74,15 @@ def model4(t,y,L0=L0, L1=L1, L2=L1, L3=L1, L4=L4):
     dy[4] += L4(y[0],y[2],y[3])
     return dy
 
-def solveModel(init,finaltime,model=model1,dt=0.01):
+def solveModel(init,finaltime,model=model1,dt=0.01,stoppingcriteria=[(0,0,0,0,0)]):
     times = np.arange(0,finaltime,dt)
-    timeseries = np.zeros((len(times),len(init)))
-    timeseries[0,:] = init
+    timeseries = [np.array(init)]
     for k,ti in enumerate(times[:-1]):
-        timeseries[k+1,:] = rk4.solverp(ti,timeseries[k,:],dt,model)
-    return timeseries
+        timeseries.append(rk4.solverp(ti,timeseries[k],dt,model))
+        if np.mod(k,50) == 0 and np.any([tuple(np.int8(timeseries[-1] > 0)) == sc for sc in stoppingcriteria]):
+            print('Reached equilibrium orthant. Stopping time integration at {0:0.02f}.'.format(ti))
+            break
+    return np.array(timeseries)
 
 def translateToOrthants(timeseries):
     trajectory = np.int8(timeseries > 0)
@@ -139,33 +141,46 @@ if __name__=='__main__':
     # init=np.array([1.0,-0.2,-0.2,-0.2,-0.2])
     # ts = solveModel(init,finaltime,model3)
     # s = translateToOrthants(ts)
-    # print(ts[:20,:])
+    # print(ts[:20])
     # print(s)
 
     # init=np.array([1.0,-0.1,-0.2,-0.2,-0.2])
     # ts = solveModel(init,finaltime,model3)
     # s = translateToOrthants(ts)
-    # print(ts[:20,:])
+    # print(ts[:20])
     # print(s)
 
-    init=np.array([1.0,-0.19,-0.2,-0.22,-0.21])
-    ts = solveModel(init,finaltime,model1)
-    s = translateToOrthants(ts)
-    i = encodeInts(s)
-    si = decodeInts(i)
-    # print(ts[60:80,:])
-    print(s)
-    print(i)
-    print(si)
-
-    # init=np.array([1.0,-0.2,-0.2,-0.1,-0.2])
+    # init=np.array([1.0,-1.0,-0.9,-0.8,-0.2])
     # ts = solveModel(init,finaltime,model4)
     # s = translateToOrthants(ts)
-    # print(ts[:20,:])
+    # print(ts[-50:])
     # print(s)
 
     # init=np.array([1.0,-0.1,-0.1,-0.1,-0.2])
     # ts = solveModel(init,finaltime,model4)
     # s = translateToOrthants(ts)
-    # print(ts[:20,:])
+    # print(ts[:20])
     # print(s)
+
+    # init=np.array([1.0,-0.19,-0.2,-0.22,-0.21])
+    # ts = solveModel(init,finaltime,model1)
+    # s = translateToOrthants(ts)
+    # i = encodeInts(s)
+    # si = decodeInts(i)
+    # print(ts[-25:])
+    # # print(ts)
+    # print(s)
+    # # print(i)
+    # # print(si)
+
+    init=np.array([3.0,-0.19,-0.2,-0.22,-0.21])
+    ts = solveModel(init,finaltime,model4,stoppingcriteria=[(0,0,0,0,0),(1,1,1,1,0)])
+    s = translateToOrthants(ts)
+    i = encodeInts(s)
+    si = decodeInts(i)
+    print(ts[-50:])
+    # print(ts)
+    print(s)
+    # print(i)
+    # print(si)
+
