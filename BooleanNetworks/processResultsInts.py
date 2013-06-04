@@ -1,41 +1,47 @@
 import numpy as np
-import cPickle, glob, os, itertools, gc
+import cPickle, glob, os, itertools
 import modelNetworks as mN
 
 #Note: This code might run into problems between little-endian and big-endian architectures. I haven't noticed any issues so far.
 
+def countme(results):
+    Ngood = float(len(results['allgoodtracks']))
+    Ntotal = Ngood + len(results['allbadtracks'])
+    tbt = []
+    uniquntranslatedcount = 0
+    totaluntranslatedcount = 0
+    for k,t in enumerate(results['translatedbadtracks']):
+        tbt.extend(t)
+        if t == []:
+            uniquntranslatedcount += 1
+            totaluntranslatedcount += results['badcounted'][k]
+    Ntotalmodified = Ntotal - totaluntranslatedcount
+    utbt,_=countClass(tbt)
+    uniqbad2goodtranslatedcount = len(utbt)
+    return uniqbad2goodtranslatedcount,uniquntranslatedcount,totaluntranslatedcount,Ntotal,Ngood,Ntotalmodified
+
+
 def printme(results=None,fname=None):
     if fname:
         results = cPickle.load(open(fname,'r'))
-    Ng = float(len(results['allgoodtracks']))
-    N = Ng + len(results['allbadtracks'])
+    uniqbad2goodtranslatedcount,uniquntranslatedcount,totaluntranslatedcount,Ntotal,Ngood,Ntotalmodified = countme(results)
     print('Total number of tracks across parameter space')
-    print(int(N))
+    print(int(Ntotal))
     print('Total number of good tracks')
-    print(int(Ng))
+    print(int(Ngood))
     print('Number of unique good tracks')
     print(len(results['uniqgoodtracks']))
     print('Number of unique bad tracks')
     print(len(results['uniqbadtracks']))
-
-    tbt = []
-    empties = 0
-    emptycount = 0
-    for k,t in enumerate(results['translatedbadtracks']):
-        tbt.extend(t)
-        if t == []:
-            empties += 1
-            emptycount += results['badcounted'][k]
-    utbt,_=countClass(tbt)
     print('Number of unique good tracks from translating bad tracks')
-    print(len(utbt))
+    print(uniqbad2goodtranslatedcount)
     print('Number of unique untranslated bad tracks')
-    print(empties)
+    print(uniquntranslatedcount)
     print('Total number of untranslated bad tracks')
-    print(emptycount)
-
-    Nmodified = N - emptycount
-
+    print(totaluntranslatedcount)
+    print('Modified number of total tracks across parameter space')
+    print(Ntotalmodified)
+    
     Keys = ['sharponeloop','oneloop','sharpperiodictwowaves','sharpperiodic','periodictwowaves','periodic','overlappedtwowaves','overlapped','diffequilibwithwave','diffequilib','noloop','unclassified']
 
     for k in Keys:
@@ -53,7 +59,7 @@ def printme(results=None,fname=None):
     for k in Keys:
         if 'count' not in k and 'note' not in k and len(results['classes'][k]) > 0:
             print(results['classes'][k + 'note'] + ': # good tracks; prop in good tracks; # good + translated; prop in total')
-            print((results['classes'][k+'count'],results['classes'][k+'count']/Ng,results['classes'][k + 'countmodified'],results['classes'][k + 'countmodified']/Nmodified))
+            print((results['classes'][k+'count'],results['classes'][k+'count']/Ngood,results['classes'][k + 'countmodified'],results['classes'][k + 'countmodified']/Ntotalmodified))
 
 def translateBadTrack(badtrack,goodtracks):
     '''
