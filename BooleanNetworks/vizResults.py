@@ -5,9 +5,9 @@ import matplotlib.pyplot as plt
 import cPickle, os, glob
 import processResultsInts as pRI
 
-def plots(x,y,show=1,hold=0,stylestr=None,leglabels=None,legloc=4,titlestr=None,xstr=None,ystr=None,xticklabels=None,fname=None):
+def plots(x,y,show=1,hold=0,stylestr=None,leglabels=None,legloc=4,titlestr=None,xstr=None,ystr=None,xticklabels=None,fname=None,tweak=0):
     if not hold:
-        fig = plt.figure()
+        fig = plt.figure(figsize=(12, 9))
     else:
         plt.hold('on')
     if leglabels == None and stylestr == None:
@@ -48,6 +48,8 @@ def plots(x,y,show=1,hold=0,stylestr=None,leglabels=None,legloc=4,titlestr=None,
         ax = plt.gca()
         ax.set_xticks(x)
         ax.set_xticklabels(xticklabels)
+        if tweak:
+            plt.setp(ax.get_xticklabels(), fontsize=14)
     mpl.rc('font',size=18)
     if fname != None:
         plt.savefig(fname,format='pdf', bbox_inches="tight")
@@ -80,4 +82,9 @@ if __name__ == '__main__':
             xticklabels=['(.5,-.5)','(.5,-1)','(.5,-2)','(1,-.5)','(1,-1)','(1,-2)','(1.5,-.5)','(1.5,-1)','(1.5,-2)','(2,-.5)','(2,-1)','(2,-2)']
         y = np.array([sharpones,broadones,periodiconewave,overlappedonewave,twowaves]).transpose()
         leglabels = ['sharp ones','broad ones','periodic < 2', 'overlapped < 2', 'two waves']
-        plots(x,y,show=1,hold=0,stylestr=['b','r','g','k','m'],leglabels=leglabels,legloc=0,titlestr='Model {0!s}'.format(k),xstr='Parameter set',ystr='Proportion of tracks',xticklabels=xticklabels,fname=None)
+        fname = os.path.join(maindir,'Model{0}Pics.pdf'.format(k))
+        if k == 1:
+            tweak = 0
+        else:
+            tweak = 1
+        plots(x,y,show=0,hold=0,stylestr=['b','r','g','k','m'],leglabels=leglabels,legloc=0,titlestr='Model {0!s}'.format(k),xstr='Parameter set',ystr='Proportion of tracks',xticklabels=xticklabels,fname=fname,tweak=tweak)
