@@ -102,7 +102,6 @@ def eqClasses(badtrack):
             step = steps[k]
             tp[r[0]:r[1],:] = step[c[k]]
         equivcls.append(tp)
-        del(tp)
         gc.collect()
     # if len(inds) > 1:
     #     print('More than one bad step')
@@ -288,8 +287,8 @@ def loadNSort(myfiles):
 if __name__ == "__main__":
     maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_randinits_biggerx/')
     # maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_perdt/')
-    # postprocess(maindir+'model1tracks*',maindir+'model1Results')
-    postprocess(maindir+'model2tracks*_arrays.pickle',maindir+'model2Results')    
+    postprocess(maindir+'model1tracks*_arrays.pickle',maindir+'model1Results')
+    # postprocess(maindir+'model2tracks*_arrays.pickle',maindir+'model2Results')    
     # postprocess(maindir+'model3tracks*',maindir+'model3Results')    
     # postprocess(maindir+'model4tracks*',maindir+'model4Results')
     # print('#########################################################')
