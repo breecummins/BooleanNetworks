@@ -23,7 +23,8 @@ def countme(results):
 
 def printme(results=None,fname=None):
     if fname:
-        results = cPickle.load(open(fname,'r'))
+        with open(fname, 'r') as of:
+            results = cPickle.load(of)
     uniqbad2goodtranslatedcount,uniquntranslatedcount,totaluntranslatedcount,Ntotal,Ngood,Ntotalmodified = countme(results)
     print('Total number of tracks across parameter space')
     print(int(Ntotal))
@@ -240,10 +241,9 @@ def separateBadTracks(myfiles):
     allgoodtracks = []
     allbadtracks = []
     try:
-        of = open(myfiles,'r')
+        with open(myfiles,'r') as of:
+            tracks = cPickle.load(of)
         print(myfiles)
-        tracks = cPickle.load(of)
-        of.close()
         for track in tracks:
             if not oneBitFlip(track):
                 allbadtracks.append(track)
@@ -252,9 +252,8 @@ def separateBadTracks(myfiles):
     except:     
         for f in glob.glob(myfiles):
             print(f)
-            of = open(f,'r')
-            tracks = cPickle.load(of)
-            of.close()
+            with open(f,'r') as of:
+                tracks = cPickle.load(of)
             for track in tracks:
                 if not oneBitFlip(track):
                     allbadtracks.append(track)
@@ -308,21 +307,20 @@ def loadNSort(myfiles):
 def postprocess(myfiles,fname=None):
     results = loadNSort(myfiles)
     if fname:
-        cPickle.dump(results,open(fname+'.pickle','w'))
+        with open(fname,'w') as of:
+            cPickle.dump(results,of)
     printme(results)
 
 def cast2Ints(myfile,fname):
     print(myfile)
-    of = open(myfile,'r')
-    tracks = cPickle.load(of)
-    of.close()
+    with open(myfile,'r') as of:
+        tracks = cPickle.load(of)
     newtracks = []
     for track in tracks:
         track = mN.encodeInts(track)
         newtracks.append(track)
-    nf = open(fname,'w')
-    cPickle.dump(newtracks,nf)
-    nf.close()
+    with open(fname,'w') as nf:
+        cPickle.dump(newtracks,nf)
 
 def changeFileNames(maindir):
     for f in glob.glob(maindir+'model*tracks*.pickle'):

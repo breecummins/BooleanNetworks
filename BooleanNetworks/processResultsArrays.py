@@ -4,12 +4,14 @@ import cPickle, glob, os, itertools, gc
 def postprocess(myfiles,fname=None):
     results = loadNSort(myfiles)
     if fname:
-        cPickle.dump(results,open(fname+'.pickle','w'))
+        with open(fname, 'w') as of:
+            cPickle.dump(results,of)
     printme(results)
 
 def printme(results=None,fname=None):
     if fname:
-        results = cPickle.load(open(fname,'r'))
+        with open(fname, 'r') as of:
+            results = cPickle.load(of)
     Ng = float(len(results['allgoodtracks']))
     N = Ng + len(results['allbadtracks'])
     print('Total number of tracks across parameter space')
@@ -204,9 +206,8 @@ def separateBadTracks(myfiles):
     allbadtracks = []
     for f in glob.glob(myfiles):
         # print(f)
-        of = open(f,'r')
-        tracks = cPickle.load(of)
-        of.close()
+        with open(f, 'r') as of:
+            tracks = cPickle.load(of)
         for track in tracks:
             if not oneBitFlip(track):
                 allbadtracks.append(track)

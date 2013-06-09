@@ -16,9 +16,8 @@ def partitionOrthant(model=mN.model1,fname=os.path.expanduser('~/temp/model1trac
                     t = mN.translateToOrthants(ts)
                     tracks.append(mN.encodeInts(t))
     fname += '.pickle'
-    of = open(fname,'w')
-    cPickle.dump(tracks,of)
-    of.close()
+    with open(fname, 'w') as of:
+        cPickle.dump(tracks,of)
 
 def alterParams(maindir,Alist=[0.5,1.0,1.5,2.0],Blist=[-0.5,-1.0,-2.0],per=[0.0,-0.01,0.01,0.02],dt=0.01):
     for k,A in enumerate(Alist):
@@ -46,22 +45,19 @@ def partitionOrthantRandInits(inits,model=mN.model1,fname=os.path.expanduser('~/
         t = mN.translateToOrthants(ts)
         tracks.append(mN.encodeInts(t))
     fname += '.pickle'
-    of = open(fname,'w')
-    cPickle.dump(tracks,of)
-    of.close()
+    with open(fname, 'w') as of:
+        cPickle.dump(tracks,of)
 
 def randInits(maindir,Alist=[0.5,1.0,1.5,2.0],Blist=[-0.5,-1.0,-2.0],dt=0.01,xinit=1.0,numinits=2000):
     if 'inits.pickle' not in os.listdir(maindir):
         print('Generating new initial conditions...')
         inits = -2.1 + 2*np.random.random((numinits,4))
-        of = open(os.path.join(maindir,'inits.pickle'),'w')
-        cPickle.dump({'inits':inits},of)
-        of.close()
+        with open(os.path.join(maindir,'inits.pickle'), 'w') as of:
+            cPickle.dump({'inits':inits},of)
     else:
         print('Using existing initial conditions file...')
-        of = open(os.path.join(maindir,'inits.pickle'),'r')
-        idict=cPickle.load(of)
-        of.close()
+        with open(os.path.join(maindir,'inits.pickle'),'r') as of:
+            idict=cPickle.load(of)
         inits=idict['inits']
     initsx = xinit*np.ones(5)
     initsx[:,1:] = inits
@@ -94,14 +90,12 @@ def randInitsWithX(maindir,Alist=[0.5,1.0,1.5,2.0],Blist=[-0.5,-1.0,-2.0],dt=0.0
         print('Generating new initial conditions...')
         inits = -2.1 + 2*np.random.random((numinits,5))
         inits[:,0] = 10.0 - 9*np.random.random((numinits,))
-        of = open(os.path.join(maindir,'inits.pickle'),'w')
-        cPickle.dump(inits,of)
-        of.close()
+        with open(os.path.join(maindir,'inits.pickle'), 'w') as of:
+            cPickle.dump(inits,of)
     else:
         print('Using existing initial conditions file...')
-        of = open(os.path.join(maindir,'inits.pickle'),'r')
-        inits=cPickle.load(of)
-        of.close()
+        with open(os.path.join(maindir,'inits.pickle'),'r') as of:
+            inits=cPickle.load(of)
     for k,A in enumerate(Alist):
         print('Model 1, A = ' + str(A))
         L0 = partial(mN.L0,A0=A)
