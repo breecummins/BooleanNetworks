@@ -23,8 +23,7 @@ def countme(results):
 
 def printme(results=None,fname=None):
     if fname:
-        with open(fname, 'r') as of:
-            results = cPickle.load(of)
+        results = cPickle.load(open(fname, 'r'))
     uniqbad2goodtranslatedcount,uniquntranslatedcount,totaluntranslatedcount,Ntotal,Ngood,Ntotalmodified = countme(results)
     print('Total number of tracks across parameter space')
     print(int(Ntotal))
@@ -241,8 +240,7 @@ def separateBadTracks(myfiles):
     allgoodtracks = []
     allbadtracks = []
     try:
-        with open(myfiles,'r') as of:
-            tracks = cPickle.load(of)
+        tracks = cPickle.load(open(myfiles,'r'))
         print(myfiles)
         for track in tracks:
             if not oneBitFlip(track):
@@ -252,8 +250,7 @@ def separateBadTracks(myfiles):
     except:     
         for f in glob.glob(myfiles):
             print(f)
-            with open(f,'r') as of:
-                tracks = cPickle.load(of)
+            tracks = cPickle.load(open(f,'r'))
             for track in tracks:
                 if not oneBitFlip(track):
                     allbadtracks.append(track)
@@ -307,20 +304,17 @@ def loadNSort(myfiles):
 def postprocess(myfiles,fname=None):
     results = loadNSort(myfiles)
     if fname:
-        with open(fname,'w') as of:
-            cPickle.dump(results,of)
+        cPickle.dump(results,open(fname,'w'))
     printme(results)
 
 def cast2Ints(myfile,fname):
     print(myfile)
-    with open(myfile,'r') as of:
-        tracks = cPickle.load(of)
+    tracks = cPickle.load(open(myfile,'r'))
     newtracks = []
     for track in tracks:
         track = mN.encodeInts(track)
         newtracks.append(track)
-    with open(fname,'w') as nf:
-        cPickle.dump(newtracks,nf)
+    cPickle.dump(newtracks,open(fname,'w'))
 
 def changeFileNames(maindir):
     for f in glob.glob(maindir+'model*tracks*.pickle'):

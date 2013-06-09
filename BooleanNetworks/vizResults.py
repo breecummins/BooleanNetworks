@@ -66,8 +66,7 @@ if __name__ == '__main__':
         twowaves = []
         for myfile in glob.glob(maindir+'model{0!s}tracks*_results.pickle'.format(k)):
             print(myfile)
-            with open(myfile,'r') as of:
-                res = cPickle.load(of)
+            res = cPickle.load(open(myfile,'r'))
             Ntotalmodified = pRI.countme(res)
             sharpones.append(res['classes']['sharponeloopcountmodified'] / Ntotalmodified[-1])
             broadones.append(res['classes']['oneloopcountmodified'] / Ntotalmodified[-1])
