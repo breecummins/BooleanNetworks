@@ -74,7 +74,7 @@ def model4(t,y,L0=L0, L1=L1, L2=L1, L3=L1, L4=L4):
     dy[4] += L4(y[0],y[2],y[3])
     return dy
 
-def solveModel(init,finaltime,model=model1,dt=0.01,stoppingcriteria=[(0,0,0,0,0)]):
+def solveModel(init,finaltime,model,dt=0.01,stoppingcriteria=[(0,0,0,0,0)]):
     times = np.arange(0,finaltime,dt)
     timeseries = [np.array(init)]
     for k,ti in enumerate(times[:-1]):

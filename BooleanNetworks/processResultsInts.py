@@ -326,11 +326,11 @@ def changeFileNames(maindir):
 
 if __name__ == "__main__":
     maindir = os.path.expanduser('~/SimulationResults/BooleanNetworks/dataset_randinits_x1to10/')
-    for k in range(1,5):
-        for myfile in glob.glob(maindir+'model{0!s}tracks*.pickle'.format(k)):
-            if '_results' != myfile:
-                savefile = myfile[:-7] + '_results'
-                postprocess(myfile,savefile)
+    # for k in range(1,5):
+    #     for myfile in glob.glob(maindir+'model{0!s}tracks*.pickle'.format(k)):
+    #         if '_results' != myfile:
+    #             savefile = myfile[:-7] + '_results'
+    #             postprocess(myfile,savefile)
 
     # # for f in glob.glob(maindir+'model*tracks*'):
     # #     cast2Ints(f,f[:-7]+'_ints.pickle')
@@ -340,9 +340,9 @@ if __name__ == "__main__":
     # # postprocess(maindir+'model2tracks*.pickle',maindir+'model2Results')    
     # # postprocess(maindir+'model3tracks*.pickle',maindir+'model3Results')    
     # # postprocess(maindir+'model4tracks*.pickle',maindir+'model4Results')
-    # print('#########################################################')
-    # print('Model 1')
-    # printme(fname=maindir + 'model1Results.pickle')
+    print('#########################################################')
+    print('Model 1')
+    printme(fname=maindir + 'model1Results.pickle')
     # print('#########################################################')
     # print('Model 2')
     # printme(fname=maindir + 'model2Results.pickle')
