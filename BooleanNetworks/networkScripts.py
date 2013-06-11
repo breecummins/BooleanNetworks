@@ -2,6 +2,7 @@ import numpy as np
 import os, random, cPickle
 from functools import partial
 import modelNetworks as mN
+import translations as trans
 
 def partitionOrthant(model=mN.model1,fname=os.path.expanduser('~/temp/model1tracks'),orthrange = np.arange(-0.1,-2.2,-0.2),per=[0.0,-0.01,0.01,0.02],dt=0.01,finaltime=5.0,stoppingcriteria=[(0,0,0,0,0)]):
     
@@ -13,8 +14,8 @@ def partitionOrthant(model=mN.model1,fname=os.path.expanduser('~/temp/model1trac
                     random.shuffle(per)
                     init = np.array([1.0,i+per[0],j+per[1],k+per[2],l+per[3]])
                     ts = mN.solveModel(init,finaltime,model,dt,stoppingcriteria)
-                    t = mN.translateToOrthants(ts)
-                    tracks.append(mN.encodeInts(t))
+                    t = trans.translateToOrthants(ts)
+                    tracks.append(trans.encodeInts(t))
     fname += '.pickle'
     cPickle.dump(tracks,open(fname, 'w'))
 
@@ -41,8 +42,8 @@ def partitionOrthantRandInits(inits,model=mN.model1,fname=os.path.expanduser('~/
     tracks = []
     for k in range(inits.shape[0]):
         ts = mN.solveModel(inits[k,:],finaltime,model,dt,stoppingcriteria)
-        t = mN.translateToOrthants(ts)
-        tracks.append(mN.encodeInts(t))
+        t = trans.translateToOrthants(ts)
+        tracks.append(trans.encodeInts(t))
     fname += '.pickle'
     cPickle.dump(tracks,open(fname, 'w'))
 
