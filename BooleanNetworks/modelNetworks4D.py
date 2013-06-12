@@ -3,33 +3,47 @@ import numpy as np
 from functools import partial
 from translations import translateToOrthants, encodeInts, decodeInts
 
-def L0(y2,z,alpha14=None,alpha1=20.0,K3=4.0):
+def L0(y2,z,alpha0=None,beta0=20.0,K1=4.0):
     if y2 > 0 and z > 0:
-        return alpha14 - K3
+        return alpha0 - K3
     elif y2 <= 0 and z > 0:
-        return -K3
+        return -K1
     elif y2 > 0 and z <= 0:
-        return alpha1 + alpha14 - K3
+        return beta0 + alpha0 - K1
     else:
-        return alpha1 - K3
+        return beta0 - K1
 
-def L1(x,alpha=20,K=4.0,thresh=0.0):
-    if x > thresh:
+def LR(z,beta=20.0,K1=4.0):
+    if z > 0:
+        return -K
+    else:
+        return alpha-K
+
+def L1(x,alpha=20,K=4.0):
+    if x > 0:
         return alpha-K
     else:
         return -K
 
-def L3(x,y2,alpha21=None,alpha22=None,K1=4.0,threshx=1.0,threshy=0.0):
-    if x > threshx and y2 > threshy:
-        return alpha21 + alpha22 - K1
-    elif x > threshx and y2 <= threshy:
-        return alpha21 - K1
-    elif x <= threshx and y2 > threshy:
-        return alpha22 - K1
+def L3(x,y2,alpha3=None,alpha4=None,R0=4.0):
+    if x > 0 and y2 > 0:
+        return alpha3 + alpha4 - R0
+    elif x > 0 and y2 <= 0:
+        return alpha3 - R0
+    elif x <= 0 and y2 > 0:
+        return alpha4 - R0
     else:
-        return -K1
+        return -R0
 
-def model1(t,y,L0=L0, L1=L1, L2=partial(L1,K=10.0), L3=partial(L1,alpha=None,thresh=1.0)):
+def model1(t,y,L0=LR, L1=L1, L2=partial(L1,K=10.0), L3=L3):
+    dy = -y
+    dy[0] += L0(y[3])
+    dy[1] += L1(y[0])
+    dy[2] += L2(y[1])
+    dy[3] += L3(y[0],y[2])
+    return dy
+
+def model1dot5(t,y,L0=L0, L1=L1, L2=partial(L1,K=10.0), L3=partial(L1,alpha=None)):
     dy = -y
     dy[0] += L0(y[2],y[3])
     dy[1] += L1(y[0])
