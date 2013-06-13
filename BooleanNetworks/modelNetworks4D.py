@@ -1,41 +1,17 @@
 import rk4
 import numpy as np
 from functools import partial
-from translations import translateToOrthants, encodeInts, decodeInts
+import translations as trans
+import HeavisideFunctions as HF
 
-def L0(y2,z,alpha0=None,beta0=20.0,K1=4.0):
-    if y2 > 0 and z > 0:
-        return alpha0 - K3
-    elif y2 <= 0 and z > 0:
-        return -K1
-    elif y2 > 0 and z <= 0:
-        return beta0 + alpha0 - K1
-    else:
-        return beta0 - K1
+L1=partial(HF.Activate,alpha=20.0,K=4.0)
+L2=partial(HF.Activate,alpha=20.0,K=10.0)
+L0R=partial(HF.Repress,beta=20.0,K=4.0)
+L0AR=partial(HF.ActivatePlusRepress,alpha=10.0,beta=20.0,K=4.0)
+L3A=partial(HF.Activate,alpha=10.0,K=4.0)
+L3AA=partial(HF.ActivatePlusActivate,alpha1=10.0,alpha2=10.0,K=4.0)
 
-def LR(z,beta=20.0,K1=4.0):
-    if z > 0:
-        return -K
-    else:
-        return alpha-K
-
-def L1(x,alpha=20,K=4.0):
-    if x > 0:
-        return alpha-K
-    else:
-        return -K
-
-def L3(x,y2,alpha3=None,alpha4=None,R0=4.0):
-    if x > 0 and y2 > 0:
-        return alpha3 + alpha4 - R0
-    elif x > 0 and y2 <= 0:
-        return alpha3 - R0
-    elif x <= 0 and y2 > 0:
-        return alpha4 - R0
-    else:
-        return -R0
-
-def model1(t,y,L0=LR, L1=L1, L2=partial(L1,K=10.0), L3=L3):
+def model1(t,y,L0=L0R, L1=L1, L2=L2, L3=L3AA):
     dy = -y
     dy[0] += L0(y[3])
     dy[1] += L1(y[0])
@@ -43,7 +19,7 @@ def model1(t,y,L0=LR, L1=L1, L2=partial(L1,K=10.0), L3=L3):
     dy[3] += L3(y[0],y[2])
     return dy
 
-def model1dot5(t,y,L0=L0, L1=L1, L2=partial(L1,K=10.0), L3=partial(L1,alpha=None)):
+def model1dot5(t,y,L0=L0AR, L1=L1, L2=L2, L3=L3A):
     dy = -y
     dy[0] += L0(y[2],y[3])
     dy[1] += L1(y[0])
@@ -51,7 +27,7 @@ def model1dot5(t,y,L0=L0, L1=L1, L2=partial(L1,K=10.0), L3=partial(L1,alpha=None
     dy[3] += L3(y[0])
     return dy
 
-def model2(t,y,L0=L0, L1=L1, L2=partial(L1,K=10.0), L3=L3):
+def model2(t,y,L0=L0AR, L1=L1, L2=L2, L3=L3AA):
     dy = -y
     dy[0] += L0(y[2],y[3])
     dy[1] += L1(y[0])
@@ -59,7 +35,7 @@ def model2(t,y,L0=L0, L1=L1, L2=partial(L1,K=10.0), L3=L3):
     dy[3] += L3(y[0],y[2])
     return dy
 
-def solveModel(init,finaltime,model,dt=0.01,stoppingcriteria=[(0,0,0,0,0)]):
+def solveModel(init,finaltime,model,dt=0.01,stoppingcriteria=[None]):
     times = np.arange(0,finaltime,dt)
     timeseries = [np.array(init)]
     for k,ti in enumerate(times[:-1]):
@@ -76,16 +52,30 @@ if __name__ == '__main__':
     # init=np.array([10.,-2.5,-1.5,-1.0])
     # init=np.array([1.,-2.5,-1.5,-1.0])
     # init=np.array([10.,-1.0,-1.5,-1.0])
-    ts = solveModel(init,finaltime,partial(model1,L0=partial(L0,alpha14=4.0),L3=partial(L1,alpha=2.0,thresh=1.0)),dt=dt)
+
+    print('###################################')
+    print('Model 1')
+    ts = solveModel(init,finaltime,model1,dt=dt)
     # print(ts)
-    s = translateToOrthants(ts)
+    s = trans.translateToOrthants(ts)
     print(s)
-    i = encodeInts(s,4)
+    i = trans.encodeInts(s,4)
     print(i)
 
-    ts = solveModel(init,finaltime,partial(model2,L0=partial(L0,alpha14=5.0),L3=partial(L3,alpha21=20.0,alpha22=20.0)),dt=dt)
+    print('###################################')
+    print('Model 1.5')
+    ts = solveModel(init,finaltime,model1dot5,dt=dt)
     # print(ts)
-    s = translateToOrthants(ts)
+    s = trans.translateToOrthants(ts)
     print(s)
-    i = encodeInts(s,4)
+    i = trans.encodeInts(s,4)
+    print(i)
+
+    print('###################################')
+    print('Model 2')
+    ts = solveModel(init,finaltime,model2,dt=dt)
+    # print(ts)
+    s = trans.translateToOrthants(ts)
+    print(s)
+    i = trans.encodeInts(s,4)
     print(i)
