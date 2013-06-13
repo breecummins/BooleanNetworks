@@ -1,44 +1,19 @@
 import rk4
 import numpy as np
 from functools import partial
+import HeavisideFunctions as HF
 
-def L1(x,A1=1.0,B1=-1.0):
-    if x > 0:
-        return A1
-    else:
-        return B1
+L1=partial(HF.Activate,alpha=20.0,K=4.0)
+L2=partial(HF.Activate,alpha=20.0,K=10.0)
+L3=partial(HF.Activate,alpha=20.0,K=10.0)
+L0R=partial(HF.Repress,beta=20.0,K=4.0)
+L0AR=partial(HF.ActivatePlusRepress,alpha=10.0,beta=20.0,K=4.0)
+L4A=partial(HF.Activate,alpha=10.0,K=4.0)
+L4AA=partial(HF.ActivatePlusActivate,alpha1=10.0,alpha2=10.0,K=4.0)
+L4AAR=partial(HF.ActivatePlusActivatePlusRepress,alpha1=10.0,alpha2=10.0,beta=20.0,K=4.0)
 
-def L0(y,z,A0=1.0,B0=-1.0,C0=-1.0,D0=-2.0):
-    if y >0 and z <=0:
-        return A0
-    elif y <=0 and z<=0:
-        return B0
-    elif y>0 and z>0:
-        return C0
-    else:
-        return D0
 
-def L4(x,y2,y3,A0=1.0,B0=-2.0,C0=2.0,D0=1.0,A1=-1.0,C1=-0.5,D1=-1.0):
-    if y3 <=0: #repression off
-        if x >0 and y2 <=0:
-            return A0
-        elif x <=0 and y2<=0:
-            return B0
-        elif x>0 and y2>0:
-            return C0
-        else:
-            return D0
-    elif y3 > 0: #repression on
-        if x >0 and y2 <=0:
-            return A1
-        elif x <=0 and y2<=0:
-            return B0 -1.0
-        elif x>0 and y2>0:
-            return C1
-        else:
-            return D1
-
-def model1(t,y,L0=L0, L1=L1, L2=L1, L3=L1, L4=L1):
+def model1(t,y,L0=L0AR, L1=L1, L2=L2, L3=L3, L4=L4A):
     dy = -y
     dy[0] += L0(y[3],y[4])
     dy[1] += L1(y[0])
@@ -47,7 +22,7 @@ def model1(t,y,L0=L0, L1=L1, L2=L1, L3=L1, L4=L1):
     dy[4] += L4(y[0])
     return dy
 
-def model2(t,y,L0=L0, L1=L1, L2=L1, L3=L1, L4=partial(L0,A0=1.0,B0=-2.0,C0=2.0,D0=1.0)):
+def model2(t,y,L0=L0AR, L1=L1, L2=L2, L3=L3, L4=L4AA):
     dy = -y
     dy[0] += L0(y[3],y[4])
     dy[1] += L1(y[0])
@@ -56,7 +31,16 @@ def model2(t,y,L0=L0, L1=L1, L2=L1, L3=L1, L4=partial(L0,A0=1.0,B0=-2.0,C0=2.0,D
     dy[4] += L4(y[0],y[2])
     return dy
 
-def model3(t,y,L0=L0, L1=L1, L2=L1, L3=L1, L4=partial(L0,A0=1.0,B0=-2.0,C0=2.0,D0=1.0)):
+def model2dot5(t,y,L0=L0R, L1=L1, L2=L2, L3=L3, L4=L4AA):
+    dy = -y
+    dy[0] += L0(y[4])
+    dy[1] += L1(y[0])
+    dy[2] += L2(y[1])
+    dy[3] += L3(y[2])
+    dy[4] += L4(y[0],y[2])
+    return dy
+
+def model3(t,y,L0=L0AR, L1=L1, L2=L2, L3=L3, L4=L4AA):
     dy = -y
     dy[0] += L0(y[3],y[4])
     dy[1] += L1(y[0])
@@ -65,7 +49,16 @@ def model3(t,y,L0=L0, L1=L1, L2=L1, L3=L1, L4=partial(L0,A0=1.0,B0=-2.0,C0=2.0,D
     dy[4] += L4(y[0],y[3])
     return dy
 
-def model4(t,y,L0=L0, L1=L1, L2=L1, L3=L1, L4=L4):
+def model3dot5(t,y,L0=L0R, L1=L1, L2=L2, L3=L3, L4=L4AA):
+    dy = -y
+    dy[0] += L0(y[4])
+    dy[1] += L1(y[0])
+    dy[2] += L2(y[1])
+    dy[3] += L3(y[2])
+    dy[4] += L4(y[0],y[3])
+    return dy
+
+def model4(t,y,L0=L0AR, L1=L1, L2=L2, L3=L3, L4=L4AAR):
     dy = -y
     dy[0] += L0(y[3],y[4])
     dy[1] += L1(y[0])

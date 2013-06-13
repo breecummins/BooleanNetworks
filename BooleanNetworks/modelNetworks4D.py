@@ -1,7 +1,6 @@
 import rk4
 import numpy as np
 from functools import partial
-import translations as trans
 import HeavisideFunctions as HF
 
 L1=partial(HF.Activate,alpha=20.0,K=4.0)
@@ -46,6 +45,7 @@ def solveModel(init,finaltime,model,dt=0.01,stoppingcriteria=[None]):
     return np.array(timeseries)
 
 if __name__ == '__main__':
+    import translations as trans
     finaltime = 10.0
     dt=0.01
     init=np.array([6.,-3.,-9.,-3.9])
