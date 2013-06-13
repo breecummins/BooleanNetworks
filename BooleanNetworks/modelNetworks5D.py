@@ -1,4 +1,3 @@
-import rk4
 import numpy as np
 from functools import partial
 import HeavisideFunctions as HF
@@ -67,18 +66,9 @@ def model4(t,y,L0=L0AR, L1=L1, L2=L2, L3=L3, L4=L4AAR):
     dy[4] += L4(y[0],y[2],y[3])
     return dy
 
-def solveModel(init,finaltime,model,dt=0.01,stoppingcriteria=[(0,0,0,0,0)]):
-    times = np.arange(0,finaltime,dt)
-    timeseries = [np.array(init)]
-    for k,ti in enumerate(times[:-1]):
-        timeseries.append(rk4.solverp(ti,timeseries[k],dt,model))
-        if np.mod(k,50) == 0 and np.any([tuple(np.int8(timeseries[-1] > 0)) == sc for sc in stoppingcriteria]):
-            print('Reached equilibrium orthant. Stopping time integration at {0:0.02f}.'.format(ti))
-            break
-    return np.array(timeseries)
-
 if __name__=='__main__':
     from translations import translateToOrthants, translateDerivativesToOrthants,encodeInts, decodeInts
+    from networkScripts import solveModel
     finaltime = 5.0
     # #periodic loop
     # init = np.array([1.0,0.1,0.1,0.1,-1.0])
