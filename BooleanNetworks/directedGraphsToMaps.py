@@ -51,18 +51,61 @@ def makeMap(acts,reps):
 
     '''
     alldeps = acts+reps
-    allcombos = itertools.chain(*[itertools.combinations(range(len(alldeps)),n) for n in range(len(alldeps)+1)])
+    allcombos = itertools.chain(*[itertools.combinations(alldeps,n) for n in range(len(alldeps)+1)])
     nodestates = []
-    # nodeinds = []
+    nodeinds = []
     for c in allcombos:
-        # nodeinds.append(tuple([alldeps[k] for k in c]))
+        nodeinds.append(c)
         ns = [0]*len(acts) + [1]*len(reps)
         for j in c:
-            if j < len(acts):
-                ns[j] = 1
+            if j in acts:
+                ns[alldeps.index(j)] = 1
             else:
-                ns[j] = 0
+                ns[alldeps.index(j)] = 0
         nodestates.append(tuple(ns))
+    nodestateints = [int(''.join([str(a) for a in n]),2) for n in nodestates]
+
+    def recurseMaps(maps,inds,templ):
+        for p in itertools.product([1,0],repeat=len(inds)):
+            tp = list(templ)
+            for k,j in enumerate(inds):
+                tp[j] = p[k]
+            ons = [s for i,s in enumerate(inds) if p[i] == 1]
+            for k1,t in enumerate(tp):
+                if t == None and any([nodestateints[k1] & nodestateints[s] for s in ons]):
+                    tp[k1] = 1
+            nonecount = tp.count(None)
+            if nonecount == 0:
+                maps.append(tp) 
+            elif nonecount == 1:
+                tp0 = list(tp)
+                tp1 = list(tp)
+                ind = tp.index(None)
+                tp0[ind]=0
+                tp1[ind]=1
+                maps.append(tp0)
+                maps.append(tp1)
+            else:
+                noneinds = [j for j in range(len(tp)) if tp[j]==None]
+                minsums = min([sum(nodestates[j]) for j in noneinds])
+                minsuminds = [j for j in noneinds if sum(nodestates[j]) == minsums]
+                maps = recurseMaps(maps,minsuminds,tp)
+        return maps
+
+
+    template = [None]*len(nodestates)
+    template[nodestateints.index(0)] = 0
+    template[nodestateints.index(2**len(alldeps)-1)] = 1
+    # find indices of single values
+    singleinds = [j for j in range(len(nodestates)) if sum(nodestates[j])==1]
+    if len(singleinds) != len(alldeps):
+        raise ValueError('There is a logic bug here. Squish it.')
+
+    maps = recurseMaps([],singleinds,template)
+
+    print(nodeinds)
+    print(nodestates)
+    print(maps)
     # need to assign 1 or 0 for each nodestate consistent with Hill function framework
     # return alldeps, nodestates, maps
 
