@@ -72,7 +72,7 @@ def makeMap(acts,reps):
                 tp[j] = p[k]
             ons = [s for i,s in enumerate(inds) if p[i] == 1]
             for k1,t in enumerate(tp):
-                if t == None and any([nodestateints[k1] & nodestateints[s] for s in ons]):
+                if t == None and any([nodestateints[k1] & nodestateints[s] == nodestateints[s] for s in ons]):
                     tp[k1] = 1
             nonecount = tp.count(None)
             if nonecount == 0:
