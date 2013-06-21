@@ -53,15 +53,15 @@ def makeMap(acts,reps):
     alldeps = acts+reps
     allcombos = itertools.chain(*[itertools.combinations(alldeps,n) for n in range(len(alldeps)+1)])
     nodestates = []
+    basestate = [0]*len(acts) + [1]*len(reps)
     for c in allcombos:
-        ns = [0]*len(acts) + [1]*len(reps)
+        ns = list(basestate)
         for j in c:
             if j in acts:
                 ns[alldeps.index(j)] = 1
             else:
                 ns[alldeps.index(j)] = 0
         nodestates.append(tuple(ns))
-    nodestateints = [int(''.join([str(a) for a in n]),2) for n in nodestates]
 
     def recurseMaps(maps,inds,templ):
         # start by taking combinations of 0's and 1's for the given state indices
@@ -69,39 +69,78 @@ def makeMap(acts,reps):
             tp = list(templ)
             for k,j in enumerate(inds):
                 tp[j] = p[k]
-            ons = [s for i,s in enumerate(inds) if p[i] == 1]
-            # propagate the 'ons' forward; i.e., if (0,0,1) maps to 1, then everything 
-            # else with (0,0,1) as a subset (e.g. (1,0,1)) must map to 1 as well
+            if len(acts) > 0:
+                actons = [s for i,s in enumerate(inds) if p[i] == 1 and sum(nodestates[s][:len(acts)]) >= 1]
+                actints = [int(''.join([str(a) for a in n]),2) for n in [nodestates[k][:len(acts)] for k in actons]]
+            if len(reps) > 0:
+                repoff = [s for i,s in enumerate(inds) if p[i] == 1 and sum(nodestates[s][len(acts):]) < len(reps)]
+                repints = [int(''.join([str(a) for a in n]),2) for n in [nodestates[k][len(acts):] for k in repoff]]
+            # propagate the 'actons' and 'repoff' forward; i.e., if first place is an 
+            # activator and (1,0,0) maps to 1, then everything else with 1 in the first 
+            # place (e.g. (1,0,1)) must map to 1 as well. Likewise, if last place is 
+            # a repressor and (0,0,0) maps to 1, then everything else with a 0 in the 
+            # last place must map to 1 as well.
             for k1,t in enumerate(tp):
-                if t == None and any([nodestateints[k1] & nodestateints[s] == nodestateints[s] for s in ons]):
-                    tp[k1] = 1
+                if len(acts) > 0:
+                    baseactint = int(''.join([str(a) for a in nodestates[k1][:len(acts)]]),2)
+                    if t == None and any([(baseactint & a) == a for a in actints]):
+                        tp[k1] = 1
+                if len(reps) > 0:
+                    baserepint = int(''.join([str(a) for a in nodestates[k1][len(acts):]]),2)
+                    if t == None and any([(baserepint | r) == r for r in repints]):
+                        tp[k1] = 1
             nonecount = tp.count(None)
             if nonecount == 0:
                 # if the map is complete, record it and continue
-                maps.append(tp) 
+                maps.append(tp)
             elif nonecount == 1:
                 # if there are two possible maps, record them and continue
                 ind = tp.index(None)
-                tp[ind]=0
-                maps.append(tp)
+                tp0 = list(tp)
+                tp0[ind]=0
+                maps.append(tp0)
                 tp[ind]=1
                 maps.append(tp)
             else:
                 # There could be 4 or more possible maps, have to check. 
-                # Find the indices of the smallest number of 'on' activators + 'off' repressors
+                # Find the indices of the smallest number of 'on' activators or 'off' repressors
                 # and run the algorithm again.
-                noneinds = [(j,sum(nodestates[j])) for j in range(len(tp)) if tp[j]==None]
-                minsums = min([n[1] for n in noneinds])
-                minsuminds = [n[0] for n in noneinds if n[1] == minsums]
-                maps = recurseMaps(maps,minsuminds,tp)
+                noneinds = [j for j in range(len(tp)) if tp[j]==None]
+                if len(acts) > 0:
+                    actsums = [sum(nodestates[j][:len(acts)]) for j in noneinds]
+                    try:
+                        minactsums = min([a for a in actsums if a !=0])
+                    except:
+                        minactsums = float('inf')
+                else:
+                    minactsums = float('inf')
+                if len(reps) > 0:
+                    repsums = [len(reps) - sum(nodestates[j][len(acts):]) for j in noneinds]
+                    try:
+                        minrepsums = min([r for r in repsums if r !=0])
+                    except:
+                        minrepsums = float('inf')
+                else:
+                    minrepsums = float('inf')
+                if minactsums == minrepsums:
+                    newinds = [j for k,j in enumerate(noneinds) if actsums[k] == minactsums or repsums[k] == minrepsums]
+                elif minactsums < minrepsums:
+                    newinds = [j for k,j in enumerate(noneinds) if actsums[k] == minactsums]
+                elif minrepsums < minactsums:
+                    try:
+                        newinds = [j for k,j in enumerate(noneinds) if repsums[k] == minrepsums]
+                    except:
+                        raise ValueError('Node has no activators or repressors.')
+                maps = recurseMaps(maps,newinds,tp)
         return maps
 
     template = [None]*len(nodestates)
-    template[nodestateints.index(0)] = 0
-    template[nodestateints.index(2**len(alldeps)-1)] = 1
+    basestate = tuple(basestate)
+    template[nodestates.index(basestate)] = 0
+    highstate = tuple([int(not(b)) for b in basestate])
+    template[nodestates.index(highstate)] = 1
     if len(nodestates) > 2:
-        # find indices of single positive values ('on' activator or 'off' repressor)
-        singleinds = [j for j in range(len(nodestates)) if sum(nodestates[j])==1]
+        singleinds = [ j for j in range(len(nodestates)) if ( ( sum(nodestates[j][:len(acts)])==1 and sum(nodestates[j][len(acts):]) == len(reps) ) or (sum(nodestates[j][len(acts):])==len(reps)-1 and sum(nodestates[j][:len(acts)])==0) ) and template[j] == None ]
         maps = recurseMaps([],singleinds,template)
     else:
         maps = [template]
