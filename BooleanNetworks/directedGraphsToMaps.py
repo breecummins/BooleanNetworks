@@ -25,6 +25,10 @@ def nodesAndSigns(listofedges):
         targets.append(e[1])
         activators.append(e[2])
     nodes = set(targets)
+    #NEW_FEATURE: I think it is only required to have each node be a source; it does not 
+    #necessarily also need to be a target. However, target nodes are the only ones that
+    #need maps, and there will be need to be code changes because nodestates and nodes 
+    #won't have the same length anymore.
     if nodes != set(sources):
         raise ValueError('All nodes must have at least one incoming and one outgoing edge.')
     nodes = tuple(nodes)
@@ -51,16 +55,11 @@ def makeMap(acts,reps):
 
     '''
     alldeps = acts+reps
+    basestate = [0]*len(acts) + [1]*len(reps)
     allcombos = itertools.chain(*[itertools.combinations(alldeps,n) for n in range(len(alldeps)+1)])
     nodestates = []
-    basestate = [0]*len(acts) + [1]*len(reps)
     for c in allcombos:
-        ns = list(basestate)
-        for j in c:
-            if j in acts:
-                ns[alldeps.index(j)] = 1
-            else:
-                ns[alldeps.index(j)] = 0
+        ns = [int(not(basestate[j])) if alldeps[j] in c else basestate[j] for j in range(len(basestate))]
         nodestates.append(tuple(ns))
 
     def recurseMaps(maps,inds,templ):
@@ -75,11 +74,11 @@ def makeMap(acts,reps):
             if len(reps) > 0:
                 repoff = [s for i,s in enumerate(inds) if p[i] == 1 and sum(nodestates[s][len(acts):]) < len(reps)]
                 repints = [int(''.join([str(a) for a in n]),2) for n in [nodestates[k][len(acts):] for k in repoff]]
-            # propagate the 'actons' and 'repoff' forward; i.e., if first place is an 
-            # activator and (1,0,0) maps to 1, then everything else with 1 in the first 
-            # place (e.g. (1,0,1)) must map to 1 as well. Likewise, if last place is 
+            # propagate the 'actons' and 'repoff' forward; i.e., if we have (act, act, rep)  
+            # and (1,0,1) maps to 1, then everything else with 1 in the first 
+            # place ((1,0,0),(1,1,0),(1,1,1)) must map to 1 as well. Likewise, if last place is 
             # a repressor and (0,0,0) maps to 1, then everything else with a 0 in the 
-            # last place must map to 1 as well.
+            # last place must map to 1 as well ((1,0,0), etc).
             for k1,t in enumerate(tp):
                 if len(acts) > 0:
                     baseactint = int(''.join([str(a) for a in nodestates[k1][:len(acts)]]),2)
@@ -102,35 +101,26 @@ def makeMap(acts,reps):
                 tp[ind]=1
                 maps.append(tp)
             else:
-                # There could be 4 or more possible maps, have to check. 
-                # Find the indices of the smallest number of 'on' activators or 'off' repressors
-                # and run the algorithm again.
+                # There are at least 4 possible maps, have to recurse. 
+                # Find the indices of the smallest number of 'on' activators 
+                # or 'off' repressors and run the algorithm again.
                 noneinds = [j for j in range(len(tp)) if tp[j]==None]
                 if len(acts) > 0:
                     actsums = [sum(nodestates[j][:len(acts)]) for j in noneinds]
-                    try:
-                        minactsums = min([a for a in actsums if a !=0])
-                    except:
-                        minactsums = float('inf')
+                    minactsums = min([a for a in actsums if a !=0])
                 else:
                     minactsums = float('inf')
                 if len(reps) > 0:
                     repsums = [len(reps) - sum(nodestates[j][len(acts):]) for j in noneinds]
-                    try:
-                        minrepsums = min([r for r in repsums if r !=0])
-                    except:
-                        minrepsums = float('inf')
+                    minrepsums = min([r for r in repsums if r !=0])
                 else:
                     minrepsums = float('inf')
                 if minactsums == minrepsums:
                     newinds = [j for k,j in enumerate(noneinds) if actsums[k] == minactsums or repsums[k] == minrepsums]
                 elif minactsums < minrepsums:
                     newinds = [j for k,j in enumerate(noneinds) if actsums[k] == minactsums]
-                elif minrepsums < minactsums:
-                    try:
-                        newinds = [j for k,j in enumerate(noneinds) if repsums[k] == minrepsums]
-                    except:
-                        raise ValueError('Node has no activators or repressors.')
+                else:
+                    newinds = [j for k,j in enumerate(noneinds) if repsums[k] == minrepsums]
                 maps = recurseMaps(maps,newinds,tp)
         return maps
 
@@ -140,13 +130,15 @@ def makeMap(acts,reps):
     highstate = tuple([int(not(b)) for b in basestate])
     template[nodestates.index(highstate)] = 1
     if len(nodestates) > 2:
-        singleinds = [ j for j in range(len(nodestates)) if ( ( sum(nodestates[j][:len(acts)])==1 and sum(nodestates[j][len(acts):]) == len(reps) ) or (sum(nodestates[j][len(acts):])==len(reps)-1 and sum(nodestates[j][:len(acts)])==0) ) and template[j] == None ]
+        singleinds = [ j for j in range(len(nodestates)) if template[j] == None and ( (sum(nodestates[j][:len(acts)])==1 and sum(nodestates[j][len(acts):]) == len(reps)) or (sum(nodestates[j][len(acts):])==len(reps)-1 and sum(nodestates[j][:len(acts)])==0) ) ]
         maps = recurseMaps([],singleinds,template)
     else:
         maps = [template]
     return alldeps, nodestates, maps
 
 def getConstraints(alldeps,nodestates,maps):
+    amps = []
+    thresholds = []
     return None
 
 def prettyOutput(nodes,alldeps,nodestates,maps):
@@ -192,6 +184,9 @@ def translateNetworkToMaps(listofedges):
 
     '''
     nodes,activatorinds,repressorinds = nodesAndSigns(listofedges)
+    thresholdlabels = ['K_'+str(n) for n in nodes]
+    actamplabels = [tuple(['A_'+str(n)+'_'+str(nodes[ind]) for ind in activatorinds[k]]) for k,n in enumerate(nodes)]
+    repamplabels = [tuple(['R_'+str(n)+'_'+str(nodes[ind]) for ind in repressorinds[k]]) for k,n in enumerate(nodes)]
     nodedeps = []
     nodedepstates = []
     nodemaps = []
