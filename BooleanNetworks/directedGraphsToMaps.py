@@ -62,16 +62,6 @@ def _makeNodeStates(basestate,allcombos,alldeps):
     return [tuple([int(not(basestate[j])) if alldeps[j] in c else basestate[j] for j in range(len(basestate))]) for c in allcombos]
 
 
-def _getSingles(acts,reps,nodestates,template):
-    '''
-    Helper function for makeMap.
-
-    Return the indices of template = None, provided that only one activator is on or 
-    (exclusive or) only one repressor is off.
-
-    '''
-    return [ j for j in range(len(nodestates)) if template[j] == None and ( (sum(nodestates[j][:len(acts)])==1 and sum(nodestates[j][len(acts):]) == len(reps)) or (sum(nodestates[j][len(acts):])==len(reps)-1 and sum(nodestates[j][:len(acts)])==0) ) ]
-
 def _updateMap(acts,reps,nodestates,tp,ct,inds,perm):
     '''
     Helper function for makeMap.
@@ -112,6 +102,16 @@ def _updateMap(acts,reps,nodestates,tp,ct,inds,perm):
             if t == None and any([(baserepint | r) == r for r in repints]):
                 tp[k1] = 1
     return tp, ct
+
+def _getSingles(acts,reps,nodestates,template):
+    '''
+    Helper function for makeMap.
+
+    Return the indices of template = None, provided that only one activator is on or 
+    only one repressor is off (exclusive or).
+
+    '''
+    return [ j for j in range(len(nodestates)) if template[j] == None and ( (sum(nodestates[j][:len(acts)])==1 and sum(nodestates[j][len(acts):]) == len(reps)) or (sum(nodestates[j][len(acts):])==len(reps)-1 and sum(nodestates[j][:len(acts)])==0) ) ]
 
 def _chooseNewInds(acts,reps,nodestates,tp):
     '''
