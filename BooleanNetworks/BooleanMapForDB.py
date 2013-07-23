@@ -56,14 +56,24 @@ def getTraversalTime(init,fp,next_threshs,dr):
         xT = next_threshs[k]
         r = dr[k]
         if xT > 0:
-            expminusT.append( (( xT - fp[k]/r ) / ( i - fp[k]/r ))**(1./r) )
+            expminusT.append( (( xT - fp[k] ) / ( i - fp[k] ))**(1./r) )
     #remove the times that are 1.0 due to a variable already on the threshold
     for k,t in enumerate(expminusT):
         if t == 1.0:
             expminusT[k] = 0
     return max(expminusT)
 
-def takeAStep(init,thresh,amp,rep,dr):
+def getFocalPoint(init,thresh,amp,rep,dr,previous=None):
+    up = (init > thresh)
+    if previous != None:
+        for k,i in enumerate(init):
+            if i > previous[k]:
+                up[:,k] += (i == thresh[:,k])
+    A = amp*(up ^ rep)
+    return A.sum(1)/dr
+
+
+def takeAStep(init,thresh,amp,rep,dr,previous=None):
     '''
     Given an initial point init and the parameter arrays of the 
     model, find the focal point toward which the dynamical system 
@@ -79,10 +89,8 @@ def takeAStep(init,thresh,amp,rep,dr):
 
     '''
     #get focal point
-    up = (init > thresh)
-    A = amp*(up ^ rep)
-    fp = (A*init).sum(1)
-    # print('Focal point: {0}'.format(fp))
+    fp = getFocalPoint(init,thresh,amp,rep,dr,previous)
+    print('Focal point: {0}'.format(fp))
     #find thresholds between init and focal point
     dif = init-thresh
     possible_threshs = dif*(fp-thresh) < 0
@@ -104,14 +112,13 @@ def takeAStep(init,thresh,amp,rep,dr):
     #if there are no intervening thresholds, then the focal point is a steady state
     #return the focal point in state form
     if np.all(next_threshs == 0):
-        print(fp)
-        return fp, 'Steady state reached!'
+        return fp, 'Steady state reached! {0}'.format(fp)
     #otherwise calculate the shortest traversal times to the thresholds and
     #get the next point on the next hyperplane 
     expminusT = getTraversalTime(init,fp,next_threshs,dr)
     # print('Time: {0}'.format(expminusT))
-    nextstep = fp/dr + (init-fp/dr)*expminusT**dr
-    print(nextstep)
+    nextstep = fp + (init-fp)*(expminusT**dr)
+    print('Hyperplane step: {0}'.format(nextstep))
     return (nextstep,)
 
 
@@ -152,11 +159,11 @@ def modelTrajectory(init,sources,targets,thresholds,amplitudes,repressors,decayr
     init = np.array(init)
     dr = np.array(decayrates)
     thresh,amp,rep = makeParameterArrays(sources,targets,thresholds,amplitudes,repressors)
-    print(init)
+    print('Initial condition: {0}'.format(init))
     nextstep = takeAStep(init,thresh,amp,rep,dr)
     traj = [init,nextstep[0]]
     while len(nextstep) < 2 and len(traj) < 1000:
-        nextstep = takeAStep(nextstep[0],thresh,amp,rep,dr)
+        nextstep = takeAStep(nextstep[0],thresh,amp,rep,dr,traj[-2])
         traj.append(nextstep[0])
     if len(nextstep) == 2:
         print(nextstep[1])
@@ -170,8 +177,14 @@ if __name__ == '__main__':
     amplitudes = [[0.5,1.0,1.0],[1.0],[1.0,1.0],[1.0]]
     decayrates = [1.0,0.5,0.5,0.5]
     repressors = [('z','x')]
-    init = [0.6,0.4,0.25,0.2]
-    init = [0.8,0.4,0.25,0.2] #This init condition gives me a white wall, I think. x bounces off the 0.75 threshold
+    # thresh, amp, rep = makeParameterArrays(sources,targets,thresholds,amplitudes,repressors)
+    # print(thresh)
+    # print(amp)
+    # print(rep)
+    # init = [0.6,0.4,0.25,0.2] #Steady state with no white wall
+    # init = [0.8,0.4,0.25,0.2] #This init condition gives me a white wall, I think. x bounces off the 0.75 threshold
+    init = [0.7,0.6,0.25,0.2]
+    # init = [0.3,0.7,0.4,0.4]
     traj,state = modelTrajectory(init,sources,targets,thresholds,amplitudes,repressors,decayrates)
     # print(traj)
     print(state)
