@@ -2,16 +2,14 @@ import numpy as np
 
 def makeParameterArrays(sources,targets,thresholds,amplitudes,repressors):
     '''
-    INPUTS:
-    See modelTrajectory.
+    Put model parameters into square arrays, where the column 
+    index indicates the source variable and the row index 
+    indicates the target variable.
 
-    OUTPUTS:
-    thresh, amp, and rep are len(sources) x len(sources)
-    arrays with sources associated with  the column indices and 
-    targets associated with the row indices. Threshold values,
-    amplitudes, and repressor identity are filled in between
-    the appropriate source-target interactions. All other array 
-    values are zero.
+    The outputs thresh, amp, and rep are len(sources) x len(sources)
+    arrays with threshold values, amplitudes, and repressor 
+    identities filled in between the appropriate source-target 
+    interactions. All other array values are zero.
 
     '''
     N = len(sources)
@@ -29,7 +27,105 @@ def makeParameterArrays(sources,targets,thresholds,amplitudes,repressors):
         rep[i,j] = 1
     return thresh, amp, rep.astype(int)
 
+def getTraversalTime(init,fp,next_threshs,dr):
+    '''
+    Find and return the time exp(-t*) to the next threshold in next_threshs 
+    that is crossed _first_ when traveling from init to the focal point fp. 
+    
+    next_threshs contains the thresholds closest to (but not equal to) each 
+    coordinate of init which must be crossed to reach the corresponding 
+    coordinate of fp. A value of 0 in next_threshs is a placeholder that 
+    means no such intervening threshold exists. The zeros are skipped in the 
+    following algorithm, as they yield meaningless (complex) traversal times.
+
+    Calculate the times exp(-t*) of every potential threshold crossing using 
+    the solution to the linear ODEs x' = -dr*x + fp. The smallest time t* has 
+    the maximal exp(-t*), which is the return value. 
+
+    '''
+    expminusT = []
+    for k,i in enumerate(init):
+        xT = next_threshs[k]
+        if xT > 0:
+            expminusT.append( (( xT - fp[k] ) / ( i - fp[k] ))**(1./dr[k]) )
+    return max(expminusT)
+
+def getFocalPoint(init,thresh,amp,rep,dr,previous):
+    '''
+    Calculate the focal point of the dynamical system
+    when the last step was previous and the current
+    location is init.
+
+    First, find in what coordinates init is strictly 
+    above threshold. This means the coordinate will 
+    influence others. This will also happen if the
+    coordinate is now at threshold, but was previously 
+    below threshold. So second, add in those effects.
+
+    Third, calculate the amplitude of all coordinates 
+    above threshold, and scale by the decay rates of
+    each coordinate. This is the focal point return
+    value. Note that to calculate amplitude, every
+    repressor has to be bit-swapped, because its 
+    amplitude is on when the repressor is off.
+
+    '''
+    up = (init > thresh) #first
+    for k,i in enumerate(init): #second
+        if i > previous[k]:
+            up[:,k] += (i == thresh[:,k])
+    A = amp*(up ^ rep) #third
+    return A.sum(1)/dr
+
+
+def takeAStep(init,thresh,amp,rep,dr,previous):
+    '''
+    Given an initial point (init), the previous point in the 
+    trajectory (previous), and the parameter arrays of the 
+    model (thresh, amp, rep, dr), find the focal point toward 
+    which the dynamical system is evolving, and then calculate 
+    which hyperplane is intersected first on the way there. 
+
+    Return the exact point on the hyperplane where the init condition 
+    hits. If there is no next hyperplane due to the existence of a steady
+    state, return the steady point and a message indicating the 
+    trajectory is finished.
+
+    '''
+    #get focal point
+    fp = getFocalPoint(init,thresh,amp,rep,dr,previous)
+    #find thresholds between init and focal point
+    possible_threshs = (init-thresh)*(fp-thresh) < 0
+    pt = possible_threshs*thresh
+    #get the closest threshold to each coordinate
+    next_threshs = np.zeros(fp.shape)
+    for k in range(len(init)):
+        if init[k] > fp[k]:
+            next_threshs[k] = pt[:,k].max()
+        elif init[k] < fp[k] and np.any(pt[:,k]):
+            next_threshs[k] = pt[pt[:,k]>0,k].min()
+    #if there are no intervening thresholds, then the focal point is a steady state
+    if np.all(next_threshs == 0):
+        return fp, 'Steady state reached! {0}'.format(fp)
+    #otherwise get the next point on the next hyperplane 
+    expminusT = getTraversalTime(init,fp,next_threshs,dr)
+    nextstep = fp + (init-fp)*(expminusT**dr)
+    # #debugging print statements
+    # print('Focal point: {0}'.format(fp))
+    # print('Possible thresholds: {0}'.format(pt))
+    # print('Next thresholds: {0}'.format(next_threshs))
+    # print('Time: {0}'.format(expminusT))
+    print('Hyperplane step: {0}'.format(nextstep))
+    return (nextstep,)
+
 def getState(steps,thresh):
+    '''
+    Take a real-valued trajectory and return the 
+    discrete state function. Each variable will have
+    states = 0,1,...,nt, where nt is the number of 
+    thresholds for that variable.
+
+    '''
     state = []
     for j,s in enumerate(steps):
         st = []
@@ -44,85 +140,7 @@ def getState(steps,thresh):
         state.append(st)
     return state
 
-def getTraversalTime(init,fp,next_threshs,dr):
-    '''
-    One of the set of thresholds next_threshs must be crossed first.
-    Calculate the times exp(-t*) of every crossing and pick the maximal
-    value. Return the index of this value.
-
-    '''
-    expminusT = []
-    for k,i in enumerate(init):
-        xT = next_threshs[k]
-        r = dr[k]
-        if xT > 0:
-            expminusT.append( (( xT - fp[k] ) / ( i - fp[k] ))**(1./r) )
-    #remove the times that are 1.0 due to a variable already on the threshold
-    for k,t in enumerate(expminusT):
-        if t == 1.0:
-            expminusT[k] = 0
-    return max(expminusT)
-
-def getFocalPoint(init,thresh,amp,rep,dr,previous=None):
-    up = (init > thresh)
-    if previous != None:
-        for k,i in enumerate(init):
-            if i > previous[k]:
-                up[:,k] += (i == thresh[:,k])
-    A = amp*(up ^ rep)
-    return A.sum(1)/dr
-
-
-def takeAStep(init,thresh,amp,rep,dr,previous=None):
-    '''
-    Given an initial point init and the parameter arrays of the 
-    model, find the focal point toward which the dynamical system 
-    is evolving, and then calculate which hyperplane is intersected 
-    on the way there. 
-
-    Return the exact point on the hyperplane where the init condition 
-    hits.
-
-    If there is no next hyperplane due to the existence of a steady
-    state, return the steady point and a message indicating the 
-    trajectory is finished.
-
-    '''
-    #get focal point
-    fp = getFocalPoint(init,thresh,amp,rep,dr,previous)
-    print('Focal point: {0}'.format(fp))
-    #find thresholds between init and focal point
-    dif = init-thresh
-    possible_threshs = dif*(fp-thresh) < 0
-    #correct for the places where init[k] is right at threshold
-    #then fp has to be at least one more threshold away
-    for k in range(len(init)):
-        q = np.nonzero(dif[:,k] == 0)[0]
-        possible_threshs[q,k] = False
-    pt = possible_threshs*thresh
-    # print('Possible thresholds: {0}'.format(pt))
-    #get the closest threshold to each coordinate
-    next_threshs = np.zeros(fp.shape)
-    for k in range(len(init)):
-        if init[k] > fp[k]:
-            next_threshs[k] = pt[:,k].max()
-        elif init[k] < fp[k] and np.any(pt[:,k]):
-            next_threshs[k] = pt[pt[:,k]>0,k].min()
-    # print('Next thresholds: {0}'.format(next_threshs))
-    #if there are no intervening thresholds, then the focal point is a steady state
-    #return the focal point in state form
-    if np.all(next_threshs == 0):
-        return fp, 'Steady state reached! {0}'.format(fp)
-    #otherwise calculate the shortest traversal times to the thresholds and
-    #get the next point on the next hyperplane 
-    expminusT = getTraversalTime(init,fp,next_threshs,dr)
-    # print('Time: {0}'.format(expminusT))
-    nextstep = fp + (init-fp)*(expminusT**dr)
-    print('Hyperplane step: {0}'.format(nextstep))
-    return (nextstep,)
-
-
-def modelTrajectory(init,sources,targets,thresholds,amplitudes,repressors,decayrates):
+def modelTrajectory(init,sources,targets,thresholds,amplitudes,decayrates,repressors):
     '''
     INPUTS:
     init is an initial condition for all the variables in
@@ -132,43 +150,48 @@ def modelTrajectory(init,sources,targets,thresholds,amplitudes,repressors,decayr
     source is associated with a list of parameters in several
     different parameter lists:
 
-    targets is a list of lists of variable names of the vars
-    affected by source[k] 
+        targets is a list of lists of variable names of the vars
+        affected by source[k] 
 
-    thresholds is a list of lists of the threshold values
-    by which sources[k] affects the list of variables in 
-    targets[k]
+        thresholds is a list of lists of the threshold values
+        by which sources[k] affects the list of variables in 
+        targets[k]
 
-    amplitudes is a list of lists of the magnitude of the 
-    effects of sources[k] on targets[k]
+        amplitudes is a list of lists of the magnitude of the 
+        effects of sources[k] on targets[k]
 
-    repressors is the list of tuples of variable names 
+        decayrates is a list containing the decay rates of 
+        source[k]
+
+    repressors is a list of tuples of variable names 
     consisting of (source, target) that are repressing instead 
     of activating interactions
 
-    decayrates is a list containing the decay rates of each
-    variable in sources
 
     OUTPUTS:
-    The trajectory in integer state space starting at the initial
-    condition and ending at a steady point. If the trajectory 
-    hasn't reached a steady point after 1000 steps, the simulation 
-    is stopped.
+    The trajectory is returned in both real values (traj) and in integer 
+    state space (state) starting at the initial condition and ending at 
+    a steady point. If the trajectory hasn't reached a steady point after 
+    1000 steps, the simulation is stopped.
 
     '''
     init = np.array(init)
     dr = np.array(decayrates)
     thresh,amp,rep = makeParameterArrays(sources,targets,thresholds,amplitudes,repressors)
-    print('Initial condition: {0}'.format(init))
-    nextstep = takeAStep(init,thresh,amp,rep,dr)
+    print('')
+    print('Init condition:  {0}'.format(init))
+    print('')
+    nextstep = takeAStep(init,thresh,amp,rep,dr,init)
     traj = [init,nextstep[0]]
     while len(nextstep) < 2 and len(traj) < 1000:
         nextstep = takeAStep(nextstep[0],thresh,amp,rep,dr,traj[-2])
         traj.append(nextstep[0])
     if len(nextstep) == 2:
+        print('')
         print(nextstep[1])
-    state = getState(traj,thresh)
-    return traj,state
+        print('')
+    state = getState(traj[:-1],thresh)
+    return traj, state
 
 if __name__ == '__main__':
     sources = ['x','y1','y2','z']
@@ -181,11 +204,11 @@ if __name__ == '__main__':
     # print(thresh)
     # print(amp)
     # print(rep)
-    # init = [0.6,0.4,0.25,0.2] #Steady state with no white wall
-    # init = [0.8,0.4,0.25,0.2] #This init condition gives me a white wall, I think. x bounces off the 0.75 threshold
+    # init = [0.6,0.4,0.25,0.2] 
+    # init = [0.8,0.4,0.25,0.2] 
     init = [0.7,0.6,0.25,0.2]
     # init = [0.3,0.7,0.4,0.4]
-    traj,state = modelTrajectory(init,sources,targets,thresholds,amplitudes,repressors,decayrates)
+    traj,state = modelTrajectory(init,sources,targets,thresholds,amplitudes,decayrates,repressors)
     # print(traj)
     print(state)
     #############
