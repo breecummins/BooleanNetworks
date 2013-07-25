@@ -2,30 +2,35 @@ import numpy as np
 import BooleanMapForDB as BDB
 import itertools
 
-def makeHyperplaneGrids(res,thresh,maxvals):
+def makeHyperplanes(thresh,maxvals,eps=0.01):
     '''
-    Create a cell-centered grid of resolution res for each
-    hyperplane that exists when a variable is at threshold.
-    thresh is the parameter array containing the thresholds.
-    maxvals is a user-supplied list of the maximum value 
-    allowed for each variable.
+    Construct all hyperplanes, where xi equals one of its 
+    threshold values and no other xj is at threshold. 
+    Assume N variables total. Then each hyperplane will be 
+    rectangular in N-1 dimensional space with side lengths 
+    w1 by w2 by ... by wi-1 by wi+1 by ... by wN. 
 
-    The output is a list of hyperplanes, the number of which
-    is determined by the dimension of thresh and the number
-    of unique threshold values in each column.
+    Make a compact box inside each hyperplane that is bounded 
+    away from the threshold values at the boundaries by eps*wj,
+    where eps is a user-supplied value between 0 and 1,
+    usually very small, and wj is the length of the side of
+    the box associated with the jth variable.
+
+    thresh is the NxN parameter array containing the thresholds.
+    maxvals is a user-supplied list of length N of the maximum 
+    value allowed for each variable. Each value in maxvals should
+    exceed the highest threshold for the corresponding variable.
+
+    The output is the list of compact boxes inside the 
+    hyperplanes, the number of which is determined by the 
+    dimension of thresh and the number of unique threshold 
+    values in each column.
     
     Each hyperplane will have one variable that is
     constant at a threshold. The other variables will be 
     bounded between two of their threshold values, or between
     zero and their lowest threshold, or between their highest
     threshold and maxvals[k]. 
-
-    Cell-centered means that the returned vertices fall in the 
-    middle of the grid cells. For example, for a square box with
-    every variable between 0 and 1 and resolution h, the first 
-    grid point is (h/2, h/2, ...) and the last vertex is 
-    (1 - h/2, 1 - h/2, ...), with the appropriate threshold value
-    entered at the threshold coordinate i.
 
     '''
     N = thresh.shape[0]
@@ -43,18 +48,16 @@ def makeHyperplaneGrids(res,thresh,maxvals):
             uniqthresh.append( u[1:] )
         else:
             uniqthresh.append( u )
-    # discretize the chunks between thresholds for each var
+    # make the chunks for the boxes 
     chunks = []
     for k,u in enumerate(uniqthresh):
         mins = np.concatenate((np.array([0]), u))
         maxs = np.concatenate((u, np.array([maxvals[k]])))
-        npts = np.floor((maxs - mins)/res)
-        slop = (maxs-mins) - npts*res
-        cu = []
-        for j,m in enumerate(mins):
-            cu.append( np.arange(m + slop[j]/2 + res/2, maxs[j], res) )
-        chunks.append( cu )
-    # assemble chunks into hyperplanes
+        lens = maxs - mins
+        mins = mins + eps*lens
+        maxs = maxs - eps*lens
+        chunks.append( [(m,maxs[k]) for k,m in enumerate(mins)])
+    # assemble chunks into hyperplane boxes
     indices = [range(len(_c)) for _c in chunks]
     hyperplanes = []
     for k,u in enumerate(uniqthresh):
@@ -70,7 +73,7 @@ def makeHyperplaneGrids(res,thresh,maxvals):
             # combine with threshold values into hyperplane discretizations
             for xt in u:
                 hpxt = list(hp)
-                hpxt[k] = np.array([xt])
+                hpxt[k] = (xt,xt)
                 hyperplanes.append( hpxt )                        
     return hyperplanes
 
@@ -118,8 +121,9 @@ if __name__ == '__main__':
     decayrates = [1.0,0.5,0.5,0.5]
     repressors = [('z','x')]
     thresh,amp,rep,dr = makeModel(sources,targets,thresholds,amplitudes,decayrates,repressors)
-    res = 0.1
     maxvals = [1.0]*len(sources)
-    hyperplanes = makeHyperplaneGrids(res,thresh,maxvals)
+    hyperplanes = makeHyperplanes(thresh,maxvals)
     print(len(hyperplanes))
-    print(hyperplanes)
+    for h in hyperplanes:
+        formattedh = ['({0:.3f}, {1:.3f})'.format(tup[0],tup[1]) for tup in h]
+        print(str(formattedh).translate(None, "'"))
