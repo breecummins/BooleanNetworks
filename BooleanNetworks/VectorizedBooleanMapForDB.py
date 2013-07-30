@@ -70,14 +70,38 @@ def makeHyperplanes(thresh,maxvals,eps=0.01):
             hp = [0]*N
             for j,i in enumerate(p):
                 hp[lessk[j]] = chunks[lessk[j]][i]
-            # combine with threshold values into hyperplane discretizations
+            # combine with threshold values into hyperplane boxes
             for xt in u:
                 hpxt = list(hp)
                 hpxt[k] = (xt,xt)
                 hyperplanes.append( hpxt )                        
     return hyperplanes
 
-def subdivideBox(N,minval,maxval):
+def constructBoxes(hyperplanes):
+    hpboxes = []
+    for hp in hyperplanes:
+        ind = [h[0]==h[1] for h in hp].index(1) #find which var is at a thresh
+        subinds = range(len(hp))
+        subinds.remove(ind)
+        vertices = []
+        for p in itertools.product([0,1],repeat=len(subinds)):
+            pt = np.empty(len(subinds)+1)
+            pt.fill(np.nan) #much faster than np.nan*np.ones(len(subinds)+1), using nan's to make bugs easier to catch
+            pt[ind] = hp[ind][0] #fill in threshold value
+            for i,k in enumerate(p):
+                pt[i] = hp[i][k] #fill either max or min for every other var in the hyperplane
+            vertices.append(pt) 
+        hpboxes.append(vertices) #save all pts in one hyperplane into one box
+    return hpboxes
+
+
+def getMinsMaxs(mappedpts,thresh):
+    pass
+
+def outerApprox(mins,maxs,boxes):
+    pass
+
+def subdivideBoxes(boxes):
     pass
 
 def mapManyPoints(vertices,thresh,amp,rep,dr,previous):
@@ -104,6 +128,20 @@ def mapManyPoints(vertices,thresh,amp,rep,dr,previous):
         mappedpts.append( BDB.takeAStep(v,thresh,amp,rep,dr,previous[k]) )
     return mappedpts
 
+def runModel(thresh,amp,rep,dr,maxvals):
+    hp = makeHyperplanes(thresh,maxvals)
+    initboxes = constructBoxes(hp)
+    s = initboxes[0][0].shape
+    previous1 = [np.zeros(s) for _ in range(len(initboxes[0]))] 
+    M = max(maxvals)
+    previous2 = [p+M for p in previous1] 
+    boxes = []
+    for b in initboxes:
+        mappedpts1 = mapManyPoints(b,thresh,amp,rep,dr,previous1) #start below thresh
+        mappedpts2 = mapManyPoints(b,thresh,amp,rep,dr,previous2) #start above thresh
+    #now translate into outer approx
+    #then decide where we should subdivide
+
 def makeModel(sources,targets,thresholds,amplitudes,decayrates,repressors):
     '''
     See documentation for BooleanMapForDB.modelTrajectory.
@@ -112,6 +150,7 @@ def makeModel(sources,targets,thresholds,amplitudes,decayrates,repressors):
     dr = np.array(decayrates)
     thresh,amp,rep = BDB.makeParameterArrays(sources,targets,thresholds,amplitudes,repressors)
     return thresh,amp,rep,dr
+
 
 if __name__ == '__main__':
     sources = ['x','y1','y2','z']
