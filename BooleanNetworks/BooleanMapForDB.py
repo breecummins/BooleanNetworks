@@ -15,9 +15,9 @@ def makeParameterArrays(sources,targets,thresholds,amplitudes,repressors):
     N = len(sources)
     thresh = np.zeros((N,N))
     amp = np.zeros((N,N))
-    for j,targ in enumerate(targets):
+    for j,targ in enumerate(targets): #j is index of source
         for k,t in enumerate(targ):
-            i = sources.index(t)
+            i = sources.index(t) #i is index of target
             thresh[i,j] = thresholds[j][k]
             amp[i,j] = amplitudes[j][k]
     rep = np.zeros((N,N))
@@ -200,17 +200,17 @@ if __name__ == '__main__':
     amplitudes = [[0.5,1.0,1.0],[1.0],[1.0,1.0],[1.0]]
     decayrates = [1.0,0.5,0.5,0.5]
     repressors = [('z','x')]
-    # thresh, amp, rep = makeParameterArrays(sources,targets,thresholds,amplitudes,repressors)
-    # print(thresh)
+    thresh, amp, rep = makeParameterArrays(sources,targets,thresholds,amplitudes,repressors)
+    print(thresh)
     # print(amp)
     # print(rep)
     # init = [0.6,0.4,0.25,0.2] 
     # init = [0.8,0.4,0.25,0.2] 
-    init = [0.7,0.6,0.25,0.2]
+    # init = [0.7,0.6,0.25,0.2]
     # init = [0.3,0.7,0.4,0.4]
-    traj,state = modelTrajectory(init,sources,targets,thresholds,amplitudes,decayrates,repressors)
+    # traj,state = modelTrajectory(init,sources,targets,thresholds,amplitudes,decayrates,repressors)
     # print(traj)
-    print(state)
+    # print(state)
     #############
     # init = np.array(init)
     # dr = np.array(decayrates)

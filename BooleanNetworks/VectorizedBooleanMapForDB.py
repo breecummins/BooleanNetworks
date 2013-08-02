@@ -94,6 +94,90 @@ def constructBoxes(hyperplanes):
         hpboxes.append(vertices) #save all pts in one hyperplane into one box
     return hpboxes
 
+def getDomainsAndFocalPoints(thresh,amp,rep,dr,maxvals):
+    # for each source, collect all the halfway points 
+    # between thresholds, including below the first and 
+    # above the last thresholds
+    dp = []
+    for j in range(thresh.shape[1]):
+        tl = list(np.unique(thresh[:,j])) + [maxvals[j]]
+        if tl[0] != 0:
+            tl = [0] + tl
+        dp.append( [np.mean(tl[k:k+2]) for k in range(len(tl[:-1]))] )
+    # find the midpoints of each domain
+    doms = np.array(list(itertools.product(*dp)))
+    # get the focal point for the midpoint of each domain
+    fps = []
+    prev = np.zeros(thresh[0,:].shape)
+    for i in range(doms.shape[0]):
+        fps.append( BDB.getFocalPoint(doms[i,:],thresh,amp,rep,dr,prev) )
+    # return the midpoints of each domain and the focal points for the domains
+    return doms, fps
+
+def identifyBlackWhiteWalls(hyperplanes,doms,fps,dr):
+    # For each hyperplane, determine which domains are on either side,
+    # then figure out if the focal points are the same on both sides.
+    # If so, make the focal point of the hyperplane the same as the 
+    # domains.
+    # If not, identify whether there is a black or white wall.
+    blackwalls = []
+    blackfps = []
+    whitewalls = []
+    unidirectional = []
+    unidirfps = []
+    for h in hyperplanes:
+        # shift indices by 1 since 0 will mean failure
+        possdoms = np.arange(1,doms.shape[0]+1) 
+        hind = np.Inf
+        for j,c in enumerate(h):
+            if c[0] != c[1]:
+                inds = np.logical_and( (doms[:,j]-c[0])>0, (c[1]-doms[:,j])>0 )
+                possdoms = possdoms*inds
+            elif c[0] == c[1]:
+                hind = j
+        # shift indices back so that the first entry (index=0) can be identified when needed
+        possdoms -= 1 
+        # get rid of all the domains that can't flank the hyperplane
+        possdoms = possdoms[possdoms > -1] 
+        # identify the threshold value
+        th = h[hind][0] 
+        # find the domain values that flank the threshold
+        tdomvals = np.unique(doms[:,hind])
+        lowerdom = np.max( tdomvals[(th-tdomvals) > 0] )
+        upperdom = np.min( tdomvals[(tdomvals-th) > 0] )
+        lofp = np.Inf
+        hifp = np.Inf
+        for i in possdoms:
+            if doms[i,hind] == lowerdom:
+                if lofp < np.Inf:
+                    raise ValueError('FIXME: Every hyperplane has exactly two adjacent regular domains. There must be a bug.')
+                lofp = fps[i]
+            elif doms[i,hind] == upperdom:
+                if hifp < np.Inf:
+                    raise ValueError('FIXME: Every hyperplane has exactly two adjacent regular domains. There must be a bug.')
+                hifp = fps[i]
+        loflow = -dr[hind]*th + lofp[hind]
+        hiflow = -dr[hind]*th + hifp[hind]
+        if loflow < 0 and hiflow <= 0:
+            #flow is unidirectional toward lower domain
+            unidirectional.append( h )
+            unidirfps.append( lofp )
+        elif loflow >= 0 and hiflow > 0:
+            #flow is unidirectional toward upper domain
+            unidirectional.append( h )
+            unidirfps.append( hifp )
+        elif loflow < 0 and hiflow > 0:
+            #we have a white wall
+            whitewalls.append( h )
+        elif loflow == 0 and hiflow == 0:
+            # We have a black wall and the flow will never leave.
+            blackwalls.append( h )
+            # Assign the focal point/steady point to be the average of the focal points on either side
+            blackfps.append( np.mean([lofp,hifp]) )
+        else:
+            raise ValueError("FIXME: The parameters of the system returned a true black wall and we can't handle that yet.")
+    return unidirectional, unidirfps, blackwalls, blackfps, whitewalls     
+
 
 def getMinsMaxs(mappedpts,thresh):
     pass
@@ -153,16 +237,42 @@ def makeModel(sources,targets,thresholds,amplitudes,decayrates,repressors):
 
 
 if __name__ == '__main__':
-    sources = ['x','y1','y2','z']
-    targets = [['x','y1','z'],['y2'],['x','z'],['x']]
-    thresholds = [[0.25,0.5,0.75],[0.5],[0.5,0.5],[0.5]]
-    amplitudes = [[0.5,1.0,1.0],[1.0],[1.0,1.0],[1.0]]
-    decayrates = [1.0,0.5,0.5,0.5]
+    # # Bridget's example
+    # sources = ['x','y1','y2','z']
+    # targets = [['x','y1','z'],['y2'],['x','z'],['x']]
+    # thresholds = [[0.25,0.5,0.75],[0.5],[0.5,0.5],[0.5]]
+    # amplitudes = [[0.5,1.0,1.0],[1.0],[1.0,1.0],[1.0]]
+    # decayrates = [1.0,0.5,0.5,0.5]
+    # repressors = [('z','x')]
+    # thresh,amp,rep,dr = makeModel(sources,targets,thresholds,amplitudes,decayrates,repressors)
+    # maxvals = [1.0]*len(sources)
+    # doms, fps = getDomainsAndFocalPoints(thresh,amp,rep,dr,maxvals)
+    # print(len(doms))
+    # # print(doms)
+    # # print(fp)
+    # hyperplanes = makeHyperplanes(thresh,maxvals)
+    # print(len(hyperplanes))
+    # # for h in hyperplanes:
+    # #     formattedh = ['({0:.3f}, {1:.3f})'.format(tup[0],tup[1]) for tup in h]
+    # #     print(str(formattedh).translate(None, "'"))
+    sources = ['x','z']
+    targets = [['x','z'],['x']]
+    thresholds = [[0.5,0.75],[0.5]]
+    amplitudes = [[1,0.5],[0.25]]
+    decayrates = [1.0,1.0]
     repressors = [('z','x')]
     thresh,amp,rep,dr = makeModel(sources,targets,thresholds,amplitudes,decayrates,repressors)
     maxvals = [1.0]*len(sources)
+    doms, fps = getDomainsAndFocalPoints(thresh,amp,rep,dr,maxvals)
+    # print(len(doms))
+    # print(doms)
+    # print(fp)
     hyperplanes = makeHyperplanes(thresh,maxvals)
-    print(len(hyperplanes))
-    for h in hyperplanes:
-        formattedh = ['({0:.3f}, {1:.3f})'.format(tup[0],tup[1]) for tup in h]
-        print(str(formattedh).translate(None, "'"))
+    # print(len(hyperplanes))
+    # for h in hyperplanes:
+    #     formattedh = ['({0:.3f}, {1:.3f})'.format(tup[0],tup[1]) for tup in h]
+    #     print(str(formattedh).translate(None, "'"))
+    unidirectional, unidirfps, blackwalls, blackfps, whitewalls = identifyBlackWhiteWalls(hyperplanes,doms,fps,dr)
+    print(unidirectional)
+    print(blackwalls)
+    print(whitewalls)
