@@ -2,7 +2,7 @@ import numpy as np
 import BooleanMapForDB as BDB
 import itertools
 
-def makeHyperplanes(thresh,maxvals,eps=0.01):
+def makeHyperplanes(thresh,maxvals,eps=0.0):
     '''
     Construct all hyperplanes, where xi equals one of its 
     threshold values and no other xj is at threshold. 
