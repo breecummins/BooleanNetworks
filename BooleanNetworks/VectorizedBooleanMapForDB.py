@@ -107,6 +107,7 @@ def getDomainsAndFocalPoints(thresh,amp,rep,dr,maxvals):
     # find the midpoints of each domain
     doms = np.array(list(itertools.product(*dp)))
     # get the focal point for the midpoint of each domain
+    # FIXME: add constant production rates
     fps = []
     prev = np.zeros(thresh[0,:].shape)
     for i in range(doms.shape[0]):
@@ -114,14 +115,13 @@ def getDomainsAndFocalPoints(thresh,amp,rep,dr,maxvals):
     # return the midpoints of each domain and the focal points for the domains
     return doms, fps
 
-def identifyBlackWhiteWalls(hyperplanes,doms,fps,dr):
+def identifyWhiteWalls(hyperplanes,doms,fps,dr):
     # For each hyperplane, determine which domains are on either side,
     # then figure out if the focal points are the same on both sides.
     # If so, make the focal point of the hyperplane the same as the 
     # domains.
-    # If not, identify whether there is a black or white wall.
-    blackwalls = []
-    blackfps = []
+    # If not, identify if there is a white wall. (Can't handle black
+    # walls yet.)
     whitewalls = []
     unidirectional = []
     unidirfps = []
@@ -169,14 +169,31 @@ def identifyBlackWhiteWalls(hyperplanes,doms,fps,dr):
         elif loflow < 0 and hiflow > 0:
             #we have a white wall
             whitewalls.append( h )
-        elif loflow == 0 and hiflow == 0:
-            # We have a black wall and the flow will never leave.
-            blackwalls.append( h )
-            # Assign the focal point/steady point to be the average of the focal points on either side
-            blackfps.append( np.mean([lofp,hifp]) )
+        # elif loflow == 0 and hiflow == 0:
+        #     # We have a black wall and the flow will never leave.
+        #     blackwalls.append( h )
+        #     # Assign the focal point/steady point to be the average of the focal points on either side
+        #     blackfps.append( np.mean([lofp,hifp]) )
         else:
-            raise ValueError("FIXME: The parameters of the system returned a true black wall and we can't handle that yet.")
-    return unidirectional, unidirfps, blackwalls, blackfps, whitewalls     
+            raise ValueError("FIXME: The parameters of the system returned a black wall and we can't handle that yet.")
+    return unidirectional, unidirfps, whitewalls  
+
+def getNextThresholds(unidirectional, unidirfps, thresh):
+    next_threshs = []
+    for k,fp in enumerate(unidirfps):
+        # get possible thresholds
+        h = unidirectional[k]
+        hpt = [np.mean(p) for p in h]
+        pt = ( (hpt-thresh)*(fp-thresh) < 0 )*thresh
+        # get the closest threshold to each coordinate
+        nt = np.zeros(fp.shape)
+        for k in range(len(hpt)):
+            if hpt[k] > fp[k]:
+                nt[k] = pt[:,k].max()
+            elif hpt[k] < fp[k] and np.any(pt[:,k]):
+                nt[k] = pt[pt[:,k]>0,k].min()
+        next_threshs.append( nt )
+    return next_threshs
 
 
 def getMinsMaxs(mappedpts,thresh):
@@ -188,7 +205,39 @@ def outerApprox(mins,maxs,boxes):
 def subdivideBoxes(boxes):
     pass
 
-def mapManyPoints(vertices,thresh,amp,rep,dr,previous):
+def getTraversalTimes(init,fp,next_threshs,dr):
+    '''
+    Find and return all times exp(-t*) to the next threshold in next_threshs. 
+    
+    next_threshs contains the thresholds closest to (but not equal to) each 
+    coordinate of init which must be crossed to reach the corresponding 
+    coordinate of fp. A value of 0 in next_threshs is a placeholder that 
+    means no such intervening threshold exists. The zeros are skipped in the 
+    following algorithm, as they yield meaningless (complex) traversal times.
+
+    Calculate the times exp(-t*) of every potential threshold crossing using 
+    the solution to the linear ODEs x' = -dr*x + fp. The smallest time t* has 
+    the maximal exp(-t*), which is the return value. 
+
+    '''
+    expminusT = []
+    for k,i in enumerate(init):
+        xT = next_threshs[k]
+        if xT > 0:
+            expminusT.append( (( xT - fp[k] ) / ( i - fp[k] ))**(1./dr[k]) )
+    return expminusT
+
+def mapOnePointToMultipleHyperplanes(pt,fp,next_threshs,dr):
+    expminusT = getTraversalTimes(pt,fp,next_threshs,dr)
+    allnextsteps = []
+    for eT in expminusT:
+        allnextsteps.append( fp + (pt-fp)*(eT**dr) )
+    ind = np.nonzero(expminusT == min(expminusT))[0]
+    shorteststep = allnextsteps[ind]
+    return shorteststep, allnextsteps
+
+
+def mapManyPointsToMultipleHyperplanes(vertices,thresh,amp,rep,dr,previous):
     '''
     vertices is a list of numpy arrays of points in 
     N-dimensional space denoting current location.
@@ -221,8 +270,7 @@ def runModel(thresh,amp,rep,dr,maxvals):
     previous2 = [p+M for p in previous1] 
     boxes = []
     for b in initboxes:
-        mappedpts1 = mapManyPoints(b,thresh,amp,rep,dr,previous1) #start below thresh
-        mappedpts2 = mapManyPoints(b,thresh,amp,rep,dr,previous2) #start above thresh
+        mappedpts = mapManyPoints(b,thresh,amp,rep,dr,previous1) #start below thresh
     #now translate into outer approx
     #then decide where we should subdivide
 
@@ -255,24 +303,57 @@ if __name__ == '__main__':
     # # for h in hyperplanes:
     # #     formattedh = ['({0:.3f}, {1:.3f})'.format(tup[0],tup[1]) for tup in h]
     # #     print(str(formattedh).translate(None, "'"))
-    sources = ['x','z']
-    targets = [['x','z'],['x']]
-    thresholds = [[0.5,0.75],[0.5]]
-    amplitudes = [[1,0.5],[0.25]]
-    decayrates = [1.0,1.0]
+    # # 2D example
+    # sources = ['x','z']
+    # targets = [['x','z'],['x']]
+    # thresholds = [[0.5,0.75],[0.5]]
+    # amplitudes = [[1,0.5],[0.25]]
+    # decayrates = [1.0,1.0]
+    # repressors = [('z','x')]
+    # thresh,amp,rep,dr = makeModel(sources,targets,thresholds,amplitudes,decayrates,repressors)
+    # maxvals = [1.0]*len(sources)
+    # doms, fps = getDomainsAndFocalPoints(thresh,amp,rep,dr,maxvals)
+    # # print(len(doms))
+    # # print(doms)
+    # # print(fp)
+    # hyperplanes = makeHyperplanes(thresh,maxvals)
+    # # print(len(hyperplanes))
+    # # for h in hyperplanes:
+    # #     formattedh = ['({0:.3f}, {1:.3f})'.format(tup[0],tup[1]) for tup in h]
+    # #     print(str(formattedh).translate(None, "'"))
+    # unidirectional, unidirfps, blackwalls, blackfps, whitewalls = identifyBlackWhiteWalls(hyperplanes,doms,fps,dr)
+    # print(unidirectional)
+    # print(blackwalls)
+    # print(whitewalls)
+    # 3D example
+    sources = ['x','y','z']
+    targets = [['x','y','z'],['x','z'],['x']]
+    thresholds = [[0.25,0.5,0.75],[0.5,0.5],[0.5]]
+    amplitudes = [[0.6,1.0,1.0],[1.0,1.0],[1.0]]
+    decayrates = [1.0,0.5,0.5]
     repressors = [('z','x')]
     thresh,amp,rep,dr = makeModel(sources,targets,thresholds,amplitudes,decayrates,repressors)
-    maxvals = [1.0]*len(sources)
+    maxvals = [2.0,3.0,4.0]
     doms, fps = getDomainsAndFocalPoints(thresh,amp,rep,dr,maxvals)
-    # print(len(doms))
+    print(len(doms))
     # print(doms)
     # print(fp)
     hyperplanes = makeHyperplanes(thresh,maxvals)
-    # print(len(hyperplanes))
+    print(len(hyperplanes))
     # for h in hyperplanes:
     #     formattedh = ['({0:.3f}, {1:.3f})'.format(tup[0],tup[1]) for tup in h]
     #     print(str(formattedh).translate(None, "'"))
-    unidirectional, unidirfps, blackwalls, blackfps, whitewalls = identifyBlackWhiteWalls(hyperplanes,doms,fps,dr)
-    print(unidirectional)
-    print(blackwalls)
-    print(whitewalls)
+    unidirectional, unidirfps, whitewalls = identifyWhiteWalls(hyperplanes,doms,fps,dr)
+    next_threshs = getNextThresholds(unidirectional, unidirfps, thresh)
+    print("White walls: {0}".format(whitewalls))
+    for k,u in enumerate(unidirectional):
+        formattedh = ['({0:.3f}, {1:.3f})'.format(tup[0],tup[1]) for tup in u]
+        print(str(formattedh).translate(None, "'"))
+        print("Focal point: {0}".format(unidirfps[k]))
+        print("Next hyperplanes: {0}".format(next_threshs[k]))
+    specpt = np.array([0.4,0.5,0.7])
+    fp = unidirfps[14]
+    nt = next_threshs[14]
+    shortest, allsteps = mapOnePointToMultipleHyperplanes(specpt,fp,nt,dr)
+    print(shortest)
+    print(allsteps)

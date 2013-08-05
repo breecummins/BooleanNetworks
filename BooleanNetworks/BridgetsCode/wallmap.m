@@ -28,7 +28,7 @@ change=0;
 
 %Identify the two regular domains cooresponding to the wall
 for i=1:n
-    if ic_wall(i)~=th(:,i)
+    if or(ic_wall(i)~=th(:,i),ic_wall(i)==0)
         %identify the state of the non-threshold coordinate in ic_wall
         ic_state1(i)=f_state(i,ic_wall(i),th);
         ic_state2(i)=ic_state1(i);
@@ -69,6 +69,7 @@ elseif wall(state2,change,ic_state1(change)+1)==1
 else
     disp('@@@@@@@@@@@@@ERROR@@@@@@@@@@@@@@@@@@@@');
 end
+%disp(state_index);
 %Now ic_wstate stores the wall address in the 3-D matrix. What we need to
 %do is searching wall(ic_wstate(1),:,:)==-1, which is the possible outlet for
 %the wall.
@@ -112,15 +113,32 @@ if outlet==0
 else
 %Check the state of the map on a hyperplane. 
 %To check this code, at least one of the image is a good one
-
+% disp('The possible dimention changes are:');
+% disp(dim_change);
 for size=1:outlet
+        temp_check=1;
 for check=1:length(dim_change)
     nn=dim_change(check);
-    if f_state(nn,image(nn),th)~=ic_wstate(nn)
-        image(outlet,n+1)=0;
-    else
-        image(outlet,n+1)=1;
-    end
+        if f_state(nn,image(size,nn),th)~=ic_wstate(nn)
+            temp_check=0;
+            image(size,n+1)=temp_check;
+%             disp('0000000000000');
+%             disp(size);
+%             disp(check);
+%             disp('0000000000000');
+        elseif image(size,nn)~=th(:,nn)
+             image(size,n+1)=temp_check;
+%             disp('111111111111111');
+%             disp(size);
+%             disp(check);
+%             disp('111111111111111');
+        else
+%             disp('errors');
+%             disp('eeeeeeeeeeeeeeee');
+%             disp(size);
+%             disp(check);
+%             disp('eeeeeeeeeeeeeeee');
+        end
 end
 end
 end
@@ -132,6 +150,10 @@ end
 
 %This is a function to find the state of the regular domain part.
 function ic_s=f_state(i,ic,th)
+ if ic==0
+     ic_s=0;
+ else
+
 ic_s=0;
 th_sorted=unique(th(:,i));
 for step=1:length(th_sorted)
@@ -144,7 +166,7 @@ end
 if min(th_sorted)==0
     ic_s=ic_s-1;
 end
-
+end
 end
 
 
