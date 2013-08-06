@@ -88,7 +88,7 @@ def getDomainsAndFocalPoints(thresh,amp,rep,dr,pr,maxvals):
     # return the midpoints of each domain and the focal points for the domains
     return doms, fps
 
-def identifyWhiteWalls(hyperplanes,doms,fps,dr):
+def identifyWhiteWalls(walls,doms,fps,dr):
     # For each hyperplane, determine which domains are on either side,
     # then figure out if the focal points are the same on both sides.
     # If so, make the focal point of the hyperplane the same as the 
@@ -98,50 +98,50 @@ def identifyWhiteWalls(hyperplanes,doms,fps,dr):
     whitewalls = []
     unidirwalls = []
     unidirfps = []
-    for h in hyperplanes:
+    for w in walls:
         # shift indices by 1 since 0 will mean failure
         possdoms = np.arange(1,doms.shape[0]+1) 
-        hind = np.Inf
-        for j,c in enumerate(h):
+        tind = np.Inf
+        for j,c in enumerate(w):
             if c[0] != c[1]:
                 inds = np.logical_and( (doms[:,j]-c[0])>0, (c[1]-doms[:,j])>0 )
                 possdoms = possdoms*inds
             elif c[0] == c[1]:
-                hind = j
+                tind = j
         # shift indices back so that the first entry (index=0) can be identified when needed
         possdoms -= 1 
         # get rid of all the domains that can't flank the hyperplane
         possdoms = possdoms[possdoms > -1] 
         # identify the threshold value
-        th = h[hind][0] 
+        th = w[tind][0] 
         # find the domain values that flank the threshold
-        tdomvals = np.unique(doms[:,hind])
+        tdomvals = np.unique(doms[:,tind])
         lowerdom = np.max( tdomvals[(th-tdomvals) > 0] )
         upperdom = np.min( tdomvals[(tdomvals-th) > 0] )
         lofp = np.Inf
         hifp = np.Inf
         for i in possdoms:
-            if doms[i,hind] == lowerdom:
+            if doms[i,tind] == lowerdom:
                 if lofp < np.Inf:
                     raise ValueError('FIXME: Every hyperplane has exactly two adjacent regular domains. There must be a bug.')
                 lofp = fps[i]
-            elif doms[i,hind] == upperdom:
+            elif doms[i,tind] == upperdom:
                 if hifp < np.Inf:
                     raise ValueError('FIXME: Every hyperplane has exactly two adjacent regular domains. There must be a bug.')
                 hifp = fps[i]
-        loflow = -dr[hind]*th + lofp[hind]
-        hiflow = -dr[hind]*th + hifp[hind]
+        loflow = -dr[tind]*th + lofp[tind]
+        hiflow = -dr[tind]*th + hifp[tind]
         if loflow < 0 and hiflow <= 0:
             #flow is unidirwalls toward lower domain
-            unidirwalls.append( h )
+            unidirwalls.append( w )
             unidirfps.append( lofp )
         elif loflow >= 0 and hiflow > 0:
             #flow is unidirwalls toward upper domain
-            unidirwalls.append( h )
+            unidirwalls.append( w )
             unidirfps.append( hifp )
         elif loflow < 0 and hiflow > 0:
             #we have a white wall
-            whitewalls.append( h )
+            whitewalls.append( w )
         else:
             raise ValueError("FIXME: The parameters of the system returned a black wall and we can't handle that yet.")
     return unidirwalls, unidirfps, whitewalls  
@@ -224,33 +224,31 @@ def mapOnePointToMultipleHyperplanes(pt,fp,next_threshs,dr):
     allnextsteps = []
     for eT in expminusT:
         allnextsteps.append( fp + (pt-fp)*(eT**dr) )
-    ind = np.nonzero(expminusT == max(expminusT))[0]
+    ind = np.nonzero(expminusT == max(expminusT))[0][0]
     shorteststep = allnextsteps[ind]
     return shorteststep, allnextsteps
 
-def mapManyPointsToMultipleHyperplanes(vertices,next_threshs,focalpts,dr):
+def mapManyPointsToMultipleHyperplanes(wallverts,fp,next_threshs,dr):
     '''
-    vertices is a list of numpy arrays of points in 
-    N-dimensional space denoting current location.
-    previous is a list of numpy arrays of points in 
-    N-dimensional space denoting the location of each
-    vertex on the previous hyperplane. The other inputs 
-    are model parameter arrays produced by makeModel.
+    wallverts is a list of numpy arrays of the vertices in 
+    N-dimensional space denoting points on one wall.
+    As such, they all have the same possibilities for the
+    next threshold (next_threshs array) and they
+    all have the same focal point (in fp).
+    dr is the array of decay rates for each coordinate.
 
-    Each point in vertices is on a hyperplane where
-    one of the variables is fixed at a threshold value.
-    This function maps each vertex from its current
-    hyperplane to the next hyperplane where a 
-    variable has achieved threshold according to 
-    an underlying dynamical system model.
+    This function maps each vertex in wallverts from its 
+    current location to all of the nonzero threshold 
+    hyperplanes in next_threshs according to an underlying 
+    dynamical system model.
 
     For details of the computation, see BooleanMapForDB.takeAStep.
 
     '''
     mappedpts = []
     mappedptsallsteps = []
-    for k,v in enumerate(vertices):
-        s,a = mapOnePointToMultipleHyperplanes(v,focalpts[k],next_threshs[k],dr)
+    for w in wallverts:
+        s,a = mapOnePointToMultipleHyperplanes(w,fp,next_threshs,dr)
         mappedpts.append( s )
         mappedptsallsteps.append( a )
     return mappedpts, mappedptsallsteps
@@ -292,8 +290,8 @@ def runModel(thresh,amp,rep,dr,pr,maxvals):
     wallvertices = constructVertices(unidirwalls)
     mappedpts = []
     allsteps = []
-    for w in wallvertices:
-        mp, mpa = mapManyPointsToMultipleHyperplanes(w,next_threshs,focalpts,dr)
+    for k,w in enumerate(wallvertices):
+        mp, mpa = mapManyPointsToMultipleHyperplanes(w,unidirfps[k],next_threshs[k],dr)
         mappedpts.append( mp )
         allsteps.append( mpa )
     return mappedpts, allsteps

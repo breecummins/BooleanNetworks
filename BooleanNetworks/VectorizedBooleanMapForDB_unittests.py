@@ -26,18 +26,18 @@ def xyz3DTest():
     wallvertices = VBD.constructVertices(unidirwalls)
     mappedpts = []
     allsteps = []
-    for w in wallvertices:
-        mp, mpa = VBD.mapManyPointsToMultipleHyperplanes(w,next_threshs,fps,dr)
+    for k,w in enumerate(wallvertices):
+        mp, mpa = VBD.mapManyPointsToMultipleHyperplanes(w,unidirfps[k],next_threshs[k],dr)
         mappedpts.append( mp )
         allsteps.append( mpa )
-    for k,u in enumerate(unidirwalls):
-        formattedh = ['({0:.3f}, {1:.3f})'.format(tup[0],tup[1]) for tup in u]
-        print("Wall: " + str(formattedh).translate(None, "'"))
-        print("Focal point: {0}".format(unidirfps[k]))
-        print("Next hyperplanes: {0}".format(next_threshs[k]))
+    # for k,u in enumerate(unidirwalls):
+    #     formattedh = ['({0:.3f}, {1:.3f})'.format(tup[0],tup[1]) for tup in u]
+    #     print("Wall: " + str(formattedh).translate(None, "'"))
+    #     print("Focal point: {0}".format(unidirfps[k]))
+    #     print("Next hyperplanes: {0}".format(next_threshs[k]))
     #     print("Wall vertices: {0}".format(wallvertices[k]))
-    #     print("Next steps for vertices: {0}".format(mappedpts[k]))
-    #     print("All hyperplane steps for vertices: {0}".format(allsteps[k]))
+    # #     print("Next steps for vertices: {0}".format(mappedpts[k]))
+    # #     print("All hyperplane steps for vertices: {0}".format(allsteps[k]))
     #     print("")
 
 if __name__ == '__main__':
