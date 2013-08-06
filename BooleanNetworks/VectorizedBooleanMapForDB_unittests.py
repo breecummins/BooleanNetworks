@@ -20,8 +20,10 @@ def xyz3DTest():
     #     formattedw = ['({0:.3f}, {1:.3f})'.format(tup[0],tup[1]) for tup in w]
     #     print(str(formattedw).translate(None, "'"))
     unidirwalls, unidirfps, whitewalls = VBD.identifyWhiteWalls(walls,doms,fps,dr)
-    next_threshs = VBD.getNextThresholds(unidirwalls, unidirfps, thresh)
+    next_threshs, steadypts = VBD.getNextThresholdsAndSteadyStates(unidirwalls, unidirfps, thresh)
     print("White walls: {0}".format(whitewalls))
+    formattedh = ['[{0:.3f}, {1:.3f}, {2:.3f}, {3:.3f}]'.format(sp[0],sp[1],sp[2],sp[3]) for sp in steadypts]
+    print("Steady points: " + str(formattedh).translate(None, "'"))
     print("")
     wallvertices = VBD.constructVertices(unidirwalls)
     mappedpts = []
@@ -30,15 +32,15 @@ def xyz3DTest():
         mp, mpa = VBD.mapManyPointsToMultipleHyperplanes(w,unidirfps[k],next_threshs[k],dr)
         mappedpts.append( mp )
         allsteps.append( mpa )
-    # for k,u in enumerate(unidirwalls):
-    #     formattedh = ['({0:.3f}, {1:.3f})'.format(tup[0],tup[1]) for tup in u]
-    #     print("Wall: " + str(formattedh).translate(None, "'"))
-    #     print("Focal point: {0}".format(unidirfps[k]))
-    #     print("Next hyperplanes: {0}".format(next_threshs[k]))
-    #     print("Wall vertices: {0}".format(wallvertices[k]))
-    # #     print("Next steps for vertices: {0}".format(mappedpts[k]))
-    # #     print("All hyperplane steps for vertices: {0}".format(allsteps[k]))
-    #     print("")
+    for k,u in enumerate(unidirwalls):
+        formattedh = ['({0:.3f}, {1:.3f})'.format(tup[0],tup[1]) for tup in u]
+        print("Wall: " + str(formattedh).translate(None, "'"))
+        print("Focal point: {0}".format(unidirfps[k]))
+        print("Next hyperplanes: {0}".format(next_threshs[k]))
+        print("Wall vertices: {0}".format(wallvertices[k]))
+        print("Next steps for vertices: {0}".format(mappedpts[k]))
+        print("All hyperplane steps for vertices: {0}".format(allsteps[k]))
+        print("")
 
 if __name__ == '__main__':
     xyz3DTest()

@@ -146,22 +146,26 @@ def identifyWhiteWalls(walls,doms,fps,dr):
             raise ValueError("FIXME: The parameters of the system returned a black wall and we can't handle that yet.")
     return unidirwalls, unidirfps, whitewalls  
 
-def getNextThresholds(unidirwalls, unidirfps, thresh):
+def getNextThresholdsAndSteadyStates(unidirwalls, unidirfps, thresh):
+    allz = [0]*unidirfps[0].shape[0]
     next_threshs = []
+    steadypts = []
     for k,fp in enumerate(unidirfps):
         # get possible thresholds
         h = unidirwalls[k]
         hpt = [np.mean(p) for p in h]
-        pt = ( (hpt-thresh)*(fp-thresh) < 0 )*thresh
+        possth = ( (hpt-thresh)*(fp-thresh) < 0 )*thresh
         # get the closest threshold to each coordinate
-        nt = np.zeros(fp.shape)
+        nt = [0]*len(allz)
         for k in range(len(hpt)):
             if hpt[k] > fp[k]:
-                nt[k] = pt[:,k].max()
-            elif hpt[k] < fp[k] and np.any(pt[:,k]):
-                nt[k] = pt[pt[:,k]>0,k].min()
+                nt[k] = possth[:,k].max()
+            elif hpt[k] < fp[k] and np.any(possth[:,k]):
+                nt[k] = possth[possth[:,k]>0,k].min()
         next_threshs.append( nt )
-    return next_threshs
+        if (nt == allz) and (list(fp) not in steadypts):
+            steadypts.append( list(fp) )
+    return next_threshs, steadypts
 
 def constructVertices(unidirwalls,eps=0.001):
     '''
@@ -207,20 +211,17 @@ def getTraversalTimes(init,fp,next_threshs,dr):
 
     '''
     expminusT = []
-    print(init)
-    print(fp)
-    print(next_threshs)
-    print("")
     for k,i in enumerate(init):
         xT = next_threshs[k]
         if xT > 0:
             expminusT.append( (( xT - fp[k] ) / ( i - fp[k] ))**(1./dr[k]) )
-    return expminusT
+    if expminusT == []:
+        return np.array([0])  # handle steady states
+    else:
+        return expminusT
 
 def mapOnePointToMultipleHyperplanes(pt,fp,next_threshs,dr):
     expminusT = getTraversalTimes(pt,fp,next_threshs,dr)
-    print(expminusT)
-    print("")
     allnextsteps = []
     for eT in expminusT:
         allnextsteps.append( fp + (pt-fp)*(eT**dr) )
@@ -286,7 +287,7 @@ def runModel(thresh,amp,rep,dr,pr,maxvals):
     walls = makeWalls(thresh,maxvals)
     domains, focalpts = getDomainsAndFocalPoints(thresh,amp,rep,dr,pr,maxvals)
     unidirwalls, unidirfps, whitewalls = identifyWhiteWalls(walls,domains,focalpts,dr)
-    next_threshs = getNextThresholds(unidirwalls, unidirfps, thresh)
+    next_threshs, steadypts = getNextThresholdsAndSteadyStates(unidirwalls, unidirfps, thresh)
     wallvertices = constructVertices(unidirwalls)
     mappedpts = []
     allsteps = []
