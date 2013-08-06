@@ -22,7 +22,7 @@ def xyz3DTest():
     unidirwalls, unidirfps, whitewalls = VBD.identifyWhiteWalls(walls,doms,fps,dr)
     next_threshs, steadypts = VBD.getNextThresholdsAndSteadyStates(unidirwalls, unidirfps, thresh)
     print("White walls: {0}".format(whitewalls))
-    formattedh = ['[{0:.3f}, {1:.3f}, {2:.3f}, {3:.3f}]'.format(sp[0],sp[1],sp[2],sp[3]) for sp in steadypts]
+    formattedh = ['[{0:.3f}, {1:.3f}, {2:.3f}]'.format(sp[0],sp[1],sp[2]) for sp in steadypts]
     print("Steady points: " + str(formattedh).translate(None, "'"))
     print("")
     wallvertices = VBD.constructVertices(unidirwalls)
