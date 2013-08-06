@@ -215,21 +215,44 @@ def getTraversalTimes(init,fp,next_threshs,dr):
         xT = next_threshs[k]
         if xT > 0:
             expminusT.append( (( xT - fp[k] ) / ( i - fp[k] ))**(1./dr[k]) )
-    if expminusT == []:
-        return np.array([0])  # handle steady states
-    else:
-        return expminusT
+        else:
+            expminusT.append( 0 )
+    return expminusT
 
-def mapOnePointToMultipleHyperplanes(pt,fp,next_threshs,dr):
-    expminusT = getTraversalTimes(pt,fp,next_threshs,dr)
+def mapOnePointToMultipleHyperplanes(pt,fp,next_threshs,dr,wallsandsteadypts):
     allnextsteps = []
+    expminusT = getTraversalTimes(pt,fp,next_threshs,dr)
     for eT in expminusT:
         allnextsteps.append( fp + (pt-fp)*(eT**dr) )
-    ind = np.nonzero(expminusT == max(expminusT))[0][0]
-    shorteststep = allnextsteps[ind]
-    return shorteststep, allnextsteps
+    ind = np.nonzero(expminusT == max(expminusT))[0]
+    shorteststep = allnextsteps.pop(ind[0])
+    print("")
+    print(pt)
+    print(shorteststep)
+    print(next_threshs)
+    print(expminusT)
+    print(ind)
+    whichwall = getWallIndex(shorteststep,next_threshs,ind,wallsandsteadypts)
+    return shorteststep, allnextsteps, whichwall
 
-def mapManyPointsToMultipleHyperplanes(wallverts,fp,next_threshs,dr):
+def getWallIndex(next_step,next_threshs,coords,wallsandsteadypts):
+    inds = []
+    for c in coords:
+        inds.extend([_i for _i,_w in enumerate(wallsandsteadypts) if _w[c][0] == _w[c][1] and _w[c][0] == next_threshs[c]])
+    mywall = []
+    for i in sorted(inds):
+        w = wallsandsteadypts[i]
+        if all( [ ns >= w[c][0] and ns <= w[c][1] for c,ns in enumerate(next_step)] ):
+            mywall.append( i )
+    if len(mywall) != 1:
+        print(next_step)
+        print(mywall)
+        for m in mywall:
+            print(wallsandsteadypts[m])
+        raise ValueError('FIXME: Should only be on one wall.') #will have to fix this once there are focal points on walls
+    return mywall[0]
+
+def mapManyPointsToMultipleHyperplanes(wallverts,fp,next_threshs,dr,wallsandsteadypts):
     '''
     wallverts is a list of numpy arrays of the vertices in 
     N-dimensional space denoting points on one wall.
@@ -247,12 +270,14 @@ def mapManyPointsToMultipleHyperplanes(wallverts,fp,next_threshs,dr):
 
     '''
     mappedpts = []
+    whichwall = []
     mappedptsallsteps = []
-    for w in wallverts:
-        s,a = mapOnePointToMultipleHyperplanes(w,fp,next_threshs,dr)
+    for v in wallverts:
+        s,a,ww = mapOnePointToMultipleHyperplanes(v,fp,next_threshs,dr,wallsandsteadypts)
         mappedpts.append( s )
         mappedptsallsteps.append( a )
-    return mappedpts, mappedptsallsteps
+        whichwall.append( ww )
+    return mappedpts, whichwall, mappedptsallsteps
 
 def makeParameterArrays(sources,targets,thresholds,amplitudes,productionrates,decayrates,repressors):
     '''
@@ -289,53 +314,14 @@ def runModel(thresh,amp,rep,dr,pr,maxvals):
     unidirwalls, unidirfps, whitewalls = identifyWhiteWalls(walls,domains,focalpts,dr)
     next_threshs, steadypts = getNextThresholdsAndSteadyStates(unidirwalls, unidirfps, thresh)
     wallvertices = constructVertices(unidirwalls)
-    mappedpts = []
-    allsteps = []
+    wallsandsteadypts = unidirwalls
+    wallsandsteadypts.extend([[(s,s) for s in sp] for sp in steadypts])
+    mappedvertices = []
+    wallidentifier = []
+    othervertsteps = []
     for k,w in enumerate(wallvertices):
-        mp, mpa = mapManyPointsToMultipleHyperplanes(w,unidirfps[k],next_threshs[k],dr)
-        mappedpts.append( mp )
-        allsteps.append( mpa )
-    return mappedpts, allsteps
-
-if __name__ == '__main__':
-    pass
-    # # Bridget's example
-    # sources = ['x','y1','y2','z']
-    # targets = [['x','y1','z'],['y2'],['x','z'],['x']]
-    # thresholds = [[0.25,0.5,0.75],[0.5],[0.5,0.5],[0.5]]
-    # amplitudes = [[0.5,1.0,1.0],[1.0],[1.0,1.0],[1.0]]
-    # decayrates = [1.0,0.5,0.5,0.5]
-    # repressors = [('z','x')]
-    # thresh,amp,rep,dr = makeModel(sources,targets,thresholds,amplitudes,decayrates,repressors)
-    # maxvals = [1.0]*len(sources)
-    # doms, fps = getDomainsAndFocalPoints(thresh,amp,rep,dr,maxvals)
-    # print(len(doms))
-    # # print(doms)
-    # # print(fp)
-    # hyperplanes = makeHyperplanes(thresh,maxvals)
-    # print(len(hyperplanes))
-    # # for h in hyperplanes:
-    # #     formattedh = ['({0:.3f}, {1:.3f})'.format(tup[0],tup[1]) for tup in h]
-    # #     print(str(formattedh).translate(None, "'"))
-    # # 2D example
-    # sources = ['x','z']
-    # targets = [['x','z'],['x']]
-    # thresholds = [[0.5,0.75],[0.5]]
-    # amplitudes = [[1,0.5],[0.25]]
-    # decayrates = [1.0,1.0]
-    # repressors = [('z','x')]
-    # thresh,amp,rep,dr = makeModel(sources,targets,thresholds,amplitudes,decayrates,repressors)
-    # maxvals = [1.0]*len(sources)
-    # doms, fps = getDomainsAndFocalPoints(thresh,amp,rep,dr,maxvals)
-    # # print(len(doms))
-    # # print(doms)
-    # # print(fp)
-    # hyperplanes = makeHyperplanes(thresh,maxvals)
-    # # print(len(hyperplanes))
-    # # for h in hyperplanes:
-    # #     formattedh = ['({0:.3f}, {1:.3f})'.format(tup[0],tup[1]) for tup in h]
-    # #     print(str(formattedh).translate(None, "'"))
-    # unidirwalls, unidirfps, blackwalls, blackfps, whitewalls = identifyBlackWhiteWalls(hyperplanes,doms,fps,dr)
-    # print(unidirwalls)
-    # print(blackwalls)
-    # print(whitewalls)
+        mp, wid, mpa = mapManyPointsToMultipleHyperplanes(w,unidirfps[k],next_threshs[k],dr,wallsandsteadypts)
+        mappedvertices.append( mp )
+        wallidentifier.append( wid )
+        othervertsteps.append( mpa )
+    return wallsandsteadypts, wallvertices, mappedvertices, wallidentifier, othervertsteps
