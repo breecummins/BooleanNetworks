@@ -90,7 +90,7 @@ def getDomainsAndFocalPoints(thresh,amp,rep,dr,pr,maxvals):
         fps.append( (A.sum(1) + pr)/dr ) # with the addition of constant production rates
     return doms, fps
 
-def identifyWhiteWalls(walls,doms,fps,dr):
+def identifyBlackWhiteWalls(walls,doms,fps,dr):
     '''
     For each wall, determine which domains are on either side,
     then use the focal points on both sides to calculate the 
@@ -100,13 +100,23 @@ def identifyWhiteWalls(walls,doms,fps,dr):
     wall the same as downstream.
 
     If the flow is not unidirectional, then there is either a 
-    white wall (which can be ignored) or a black wall. White 
-    walls are returned in a list, and black walls throw an error.
+    white wall (outward flow) or a black wall (inward flow). 
+    White walls can be ignored because nothing ever gets to them. 
+    Black walls can be handled if there is no negative self-regulation, 
+    because in that case, either the focal point on the hyperplane is 
+    a steady point and will be listed as such in wallsandsteadypts, or 
+    another threshold will be crossed first because the time to the focal
+    point is infinite. Therefore, if a black wall is ever reached,it is 
+    only because there is a steady point there. So we have no need to 
+    discretize this wall. I am not sure what happens with negative 
+    self-regulation, so it is currently excluded earlier in the program.
 
-    FIXME: We can handle black walls when there is no negative 
-    self-regulation.
+    Even though black and white walls are not used in further 
+    calculations, they are returned in lists so they can be
+    checked against known solutions.
 
     '''
+    blackwalls = []
     whitewalls = []
     unidirwalls = []
     unidirfps = []
@@ -142,22 +152,28 @@ def identifyWhiteWalls(walls,doms,fps,dr):
                 #     raise ValueError('FIXME: Every hyperplane has exactly two adjacent regular domains. There must be a bug.')
                 hifp = fps[i]
         # calculate direction of flow on both sides of the wall
+        # note the dependence on a small arbitrary parameter, hopefully it's smaller than the precision we care about
+        # the only problem would be if there's a focal pt within eps of the wall
+        # then we may as well assume it's on the wall, which is what this code does
         loflow = -dr[tind]*th + lofp[tind]
         hiflow = -dr[tind]*th + hifp[tind]
-        if loflow < 0 and hiflow < 0:
-            #flow is unidirectional toward lower domain
+        lofloweps = -dr[tind]*((1-1.e-12)*th) + lofp[tind]
+        hifloweps = -dr[tind]*((1+1.e-12)*th) + hifp[tind]
+        if (loflow < 0 and hiflow < 0) or (loflow < 0  and hiflow == 0 and hifloweps < 0):
+            # flow is unidirectional toward lower domain
             unidirwalls.append( w )
             unidirfps.append( lofp )
-        elif loflow > 0 and hiflow > 0:
-            #flow is unidirectional toward upper domain
+        elif (loflow > 0 and hiflow > 0) or (hiflow > 0  and loflow == 0 and lofloweps > 0):
+            # flow is unidirectional toward upper domain
             unidirwalls.append( w )
             unidirfps.append( hifp )
-        elif loflow < 0 and hiflow > 0:
-            #we have a white wall
+        elif (loflow < 0 and hiflow > 0) or (loflow < 0  and hiflow == 0 and hifloweps > 0) or (hiflow > 0  and loflow == 0 and lofloweps < 0) or (loflow == 0 and hiflow == 0 and lofloweps < 0 and hifloweps > 0):
+            # white wall
             whitewalls.append( w )
-        else:
-            raise ValueError("FIXME: The parameters of the system returned a black wall and we can't handle that yet.")
-    return unidirwalls, unidirfps, whitewalls  
+        elif loflow > 0 and hiflow < 0 or (loflow > 0  and hiflow == 0 and hifloweps < 0) or (hiflow < 0  and loflow == 0 and lofloweps > 0) or (loflow == 0 and hiflow == 0 and lofloweps > 0 and hifloweps < 0):
+            # black wall
+            blackwalls.append( w )
+    return unidirwalls, unidirfps, whitewalls, blackwalls  
 
 def getNextThresholdsAndSteadyStates(unidirwalls, unidirfps, thresh):
     '''
@@ -247,15 +263,15 @@ def getTraversalTimes(init,fp,next_threshs,dr):
 
     '''
     expminusT = []
+    nzinds = []
     for k,i in enumerate(init):
         xT = next_threshs[k]
         if xT > 0:
+            nzinds.append( k )
             expminusT.append( (( xT - fp[k] ) / ( i - fp[k] ))**(1./dr[k]) )
-        else:
-            expminusT.append( 0 )
-    return expminusT
+    return expminusT, nzinds
 
-def mapOnePointToMultipleHyperplanes(pt,fp,next_threshs,dr,wallsandsteadypts):
+def mapOnePointToMultipleHyperplanes(pt,fp,next_threshs,dr,wallsandsteadypts,steadypts):
     '''
     Map the point pt to all possible hyperplanes indicated in next_threshs.
     Return the shortest step (the true step), any other steps that arise
@@ -268,63 +284,63 @@ def mapOnePointToMultipleHyperplanes(pt,fp,next_threshs,dr,wallsandsteadypts):
     or more wall indices for the mapped point.
 
     '''
-    allnextsteps = []
-    expminusT = getTraversalTimes(pt,fp,next_threshs,dr)
-    for eT in expminusT:
-        allnextsteps.append( fp + (pt-fp)*(eT**dr) )
-    ind = np.nonzero(expminusT == max(expminusT))[0]
-    shorteststep = allnextsteps.pop(ind[0])
-    for k in range(1,len(ind)):
-        allnextsteps.remove(ind[k]) #remove duplicate mapped points
-    print("")
-    print(pt)
-    print(shorteststep)
-    print(next_threshs)
-    print(expminusT)
-    print(ind)
-    whichwall = getWallIndex(shorteststep,next_threshs,ind,wallsandsteadypts,pt)
-    print(whichwall)
+    # steady states first
+    if next_threshs == [0]*len(next_threshs): 
+        shorteststep = fp
+        allnextsteps = []*len(next_threshs)
+        for k,ss in enumerate(steadypts):
+            if np.all(fp == ss):
+                whichwall = len(wallsandsteadypts)-len(steadypts)+k
+                break
+    # now walls
+    else:
+        allnextsteps = []
+        expminusT, nzinds = getTraversalTimes(pt,fp,next_threshs,dr)
+        for eT in expminusT:
+            allnextsteps.append( fp + (pt-fp)*(eT**dr) )
+        ind = np.nonzero(expminusT == max(expminusT))[0]
+        shorteststep = allnextsteps.pop(ind[0])
+        corr = 1
+        for k in range(1,len(ind)):
+            allnextsteps.pop(ind[k]-corr) #remove duplicate mapped points
+            corr += 1
+        whichwall = getWallIndex(shorteststep,next_threshs,[nzinds[_i] for _i in ind],wallsandsteadypts,pt)
     return shorteststep, allnextsteps, whichwall
 
 def getWallIndex(next_step,next_threshs,coords,wallsandsteadypts,previous):
     '''
     Find the index of the wall that next_step is on. If the point lies
     on the intersection of two or more walls due to a simultaneous arrival,
-    then the indices of all the walls will be returned.
+    then the indices of all of the walls will be returned.
 
     '''
     inds = []
     for c in coords:
-        inds.extend([_i for _i,_w in enumerate(wallsandsteadypts) if _w[c][0] == _w[c][1] and _w[c][0] == next_threshs[c]])
-    mywall = []
+        inds.extend( [_i for _i,_w in enumerate(wallsandsteadypts) if _w[c][0] == _w[c][1] and abs(_w[c][0] - next_threshs[c]) < 1.e-12] )
     # find all indices where next_step is in the closure of the wall
     # if there is only one such index, we're done
+    mywall = []
     for i in sorted(inds):
         w = wallsandsteadypts[i]
-        if all( [ ns >= w[c][0] and ns <= w[c][1] for c,ns in enumerate(next_step)] ):
+        if all( [ ( ns > w[c][0] or abs(w[c][0] - ns) < 1.e-12 ) and ( ns < w[c][1] or abs(w[c][1] - ns) < 1.e-12 ) for c,ns in enumerate(next_step)] ):
             mywall.append( i )
-    # if there's more than one index, we need to take the direction of flow into 
+    if mywall == []:
+        raise ValueError("No wall identifier found for next step. Try increasing maxvals for variable(s) {0}. Otherwise debugging is needed.".format(coords))
+    # if there's more than one index, we need to take the previous location into 
     # account, because now 2 or more variables are at threshold
+    # suppose next_step[1] and next_step[2] are both at threshold. Then in the domain where only next_step[1] 
+    # is at threshold, previous[2] needs to be inside that domain and vice versa with swapped indices
     if len(mywall) != 1:
-        jnds = [j for j in range(len(next_threshs)) if any( [wallsandsteadypts[i][j][0] == wallsandsteadypts[i][j][0] for i in mywall] )  ]
         mynewwall = []
-        signs = (next_step - previous > 0)
         for i in mywall:
             w = wallsandsteadypts[i]
-            truthtable = []
-            for j in jnds:
-                if next_step[j] == w[j][0] and (w[j][0] == w[j][1] or signs[j]):
-                    truthtable.append( 1 )
-                elif next_step[j] == w[j][1] and not signs[j]:
-                    truthtable.append( 1 )
-                else:
-                    truthtable.append( 0 )
-            if not np.all(truthtable):
+            truthtable = [0 if w[c][0] != w[c][1] and ( (next_step[c] == w[c][0] and previous[c] < w[c][0]) or (next_step[c] == w[c][1] and previous[c] > w[c][1]) ) else 1 for c in coords ]
+            if np.all(truthtable):
                 mynewwall.append( i )
         mywall = mynewwall
     return mywall
 
-def mapManyPointsToMultipleHyperplanes(wallverts,fp,next_threshs,dr,wallsandsteadypts):
+def mapManyPointsToMultipleHyperplanes(wallverts,fp,next_threshs,dr,wallsandsteadypts,steadypts):
     '''
     wallverts is a list of numpy arrays of the vertices in 
     N-dimensional space denoting points on one wall.
@@ -345,7 +361,7 @@ def mapManyPointsToMultipleHyperplanes(wallverts,fp,next_threshs,dr,wallsandstea
     whichwall = []
     mappedptsallsteps = []
     for v in wallverts:
-        s,a,ww = mapOnePointToMultipleHyperplanes(v,fp,next_threshs,dr,wallsandsteadypts)
+        s,a,ww = mapOnePointToMultipleHyperplanes(v,fp,next_threshs,dr,wallsandsteadypts,steadypts)
         mappedpts.append( s )
         mappedptsallsteps.append( a )
         whichwall.append( ww )
@@ -376,6 +392,8 @@ def makeParameterArrays(sources,targets,thresholds,amplitudes,productionrates,de
         j = sources.index(r[0])
         i = sources.index(r[1])
         rep[i,j] = 1
+        if i == j:
+            raise ValueError('Negative self-regulation is not allowed. No variable may repress itself.')
     dr = np.array(decayrates)
     pr = np.array(productionrates)
     return thresh, amp, rep.astype(int), dr, pr
@@ -383,7 +401,7 @@ def makeParameterArrays(sources,targets,thresholds,amplitudes,productionrates,de
 def runModel(thresh,amp,rep,dr,pr,maxvals):
     walls = makeWalls(thresh,maxvals)
     domains, focalpts = getDomainsAndFocalPoints(thresh,amp,rep,dr,pr,maxvals)
-    unidirwalls, unidirfps, whitewalls = identifyWhiteWalls(walls,domains,focalpts,dr)
+    unidirwalls, unidirfps, whitewalls, blackwalls = identifyBlackWhiteWalls(walls,domains,focalpts,dr)
     next_threshs, steadypts = getNextThresholdsAndSteadyStates(unidirwalls, unidirfps, thresh)
     wallvertices = constructVertices(unidirwalls)
     wallsandsteadypts = unidirwalls
@@ -392,7 +410,7 @@ def runModel(thresh,amp,rep,dr,pr,maxvals):
     wallidentifier = []
     othervertsteps = []
     for k,w in enumerate(wallvertices):
-        mp, wid, mpa = mapManyPointsToMultipleHyperplanes(w,unidirfps[k],next_threshs[k],dr,wallsandsteadypts)
+        mp, wid, mpa = mapManyPointsToMultipleHyperplanes(w,unidirfps[k],next_threshs[k],dr,wallsandsteadypts,steadypts)
         mappedvertices.append( mp )
         wallidentifier.append( wid )
         othervertsteps.append( mpa )

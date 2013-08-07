@@ -11,20 +11,25 @@ def xyz3DTest():
     repressors = [('z','x')]
     productionrates = [0.1,0.1,0.1]
     thresh,amp,rep,dr,pr = VBD.makeParameterArrays(sources,targets,thresholds,amplitudes,productionrates,decayrates,repressors)
-    maxvals = [2.0,3.0,4.0]
+    maxvals = [3.0,3.0,4.0]
     wallsandsteadypts, wallvertices, mappedpts, wallidentifier, othersteps = VBD.runModel(thresh,amp,rep,dr,pr,maxvals)
-    # for k,m in enumerate(mappedpts):
-    #     formattedh = ['({0:.3f}, {1:.3f})'.format(tup[0],tup[1]) for tup in wallsandsteadypts[k]]
-    #     print("Wall: " + str(formattedh).translate(None, "'"))
-    #     print("Wall vertices: {0}".format(wallvertices[k]))
-    #     print("Next steps for vertices: {0}".format(m))
-    #     print("Wall indices of next step: {0}".format(wallidentifier[k]))
-    #     print("All other hyperplane steps for vertices: {0}".format(othersteps[k]))
-    #     print("")
-    # for ss in wallsandsteadypts[k+1:]:
-    #     formattedss = '[{0:.3f}, {1:.3f}, {2:.3f}]'.format(ss[0],ss[1],ss[2])
-    #     print("Steady point: " + formattedss.translate(None, "'"))
-
+    for k,m in enumerate(mappedpts):
+        formattedh = ['({0:.3f}, {1:.3f})'.format(tup[0],tup[1]) for tup in wallsandsteadypts[k]]
+        print("Wall: " + str(formattedh).translate(None, "'"))
+        formattedv = ['[{0:.4f}, {1:.4f},{2:.4f}]'.format(arr[0],arr[1],arr[2]) for arr in wallvertices[k]]
+        print("Wall vertices: " + str(formattedv).translate(None, "'"))
+        formattedn = ['[{0:.4f}, {1:.4f},{2:.4f}]'.format(arr[0],arr[1],arr[2]) for arr in m]
+        print("Next steps for vertices: " + str(formattedn).translate(None, "'"))
+        print("Wall identifiers for next steps: {0}".format(wallidentifier[k]))
+        try:
+            wi = [ item for sublist in wallidentifier[k] for item in sublist ]
+        except:
+            wi = wallidentifier[k]
+        wi = list(set(wi))
+        formattedhs = [ [ '({0:.3f}, {1:.3f})'.format(tup[0],tup[1]) for tup in wallsandsteadypts[i] ] for i in wi ]
+        print("Walls of next steps: " + str(formattedhs).translate(None, "'"))
+        print("All other hyperplane steps for vertices: {0}".format(othersteps[k]))
+        print("")
 
 
     # #manual version for extra checking
