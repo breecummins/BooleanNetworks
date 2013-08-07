@@ -16,6 +16,7 @@ def xyz3DTest():
     for k,m in enumerate(mappedpts):
         formattedh = ['({0:.3f}, {1:.3f})'.format(tup[0],tup[1]) for tup in wallsandsteadypts[k]]
         print("Wall: " + str(formattedh).translate(None, "'"))
+        print("Wall identifier: {0}".format(k))
         formattedv = ['[{0:.4f}, {1:.4f},{2:.4f}]'.format(arr[0],arr[1],arr[2]) for arr in wallvertices[k]]
         print("Wall vertices: " + str(formattedv).translate(None, "'"))
         formattedn = ['[{0:.4f}, {1:.4f},{2:.4f}]'.format(arr[0],arr[1],arr[2]) for arr in m]

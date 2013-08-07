@@ -248,7 +248,7 @@ def getNextThresholdsAndSteadyStates(unidirwalls, unidirfps, thresh):
             fullmaps.append( inds )
     return next_threshs, steadypts, fullmaps
 
-def constructVertices(unidirwalls,eps=0.001):
+def constructVertices(unidirwalls,eps=0.0):
     '''
     Make a compact box inside each hyperplane that is bounded 
     away from the threshold values at the boundaries by eps*wj,
