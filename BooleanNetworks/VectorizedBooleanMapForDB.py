@@ -3,27 +3,28 @@ import itertools
 
 def makeWalls(thresh,maxvals):
     '''
-    Construct all hyperplanes, where xi equals one of its 
-    threshold values and no other xj is at threshold. 
-    Assume N variables total. Then each hyperplane will be 
-    rectangular in N-1 dimensional space with side lengths 
-    w1 by w2 by ... by wi-1 by wi+1 by ... by wN. 
+    Construct all walls, where xi equals one of its threshold 
+    values and all other xj are between thresholds, or between
+    zero and their smallest threshold, or between their largest
+    threshold and maxvals[j]. If there are N variables total, 
+    then each wall will be rectangular in N-1 dimensional space. 
 
-    thresh is the NxN parameter array containing the thresholds.
+    thresh is the NxN parameter array containing the thresholds
+    for each variable.
     maxvals is a user-supplied list of length N of the maximum 
     value allowed for each variable. Each value in maxvals should
-    exceed the highest threshold for the corresponding variable.
+    exceed the highest threshold and highest steady state value
+    for the corresponding variable.
 
-    The output is the list of compact boxes inside the 
-    hyperplanes, the number of which is determined by the 
-    dimension of thresh and the number of unique threshold 
-    values in each column.
-    
-    Each hyperplane will have one variable that is
-    constant at a threshold. The other variables will be 
-    bounded between two of their threshold values, or between
-    zero and their lowest threshold, or between their highest
-    threshold and maxvals[k]. 
+    The output is the list of walls, the number of which is 
+    determined by the dimension of thresh and the number of unique 
+    threshold values in each column. Each wall is a list of 
+    (min,max) tuples containing the minimum and maximum value of 
+    each coordinate on that particular wall. The coordinate at 
+    threshold will have the same min and max value. The other 
+    coordinates will have a min value of one of their thresholds 
+    (or zero) and a max value of another of their thresholds (or
+    the user-supplied maximum value for that coordinate in maxvals).
 
     '''
     N = thresh.shape[0]
@@ -41,36 +42,38 @@ def makeWalls(thresh,maxvals):
             uniqthresh.append( u[1:] )
         else:
             uniqthresh.append( u )
-    # make the chunks for the boxes 
+    # find the regions between thresholds for each variable 
     chunks = []
     for k,u in enumerate(uniqthresh):
         mins = np.concatenate((np.array([0]), u))
         maxs = np.concatenate((u, np.array([maxvals[k]])))
         chunks.append( [(m,maxs[k]) for k,m in enumerate(mins)])
-    # assemble chunks into hyperplane boxes
+    # assemble chunks into walls
     indices = [range(len(_c)) for _c in chunks]
-    hyperplanes = []
+    walls = []
     for k,u in enumerate(uniqthresh):
         # excise var at threshold
         lessk = range(N)
         lessk.remove(k)
         subinds = indices[:k] + indices[k+1:]
-        # make all combinations of remaining chunks
+        # make all combinations of nonthreshold chunks
         for p in itertools.product(*subinds):
-            hp = [0]*N
+            w = [0]*N
             for j,i in enumerate(p):
-                hp[lessk[j]] = chunks[lessk[j]][i]
-            # combine with threshold values into hyperplane boxes
+                w[lessk[j]] = chunks[lessk[j]][i]
+            # combine with threshold values into walls
             for xt in u:
-                hpxt = list(hp)
-                hpxt[k] = (xt,xt)
-                hyperplanes.append( hpxt )                        
-    return hyperplanes
+                wxt = list(w)
+                wxt[k] = (xt,xt)
+                walls.append( wxt )                        
+    return walls
 
 def getDomainsAndFocalPoints(thresh,amp,rep,dr,pr,maxvals):
-    # for each source, collect all the halfway points 
-    # between thresholds, including below the first and 
-    # above the last thresholds
+    '''
+    Find the midpoint and focal (target) point of each 
+    regular domain (area between thresholds).
+
+    '''
     dp = []
     for j in range(thresh.shape[1]):
         tl = list(np.unique(thresh[:,j])) + [maxvals[j]]
@@ -85,16 +88,25 @@ def getDomainsAndFocalPoints(thresh,amp,rep,dr,pr,maxvals):
         up = (doms[i,:] > thresh)  #this is focal point code from BooleanMapForDB 
         A = amp*(up ^ rep) # without look-ahead because we're in a regular domain   
         fps.append( (A.sum(1) + pr)/dr ) # with the addition of constant production rates
-    # return the midpoints of each domain and the focal points for the domains
     return doms, fps
 
 def identifyWhiteWalls(walls,doms,fps,dr):
-    # For each hyperplane, determine which domains are on either side,
-    # then figure out if the focal points are the same on both sides.
-    # If so, make the focal point of the hyperplane the same as the 
-    # domains.
-    # If not, identify if there is a white wall. (Can't handle black
-    # walls yet.)
+    '''
+    For each wall, determine which domains are on either side,
+    then use the focal points on both sides to calculate the 
+    direction of flow across the wall.
+    
+    If the flow is unidirectional, make the focal point of the 
+    wall the same as downstream.
+
+    If the flow is not unidirectional, then there is either a 
+    white wall (which can be ignored) or a black wall. White 
+    walls are returned in a list, and black walls throw an error.
+
+    FIXME: We can handle black walls when there is no negative 
+    self-regulation.
+
+    '''
     whitewalls = []
     unidirwalls = []
     unidirfps = []
@@ -105,7 +117,7 @@ def identifyWhiteWalls(walls,doms,fps,dr):
         for j,c in enumerate(w):
             if c[0] != c[1]:
                 inds = np.logical_and( (doms[:,j]-c[0])>0, (c[1]-doms[:,j])>0 )
-                possdoms = possdoms*inds
+                possdoms = possdoms*inds # mask indices of possible flanking domains
             elif c[0] == c[1]:
                 tind = j
         # shift indices back so that the first entry (index=0) can be identified when needed
@@ -122,21 +134,22 @@ def identifyWhiteWalls(walls,doms,fps,dr):
         hifp = np.Inf
         for i in possdoms:
             if doms[i,tind] == lowerdom:
-                if lofp < np.Inf:
-                    raise ValueError('FIXME: Every hyperplane has exactly two adjacent regular domains. There must be a bug.')
+                # if lofp < np.Inf:
+                #     raise ValueError('FIXME: Every hyperplane has exactly two adjacent regular domains. There must be a bug.')
                 lofp = fps[i]
             elif doms[i,tind] == upperdom:
-                if hifp < np.Inf:
-                    raise ValueError('FIXME: Every hyperplane has exactly two adjacent regular domains. There must be a bug.')
+                # if hifp < np.Inf:
+                #     raise ValueError('FIXME: Every hyperplane has exactly two adjacent regular domains. There must be a bug.')
                 hifp = fps[i]
+        # calculate direction of flow on both sides of the wall
         loflow = -dr[tind]*th + lofp[tind]
         hiflow = -dr[tind]*th + hifp[tind]
-        if loflow < 0 and hiflow <= 0:
-            #flow is unidirwalls toward lower domain
+        if loflow < 0 and hiflow < 0:
+            #flow is unidirectional toward lower domain
             unidirwalls.append( w )
             unidirfps.append( lofp )
-        elif loflow >= 0 and hiflow > 0:
-            #flow is unidirwalls toward upper domain
+        elif loflow > 0 and hiflow > 0:
+            #flow is unidirectional toward upper domain
             unidirwalls.append( w )
             unidirfps.append( hifp )
         elif loflow < 0 and hiflow > 0:
@@ -147,22 +160,47 @@ def identifyWhiteWalls(walls,doms,fps,dr):
     return unidirwalls, unidirfps, whitewalls  
 
 def getNextThresholdsAndSteadyStates(unidirwalls, unidirfps, thresh):
+    '''
+    Identify the hyperplanes that each wall can map to. 
+    The output next_threshs is a list of lists, with each 
+    internal list consisting of the possible hyperplane 
+    maps for that wall. 
+
+    For example, next_threshs[j] = [0, 0, 1, 0.5] means that 
+    the j-th wall can map to the hyperplane where the third 
+    coordinate is at a threshold value of 1, or where the 
+    fourth coordinate is at 0.5. Values of zero mean that 
+    there is no map from wall j to hyperplanes of the first or 
+    second coordinates. 
+
+    Additionally, identify all the steady states of the system.
+    The output steadypts is a list of lists, with each internal
+    list indicating an asymptotically stable point in N-dimensional 
+    space.
+
+    '''
     allz = [0]*unidirfps[0].shape[0]
     next_threshs = []
     steadypts = []
     for k,fp in enumerate(unidirfps):
-        # get possible thresholds
-        h = unidirwalls[k]
-        hpt = [np.mean(p) for p in h]
-        possth = ( (hpt-thresh)*(fp-thresh) < 0 )*thresh
+        # get the midpoint of the wall (the midpoint is representative of
+        # the whole wall because the focal point is constant on the wall)
+        w = unidirwalls[k]
+        midpt = [np.mean(p) for p in w]
+        # figure out which coordinates of the focal point and midpoint 
+        # flank threshold values, use those thresholds as possibilities
+        possth = ( (midpt-thresh)*(fp-thresh) < 0 )*thresh
         # get the closest threshold to each coordinate
         nt = [0]*len(allz)
-        for k in range(len(hpt)):
-            if hpt[k] > fp[k]:
-                nt[k] = possth[:,k].max()
-            elif hpt[k] < fp[k] and np.any(possth[:,k]):
+        for k in range(len(midpt)):
+            # choose the max thresh between the midpt and the fp if the midpt exceeds the fp
+            if midpt[k] > fp[k]:
+                nt[k] = possth[:,k].max() 
+            # choose the min thresh > 0 between the midpt and the fp if the fp exceeds the midpt
+            elif midpt[k] < fp[k] and np.any(possth[:,k]):
                 nt[k] = possth[possth[:,k]>0,k].min()
         next_threshs.append( nt )
+        # if no thresholds met the criteria, the focal point is a steady state
         if (nt == allz) and (list(fp) not in steadypts):
             steadypts.append( list(fp) )
     return next_threshs, steadypts
@@ -197,17 +235,15 @@ def constructVertices(unidirwalls,eps=0.001):
 
 def getTraversalTimes(init,fp,next_threshs,dr):
     '''
-    Find and return all times exp(-t*) to the next threshold in next_threshs. 
+    Find and return all times exp(-T) to the next thresholds in next_threshs
+    crossing using the solution to the linear ODEs x' = -dr*x + A, which is
+    x_thresh = fp + (init - fp)*exp(-dr*T), where fp = A/dr.
     
     next_threshs contains the thresholds closest to (but not equal to) each 
     coordinate of init which must be crossed to reach the corresponding 
     coordinate of fp. A value of 0 in next_threshs is a placeholder that 
-    means no such intervening threshold exists. The zeros are skipped in the 
-    following algorithm, as they yield meaningless (complex) traversal times.
-
-    Calculate the times exp(-t*) of every potential threshold crossing using 
-    the solution to the linear ODEs x' = -dr*x + fp. The smallest time t* has 
-    the maximal exp(-t*), which is the return value. 
+    means no such intervening threshold exists. In this case we set exp(-T)=0
+    in the output, indicating infinite travel time.
 
     '''
     expminusT = []
@@ -220,37 +256,73 @@ def getTraversalTimes(init,fp,next_threshs,dr):
     return expminusT
 
 def mapOnePointToMultipleHyperplanes(pt,fp,next_threshs,dr,wallsandsteadypts):
+    '''
+    Map the point pt to all possible hyperplanes indicated in next_threshs.
+    Return the shortest step (the true step), any other steps that arise
+    because there is more than one possible map, and the indices of the 
+    walls that are mapped to. This last is important because some points
+    exist on more than one wall. 
+
+    On rare occasions, a point will map to two hyperplanes simultaneously.
+    In this case, there is still one shortest step, but there will be two
+    or more wall indices for the mapped point.
+
+    '''
     allnextsteps = []
     expminusT = getTraversalTimes(pt,fp,next_threshs,dr)
     for eT in expminusT:
         allnextsteps.append( fp + (pt-fp)*(eT**dr) )
     ind = np.nonzero(expminusT == max(expminusT))[0]
     shorteststep = allnextsteps.pop(ind[0])
+    for k in range(1,len(ind)):
+        allnextsteps.remove(ind[k]) #remove duplicate mapped points
     print("")
     print(pt)
     print(shorteststep)
     print(next_threshs)
     print(expminusT)
     print(ind)
-    whichwall = getWallIndex(shorteststep,next_threshs,ind,wallsandsteadypts)
+    whichwall = getWallIndex(shorteststep,next_threshs,ind,wallsandsteadypts,pt)
+    print(whichwall)
     return shorteststep, allnextsteps, whichwall
 
-def getWallIndex(next_step,next_threshs,coords,wallsandsteadypts):
+def getWallIndex(next_step,next_threshs,coords,wallsandsteadypts,previous):
+    '''
+    Find the index of the wall that next_step is on. If the point lies
+    on the intersection of two or more walls due to a simultaneous arrival,
+    then the indices of all the walls will be returned.
+
+    '''
     inds = []
     for c in coords:
         inds.extend([_i for _i,_w in enumerate(wallsandsteadypts) if _w[c][0] == _w[c][1] and _w[c][0] == next_threshs[c]])
     mywall = []
+    # find all indices where next_step is in the closure of the wall
+    # if there is only one such index, we're done
     for i in sorted(inds):
         w = wallsandsteadypts[i]
         if all( [ ns >= w[c][0] and ns <= w[c][1] for c,ns in enumerate(next_step)] ):
             mywall.append( i )
+    # if there's more than one index, we need to take the direction of flow into 
+    # account, because now 2 or more variables are at threshold
     if len(mywall) != 1:
-        print(next_step)
-        print(mywall)
-        for m in mywall:
-            print(wallsandsteadypts[m])
-        raise ValueError('FIXME: Should only be on one wall.') #will have to fix this once there are focal points on walls
-    return mywall[0]
+        jnds = [j for j in range(len(next_threshs)) if any( [wallsandsteadypts[i][j][0] == wallsandsteadypts[i][j][0] for i in mywall] )  ]
+        mynewwall = []
+        signs = (next_step - previous > 0)
+        for i in mywall:
+            w = wallsandsteadypts[i]
+            truthtable = []
+            for j in jnds:
+                if next_step[j] == w[j][0] and (w[j][0] == w[j][1] or signs[j]):
+                    truthtable.append( 1 )
+                elif next_step[j] == w[j][1] and not signs[j]:
+                    truthtable.append( 1 )
+                else:
+                    truthtable.append( 0 )
+            if not np.all(truthtable):
+                mynewwall.append( i )
+        mywall = mynewwall
+    return mywall
 
 def mapManyPointsToMultipleHyperplanes(wallverts,fp,next_threshs,dr,wallsandsteadypts):
     '''

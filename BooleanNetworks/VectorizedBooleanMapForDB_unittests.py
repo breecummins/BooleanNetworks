@@ -13,17 +13,17 @@ def xyz3DTest():
     thresh,amp,rep,dr,pr = VBD.makeParameterArrays(sources,targets,thresholds,amplitudes,productionrates,decayrates,repressors)
     maxvals = [2.0,3.0,4.0]
     wallsandsteadypts, wallvertices, mappedpts, wallidentifier, othersteps = VBD.runModel(thresh,amp,rep,dr,pr,maxvals)
-    for k,m in enumerate(mappedpts):
-        formattedh = ['({0:.3f}, {1:.3f})'.format(tup[0],tup[1]) for tup in wallsandsteadypts[k]]
-        print("Wall: " + str(formattedh).translate(None, "'"))
-        print("Wall vertices: {0}".format(wallvertices[k]))
-        print("Next steps for vertices: {0}".format(m))
-        print("Wall indices of next step: {0}".format(wallidentifier[k]))
-        print("All other hyperplane steps for vertices: {0}".format(othersteps[k]))
-        print("")
-    for ss in wallsandsteadypts[k+1:]:
-        formattedss = '[{0:.3f}, {1:.3f}, {2:.3f}]'.format(ss[0],ss[1],ss[2])
-        print("Steady point: " + formattedss.translate(None, "'"))
+    # for k,m in enumerate(mappedpts):
+    #     formattedh = ['({0:.3f}, {1:.3f})'.format(tup[0],tup[1]) for tup in wallsandsteadypts[k]]
+    #     print("Wall: " + str(formattedh).translate(None, "'"))
+    #     print("Wall vertices: {0}".format(wallvertices[k]))
+    #     print("Next steps for vertices: {0}".format(m))
+    #     print("Wall indices of next step: {0}".format(wallidentifier[k]))
+    #     print("All other hyperplane steps for vertices: {0}".format(othersteps[k]))
+    #     print("")
+    # for ss in wallsandsteadypts[k+1:]:
+    #     formattedss = '[{0:.3f}, {1:.3f}, {2:.3f}]'.format(ss[0],ss[1],ss[2])
+    #     print("Steady point: " + formattedss.translate(None, "'"))
 
 
 
