@@ -12,14 +12,14 @@ def xyz3DTest():
     productionrates = [0.1,0.1,0.1]
     thresh,amp,rep,dr,pr = VBD.makeParameterArrays(sources,targets,thresholds,amplitudes,productionrates,decayrates,repressors)
     maxvals = [3.0,3.0,4.0]
-    wallsandsteadypts, wallvertices, mappedpts, wallidentifier, othersteps = VBD.runModel(thresh,amp,rep,dr,pr,maxvals)
-    for k,m in enumerate(mappedpts):
+    wallsandsteadypts, wallvertices, mappedptinds, wallidentifier, allsteps = VBD.runModel(thresh,amp,rep,dr,pr,maxvals)
+    for k,m in enumerate(mappedptinds):
         formattedh = ['({0:.3f}, {1:.3f})'.format(tup[0],tup[1]) for tup in wallsandsteadypts[k]]
         print("Wall: " + str(formattedh).translate(None, "'"))
         print("Wall identifier: {0}".format(k))
         formattedv = ['[{0:.4f}, {1:.4f},{2:.4f}]'.format(arr[0],arr[1],arr[2]) for arr in wallvertices[k]]
         print("Wall vertices: " + str(formattedv).translate(None, "'"))
-        formattedn = ['[{0:.4f}, {1:.4f},{2:.4f}]'.format(arr[0],arr[1],arr[2]) for arr in m]
+        formattedn = ['[{0:.4f}, {1:.4f},{2:.4f}]'.format(allsteps[k][j][m1][0],allsteps[k][j][m1][1],allsteps[k][j][m1][2]) for j,m1 in enumerate(m)]
         print("Next steps for vertices: " + str(formattedn).translate(None, "'"))
         print("Wall identifiers for next steps: {0}".format(wallidentifier[k]))
         print("Walls of next steps: ")
@@ -30,7 +30,7 @@ def xyz3DTest():
                 formattedhs = [ '({0:.3f}, {1:.3f})'.format(tup[0],tup[1]) for tup in wallsandsteadypts[sublist] ]
             print(str(formattedhs).translate(None, "'"))
             print("")
-        print("All other hyperplane steps for vertices: {0}".format(othersteps[k]))
+        print("All hyperplane steps for vertices: {0}".format(allsteps[k]))
         print("")
         print("")
         print("")

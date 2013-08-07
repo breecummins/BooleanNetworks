@@ -311,8 +311,8 @@ def mapOnePointToMultipleHyperplanes(pt,fp,next_threshs,dr,wallsandsteadypts,ful
     '''
     # steady states first
     if next_threshs == [0]*len(next_threshs): 
-        shorteststep = fp
-        allnextsteps = []*len(next_threshs)
+        allnextsteps = [fp]
+        shorteststep = 0
         whichwall = [fullmaps[0]]
     # now walls
     else:
@@ -321,11 +321,7 @@ def mapOnePointToMultipleHyperplanes(pt,fp,next_threshs,dr,wallsandsteadypts,ful
         for eT in expminusT:
             allnextsteps.append( fp + (pt-fp)*(eT**dr) )
         ind = np.nonzero(expminusT == max(expminusT))[0]
-        shorteststep = allnextsteps.pop(ind[0])
-        corr = 1
-        for k in range(1,len(ind)):
-            allnextsteps.pop(ind[k]-corr) #remove duplicate mapped points
-            corr += 1
+        shorteststep = ind[0]
         whichwall = [fullmaps[i] for i in ind]
     return shorteststep, allnextsteps, whichwall
 
@@ -395,12 +391,12 @@ def runModel(thresh,amp,rep,dr,pr,maxvals):
     wallvertices = constructVertices(unidirwalls)
     wallsandsteadypts = list(unidirwalls)
     wallsandsteadypts.extend([[(s,s) for s in sp] for sp in steadypts])
-    mappedvertices = []
+    mappedvertinds = []
     wallidentifier = []
-    othervertsteps = []
+    allvertexsteps = []
     for k,w in enumerate(wallvertices):
         mp, wid, mpa = mapManyPointsToMultipleHyperplanes(w,unidirfps[k],next_threshs[k],dr,wallsandsteadypts,fullmaps[k])
-        mappedvertices.append( mp )
+        mappedvertinds.append( mp )
         wallidentifier.append( wid )
-        othervertsteps.append( mpa )
-    return wallsandsteadypts, wallvertices, mappedvertices, wallidentifier, othervertsteps
+        allvertexsteps.append( mpa )
+    return wallsandsteadypts, wallvertices, mappedvertinds, wallidentifier, allvertexsteps
