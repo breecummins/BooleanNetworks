@@ -21,14 +21,17 @@ def xyz3DTest():
         formattedn = ['[{0:.4f}, {1:.4f},{2:.4f}]'.format(arr[0],arr[1],arr[2]) for arr in m]
         print("Next steps for vertices: " + str(formattedn).translate(None, "'"))
         print("Wall identifiers for next steps: {0}".format(wallidentifier[k]))
-        try:
-            wi = [ item for sublist in wallidentifier[k] for item in sublist ]
-        except:
-            wi = wallidentifier[k]
-        wi = list(set(wi))
-        formattedhs = [ [ '({0:.3f}, {1:.3f})'.format(tup[0],tup[1]) for tup in wallsandsteadypts[i] ] for i in wi ]
-        print("Walls of next steps: " + str(formattedhs).translate(None, "'"))
+        print("Walls of next steps: ")
+        for sublist in wallidentifier[k]:
+            try:
+                formattedhs = [ [ '({0:.3f}, {1:.3f})'.format(tup[0],tup[1]) for tup in wallsandsteadypts[i] ] for i in sublist ]
+            except:
+                formattedhs = [ '({0:.3f}, {1:.3f})'.format(tup[0],tup[1]) for tup in wallsandsteadypts[sublist] ]
+            print(str(formattedhs).translate(None, "'"))
+            print("")
         print("All other hyperplane steps for vertices: {0}".format(othersteps[k]))
+        print("")
+        print("")
         print("")
 
 

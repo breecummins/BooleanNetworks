@@ -198,28 +198,55 @@ def getNextThresholdsAndSteadyStates(unidirwalls, unidirfps, thresh):
     allz = [0]*unidirfps[0].shape[0]
     next_threshs = []
     steadypts = []
+    fullmaps = []
     for k,fp in enumerate(unidirfps):
         # get the midpoint of the wall (the midpoint is representative of
         # the whole wall because the focal point is constant on the wall)
-        w = unidirwalls[k]
-        midpt = [np.mean(p) for p in w]
+        wall = unidirwalls[k]
+        midpt = [np.mean(p) for p in wall]
         # figure out which coordinates of the focal point and midpoint 
         # flank threshold values, use those thresholds as possibilities
         possth = ( (midpt-thresh)*(fp-thresh) < 0 )*thresh
         # get the closest threshold to each coordinate
         nt = [0]*len(allz)
-        for k in range(len(midpt)):
+        for j in range(len(midpt)):
             # choose the max thresh between the midpt and the fp if the midpt exceeds the fp
-            if midpt[k] > fp[k]:
-                nt[k] = possth[:,k].max() 
+            if midpt[j] > fp[j]:
+                nt[j] = possth[:,j].max() 
             # choose the min thresh > 0 between the midpt and the fp if the fp exceeds the midpt
-            elif midpt[k] < fp[k] and np.any(possth[:,k]):
-                nt[k] = possth[possth[:,k]>0,k].min()
+            elif midpt[j] < fp[j] and np.any(possth[:,j]):
+                nt[j] = possth[possth[:,j]>0,j].min()
         next_threshs.append( nt )
         # if no thresholds met the criteria, the focal point is a steady state
-        if (nt == allz) and (list(fp) not in steadypts):
-            steadypts.append( list(fp) )
-    return next_threshs, steadypts
+        if (nt == allz): 
+            if (list(fp) not in steadypts):
+                steadypts.append( list(fp) )
+                fullmaps.append( [len(unidirwalls) + len(steadypts) - 1] )
+            else:
+                si = steadypts.index(list(fp))
+                fullmaps.append( [len(unidirwalls) + si] )
+        # make full maps
+        else:
+            # get threshold and index of current threshold
+            k1 = [1 if w[0] == w[1] else 0 for w in wall].index(1)
+            th = wall[k1][0]
+            # get direction of flow
+            df = int(midpt[k1] > fp[k1])
+            # get indices consistent with current wall, flow direction across the wall, and the next thresholds
+            inds = [] 
+            for j,n in enumerate(nt):
+                for m,mapwall in enumerate(unidirwalls):
+                    works = [0]
+                    if j != k1:
+                        if mapwall[j][0] == mapwall[j][1] and abs(mapwall[j][0] - n) < 1.e-12 and mapwall[k1][df] == th:
+                            works = [0 if j1 != k1 and j1 != j and w != mapwall[j1] else 1 for j1,w in enumerate(wall) ]
+                    else:
+                        if mapwall[j][0] == mapwall[j][1] and abs(mapwall[j][0] - n) < 1.e-12:
+                            works = [0 if j1 != k1 and w != mapwall[j1] else 1 for j1,w in enumerate(wall) ]
+                    if all(works):
+                        inds.append( m ) 
+            fullmaps.append( inds )
+    return next_threshs, steadypts, fullmaps
 
 def constructVertices(unidirwalls,eps=0.001):
     '''
@@ -258,20 +285,18 @@ def getTraversalTimes(init,fp,next_threshs,dr):
     next_threshs contains the thresholds closest to (but not equal to) each 
     coordinate of init which must be crossed to reach the corresponding 
     coordinate of fp. A value of 0 in next_threshs is a placeholder that 
-    means no such intervening threshold exists. In this case we set exp(-T)=0
-    in the output, indicating infinite travel time.
+    means no such intervening threshold exists. In this case we skip the 
+    calculation of the time. 
 
     '''
     expminusT = []
-    nzinds = []
     for k,i in enumerate(init):
         xT = next_threshs[k]
         if xT > 0:
-            nzinds.append( k )
             expminusT.append( (( xT - fp[k] ) / ( i - fp[k] ))**(1./dr[k]) )
-    return expminusT, nzinds
+    return expminusT
 
-def mapOnePointToMultipleHyperplanes(pt,fp,next_threshs,dr,wallsandsteadypts,steadypts):
+def mapOnePointToMultipleHyperplanes(pt,fp,next_threshs,dr,wallsandsteadypts,fullmaps):
     '''
     Map the point pt to all possible hyperplanes indicated in next_threshs.
     Return the shortest step (the true step), any other steps that arise
@@ -288,14 +313,11 @@ def mapOnePointToMultipleHyperplanes(pt,fp,next_threshs,dr,wallsandsteadypts,ste
     if next_threshs == [0]*len(next_threshs): 
         shorteststep = fp
         allnextsteps = []*len(next_threshs)
-        for k,ss in enumerate(steadypts):
-            if np.all(fp == ss):
-                whichwall = len(wallsandsteadypts)-len(steadypts)+k
-                break
+        whichwall = [fullmaps[0]]
     # now walls
     else:
         allnextsteps = []
-        expminusT, nzinds = getTraversalTimes(pt,fp,next_threshs,dr)
+        expminusT = getTraversalTimes(pt,fp,next_threshs,dr)
         for eT in expminusT:
             allnextsteps.append( fp + (pt-fp)*(eT**dr) )
         ind = np.nonzero(expminusT == max(expminusT))[0]
@@ -304,43 +326,10 @@ def mapOnePointToMultipleHyperplanes(pt,fp,next_threshs,dr,wallsandsteadypts,ste
         for k in range(1,len(ind)):
             allnextsteps.pop(ind[k]-corr) #remove duplicate mapped points
             corr += 1
-        whichwall = getWallIndex(shorteststep,next_threshs,[nzinds[_i] for _i in ind],wallsandsteadypts,pt)
+        whichwall = [fullmaps[i] for i in ind]
     return shorteststep, allnextsteps, whichwall
 
-def getWallIndex(next_step,next_threshs,coords,wallsandsteadypts,previous):
-    '''
-    Find the index of the wall that next_step is on. If the point lies
-    on the intersection of two or more walls due to a simultaneous arrival,
-    then the indices of all of the walls will be returned.
-
-    '''
-    inds = []
-    for c in coords:
-        inds.extend( [_i for _i,_w in enumerate(wallsandsteadypts) if _w[c][0] == _w[c][1] and abs(_w[c][0] - next_threshs[c]) < 1.e-12] )
-    # find all indices where next_step is in the closure of the wall
-    # if there is only one such index, we're done
-    mywall = []
-    for i in sorted(inds):
-        w = wallsandsteadypts[i]
-        if all( [ ( ns > w[c][0] or abs(w[c][0] - ns) < 1.e-12 ) and ( ns < w[c][1] or abs(w[c][1] - ns) < 1.e-12 ) for c,ns in enumerate(next_step)] ):
-            mywall.append( i )
-    if mywall == []:
-        raise ValueError("No wall identifier found for next step. Try increasing maxvals for variable(s) {0}. Otherwise debugging is needed.".format(coords))
-    # if there's more than one index, we need to take the previous location into 
-    # account, because now 2 or more variables are at threshold
-    # suppose next_step[1] and next_step[2] are both at threshold. Then in the domain where only next_step[1] 
-    # is at threshold, previous[2] needs to be inside that domain and vice versa with swapped indices
-    if len(mywall) != 1:
-        mynewwall = []
-        for i in mywall:
-            w = wallsandsteadypts[i]
-            truthtable = [0 if w[c][0] != w[c][1] and ( (next_step[c] == w[c][0] and previous[c] < w[c][0]) or (next_step[c] == w[c][1] and previous[c] > w[c][1]) ) else 1 for c in coords ]
-            if np.all(truthtable):
-                mynewwall.append( i )
-        mywall = mynewwall
-    return mywall
-
-def mapManyPointsToMultipleHyperplanes(wallverts,fp,next_threshs,dr,wallsandsteadypts,steadypts):
+def mapManyPointsToMultipleHyperplanes(wallverts,fp,next_threshs,dr,wallsandsteadypts,fullmaps):
     '''
     wallverts is a list of numpy arrays of the vertices in 
     N-dimensional space denoting points on one wall.
@@ -361,7 +350,7 @@ def mapManyPointsToMultipleHyperplanes(wallverts,fp,next_threshs,dr,wallsandstea
     whichwall = []
     mappedptsallsteps = []
     for v in wallverts:
-        s,a,ww = mapOnePointToMultipleHyperplanes(v,fp,next_threshs,dr,wallsandsteadypts,steadypts)
+        s,a,ww = mapOnePointToMultipleHyperplanes(v,fp,next_threshs,dr,wallsandsteadypts,fullmaps)
         mappedpts.append( s )
         mappedptsallsteps.append( a )
         whichwall.append( ww )
@@ -402,15 +391,15 @@ def runModel(thresh,amp,rep,dr,pr,maxvals):
     walls = makeWalls(thresh,maxvals)
     domains, focalpts = getDomainsAndFocalPoints(thresh,amp,rep,dr,pr,maxvals)
     unidirwalls, unidirfps, whitewalls, blackwalls = identifyBlackWhiteWalls(walls,domains,focalpts,dr)
-    next_threshs, steadypts = getNextThresholdsAndSteadyStates(unidirwalls, unidirfps, thresh)
+    next_threshs, steadypts, fullmaps = getNextThresholdsAndSteadyStates(unidirwalls, unidirfps, thresh)
     wallvertices = constructVertices(unidirwalls)
-    wallsandsteadypts = unidirwalls
+    wallsandsteadypts = list(unidirwalls)
     wallsandsteadypts.extend([[(s,s) for s in sp] for sp in steadypts])
     mappedvertices = []
     wallidentifier = []
     othervertsteps = []
     for k,w in enumerate(wallvertices):
-        mp, wid, mpa = mapManyPointsToMultipleHyperplanes(w,unidirfps[k],next_threshs[k],dr,wallsandsteadypts,steadypts)
+        mp, wid, mpa = mapManyPointsToMultipleHyperplanes(w,unidirfps[k],next_threshs[k],dr,wallsandsteadypts,fullmaps[k])
         mappedvertices.append( mp )
         wallidentifier.append( wid )
         othervertsteps.append( mpa )
