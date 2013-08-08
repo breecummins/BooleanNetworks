@@ -375,6 +375,15 @@ def makeParameterArrays(sources,targets,thresholds,amplitudes,productionrates,de
     pr = np.array(productionrates)
     return thresh, amp, rep.astype(int), dr, pr
 
+def takeSteps(wallvertices,unidirfps,next_threshs,dr,wallsandsteadypts,allmaps):
+    shorteststepinds = []
+    allsteps = []
+    for k,w in enumerate(wallvertices):
+        ss, als = mapManyPointsToMultipleHyperplanes(w,unidirfps[k],next_threshs[k],dr,wallsandsteadypts,allmaps[k])
+        shorteststepinds.append( ss )
+        allsteps.append( als )
+    return shorteststepinds, allsteps
+
 def runModel(thresh,amp,rep,dr,pr,maxvals):
     walls = makeWalls(thresh,maxvals)
     domains, focalpts = getDomainsAndFocalPoints(thresh,amp,rep,dr,pr,maxvals)
@@ -383,10 +392,5 @@ def runModel(thresh,amp,rep,dr,pr,maxvals):
     wallvertices = constructVertices(unidirwalls)
     wallsandsteadypts = list(unidirwalls)
     wallsandsteadypts.extend([[(s,s) for s in sp] for sp in steadypts])
-    shorteststepinds = []
-    allsteps = []
-    for k,w in enumerate(wallvertices):
-        ss, als = mapManyPointsToMultipleHyperplanes(w,unidirfps[k],next_threshs[k],dr,wallsandsteadypts,allmaps[k])
-        shorteststepinds.append( ss )
-        allsteps.append( als )
-    return wallsandsteadypts, wallvertices, shorteststepinds, allsteps, allmaps
+    shorteststepinds, allsteps = takeSteps(wallvertices,unidirfps,next_threshs,dr,wallsandsteadypts,allmaps)
+    return wallsandsteadypts, wallvertices, shorteststepinds, allsteps, allmaps, next_threshs, unidirfps
