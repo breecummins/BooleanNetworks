@@ -198,7 +198,7 @@ def getNextThresholdsAndSteadyStates(unidirwalls, unidirfps, thresh):
     allz = [0]*unidirfps[0].shape[0]
     next_threshs = []
     steadypts = []
-    fullmaps = []
+    allmaps = []
     for k,fp in enumerate(unidirfps):
         # get the midpoint of the wall (the midpoint is representative of
         # the whole wall because the focal point is constant on the wall)
@@ -221,10 +221,10 @@ def getNextThresholdsAndSteadyStates(unidirwalls, unidirfps, thresh):
         if (nt == allz): 
             if (list(fp) not in steadypts):
                 steadypts.append( list(fp) )
-                fullmaps.append( [len(unidirwalls) + len(steadypts) - 1] )
+                allmaps.append( [len(unidirwalls) + len(steadypts) - 1] )
             else:
                 si = steadypts.index(list(fp))
-                fullmaps.append( [len(unidirwalls) + si] )
+                allmaps.append( [len(unidirwalls) + si] )
         # make full maps
         else:
             # get threshold and index of current threshold
@@ -245,8 +245,8 @@ def getNextThresholdsAndSteadyStates(unidirwalls, unidirfps, thresh):
                             works = [0 if j1 != k1 and w != mapwall[j1] else 1 for j1,w in enumerate(wall) ]
                     if all(works):
                         inds.append( m ) 
-            fullmaps.append( inds )
-    return next_threshs, steadypts, fullmaps
+            allmaps.append( inds )
+    return next_threshs, steadypts, allmaps
 
 def constructVertices(unidirwalls,eps=0.0):
     '''
@@ -296,36 +296,28 @@ def getTraversalTimes(init,fp,next_threshs,dr):
             expminusT.append( (( xT - fp[k] ) / ( i - fp[k] ))**(1./dr[k]) )
     return expminusT
 
-def mapOnePointToMultipleHyperplanes(pt,fp,next_threshs,dr,wallsandsteadypts,fullmaps):
+def mapOnePointToMultipleHyperplanes(pt,fp,next_threshs,dr,wallsandsteadypts,allmaps):
     '''
     Map the point pt to all possible hyperplanes indicated in next_threshs.
-    Return the shortest step (the true step), any other steps that arise
-    because there is more than one possible map, and the indices of the 
-    walls that are mapped to. This last is important because some points
-    exist on more than one wall. 
-
-    On rare occasions, a point will map to two hyperplanes simultaneously.
-    In this case, there is still one shortest step, but there will be two
-    or more wall indices for the mapped point.
+    Return the steps to all possible hyperplanes and the index of the shortest 
+    step (the true step). There will be more than one index for a simulataneous
+    arrival.
 
     '''
     # steady states first
     if next_threshs == [0]*len(next_threshs): 
         allnextsteps = [fp]
-        shorteststep = 0
-        whichwall = [fullmaps[0]]
+        shorteststep = [0]
     # now walls
     else:
         allnextsteps = []
         expminusT = getTraversalTimes(pt,fp,next_threshs,dr)
         for eT in expminusT:
             allnextsteps.append( fp + (pt-fp)*(eT**dr) )
-        ind = np.nonzero(expminusT == max(expminusT))[0]
-        shorteststep = ind[0]
-        whichwall = [fullmaps[i] for i in ind]
-    return shorteststep, allnextsteps, whichwall
+        shorteststep = np.nonzero(expminusT == max(expminusT))[0]
+    return shorteststep, allnextsteps
 
-def mapManyPointsToMultipleHyperplanes(wallverts,fp,next_threshs,dr,wallsandsteadypts,fullmaps):
+def mapManyPointsToMultipleHyperplanes(wallverts,fp,next_threshs,dr,wallsandsteadypts,allmaps):
     '''
     wallverts is a list of numpy arrays of the vertices in 
     N-dimensional space denoting points on one wall.
@@ -337,20 +329,20 @@ def mapManyPointsToMultipleHyperplanes(wallverts,fp,next_threshs,dr,wallsandstea
     This function maps each vertex in wallverts from its 
     current location to all of the nonzero threshold 
     hyperplanes in next_threshs according to an underlying 
-    dynamical system model.
+    dynamical system model. This is the list of allsteps.
+    The output shorteststeps contains the indices of the 
+    true next step.
 
     For details of the computation, see BooleanMapForDB.takeAStep.
 
     '''
-    mappedpts = []
-    whichwall = []
-    mappedptsallsteps = []
+    shorteststeps = []
+    allsteps = []
     for v in wallverts:
-        s,a,ww = mapOnePointToMultipleHyperplanes(v,fp,next_threshs,dr,wallsandsteadypts,fullmaps)
-        mappedpts.append( s )
-        mappedptsallsteps.append( a )
-        whichwall.append( ww )
-    return mappedpts, whichwall, mappedptsallsteps
+        s,a = mapOnePointToMultipleHyperplanes(v,fp,next_threshs,dr,wallsandsteadypts,allmaps)
+        shorteststeps.append( s )
+        allsteps.append( a )
+    return shorteststeps, allsteps
 
 def makeParameterArrays(sources,targets,thresholds,amplitudes,productionrates,decayrates,repressors):
     '''
@@ -387,16 +379,14 @@ def runModel(thresh,amp,rep,dr,pr,maxvals):
     walls = makeWalls(thresh,maxvals)
     domains, focalpts = getDomainsAndFocalPoints(thresh,amp,rep,dr,pr,maxvals)
     unidirwalls, unidirfps, whitewalls, blackwalls = identifyBlackWhiteWalls(walls,domains,focalpts,dr)
-    next_threshs, steadypts, fullmaps = getNextThresholdsAndSteadyStates(unidirwalls, unidirfps, thresh)
+    next_threshs, steadypts, allmaps = getNextThresholdsAndSteadyStates(unidirwalls, unidirfps, thresh)
     wallvertices = constructVertices(unidirwalls)
     wallsandsteadypts = list(unidirwalls)
     wallsandsteadypts.extend([[(s,s) for s in sp] for sp in steadypts])
-    mappedvertinds = []
-    wallidentifier = []
-    allvertexsteps = []
+    shorteststepinds = []
+    allsteps = []
     for k,w in enumerate(wallvertices):
-        mp, wid, mpa = mapManyPointsToMultipleHyperplanes(w,unidirfps[k],next_threshs[k],dr,wallsandsteadypts,fullmaps[k])
-        mappedvertinds.append( mp )
-        wallidentifier.append( wid )
-        allvertexsteps.append( mpa )
-    return wallsandsteadypts, wallvertices, mappedvertinds, wallidentifier, allvertexsteps
+        ss, als = mapManyPointsToMultipleHyperplanes(w,unidirfps[k],next_threshs[k],dr,wallsandsteadypts,allmaps[k])
+        shorteststepinds.append( ss )
+        allsteps.append( als )
+    return wallsandsteadypts, wallvertices, shorteststepinds, allsteps, allmaps
