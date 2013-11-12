@@ -1,6 +1,27 @@
 import numpy as np
 import itertools
 
+def test4DExample():
+    '''
+    Example inputs.
+
+    '''
+    # define the interactions between variables
+    variables = ['x','y1','y2','z']
+    affectedby = [['x','y2','z'],['x'],['y1'],['x']]
+    # give the thresholds for each interaction
+    thresholds = [[2,1,1],[3],[1],[1]]
+    # give the maps and amplitudes of each interaction (upper and lower bounds for parameter search)
+    maps = [[(0,0,0),(1,0,0),(0,1,0),(0,0,1),(1,1,0),(1,0,1),(0,1,1),(1,1,1)],[(0,),(1,)],[(0,),(1,)],[(0,),(1,)]]
+    loweramplitudes = [[],[0.5],[0.5],[0.5]]
+    upperamplitudes = [[1.5,2.25,3.0,0.0,3.75,0.75,1.5,2.25],[0.0,1.5],[0.0,1.5,1.5,3.0]]
+    # give the natural decay rates of the species (upper and lower bounds for parameter search)
+    lowerdecayrates = [-1.5,-0.75,-0.75]
+    upperdecayrates = [-0.5,-0.25,-0.25]
+    # give the endogenous production rates. 
+    productionrates = [0.0,0.0,0.0] 
+    return variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates
+
 def xyz3DExample():
     '''
     Example inputs.
@@ -18,13 +39,13 @@ def xyz3DExample():
     # give the natural decay rates of the species (upper and lower bounds for parameter search)
     lowerdecayrates = [-1.5,-0.75,-0.75]
     upperdecayrates = [-0.5,-0.25,-0.25]
-    # give the endogenous production rates. These values must be nonzero.
+    # give the endogenous production rates. 
     productionrates = [0.1,0.1,0.1] 
     return variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates
 
 def convertInputsToXML(variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates):
     thresh,ainds,pr = makeParameterArrays(variables, affectedby, thresholds, productionrates)
-    upperbounds = ((np.array([np.max(u) for u in upperamplitudes]) + pr) / np.abs(np.array(upperdecayrates))) + pr # calculate upper bounds of domains
+    upperbounds = 1.1*((np.array([np.max(u) for u in upperamplitudes]) + pr) / np.abs(np.array(upperdecayrates))) # calculate upper bounds of domains
     lowerbounds = np.zeros(upperbounds.shape)
     doms = getDomains(thresh,upperbounds)
     lsigs,usigs = getSigmas(doms,thresh,loweramplitudes,upperamplitudes,pr,ainds,maps)
@@ -93,7 +114,7 @@ def getSigmas(doms,thresh,lamp,uamp,pr,ainds,maps):
     return lsigs,usigs
 
 def generateXML(lowerbounds,upperbounds,lowerdecayrates,upperdecayrates,doms,lsigs,usigs):
-    f = open('input2.xml','w')
+    f = open('input.xml','w')
     f.write("<atlas>\n")
     f.write("  <dimension> " + str(len(lowerbounds)) + " </dimension>\n")
     f.write("  <phasespace>\n")
