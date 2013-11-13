@@ -12,14 +12,14 @@ def test4DExample():
     # give the thresholds for each interaction
     thresholds = [[2,1,1],[3],[1],[1]]
     # give the maps and amplitudes of each interaction (upper and lower bounds for parameter search)
-    maps = [[(0,0,0),(1,0,0),(0,1,0),(0,0,1),(1,1,0),(1,0,1),(0,1,1),(1,1,1)],[(0,),(1,)],[(0,),(1,)],[(0,),(1,)]]
-    loweramplitudes = [[],[0.5],[0.5],[0.5]]
-    upperamplitudes = [[1.5,2.25,3.0,0.0,3.75,0.75,1.5,2.25],[0.0,1.5],[0.0,1.5,1.5,3.0]]
+    maps = [[(0,0,0),(1,0,0),(0,1,0),(1,1,0),(0,0,1),(1,0,1),(0,1,1),(1,1,1)],[(0,),(1,)],[(0,),(1,)],[(0,),(1,)]]
+    loweramplitudes = [[0,4.25,1.00,5.250,0,1.0625,0.25,1.3125],[0,2.5],[0,2.5],[0,1.0]]
+    upperamplitudes = [[0,4.25,12.0,16.25,0,1.0625,3.00,4.0625],[0,2.5],[0,2.5],[0,5.0]]
     # give the natural decay rates of the species (upper and lower bounds for parameter search)
-    lowerdecayrates = [-1.5,-0.75,-0.75]
-    upperdecayrates = [-0.5,-0.25,-0.25]
+    lowerdecayrates = [-1,-1,-1,-1]
+    upperdecayrates = [-1,-1,-1,-1]
     # give the endogenous production rates. 
-    productionrates = [0.0,0.0,0.0] 
+    productionrates = [0.1,0.5,0.5,0.5] 
     return variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates
 
 def xyz3DExample():
@@ -144,5 +144,5 @@ def generateXML(lowerbounds,upperbounds,lowerdecayrates,upperdecayrates,doms,lsi
     f.close()
 
 if __name__ == "__main__":
-    variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates = xyz3DExample()
+    variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates = test4DExample()
     convertInputsToXML(variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates)
