@@ -1,7 +1,12 @@
 import numpy as np
 import itertools
 
-def test4DExample():
+def genStringForFixedParams(A,B,Amax,Bmax):
+    variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates, upperbounds, lowerbounds = test4DExample(A,B,Amax,Bmax)
+    xmlstr = convertInputsToXML(variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates, upperbounds, lowerbounds)
+    return xmlstr
+
+def test4DExample(A,B,Amax,Bmax):
     '''
     Example inputs.
 
@@ -13,14 +18,19 @@ def test4DExample():
     thresholds = [[2,1,1],[3],[1],[1]]
     # give the maps and amplitudes of each interaction (upper and lower bounds for parameter search)
     maps = [[(0,0,0),(1,0,0),(0,1,0),(1,1,0),(0,0,1),(1,0,1),(0,1,1),(1,1,1)],[(0,),(1,)],[(0,),(1,)],[(0,),(1,)]]
-    loweramplitudes = [[0,4.25,1.00,5.250,0,1.0625,0.25,1.3125],[0,2.5],[0,2.5],[0,1.0]]
-    upperamplitudes = [[0,4.25,12.0,16.25,0,1.0625,3.00,4.0625],[0,2.5],[0,2.5],[0,5.0]]
+    amps = [[0,4.25,A,A+4.25,0,1.0625,A*0.25,(A+4.25)*0.25],[0,2.5],[0,2.5],[0,B]]
+    loweramplitudes = amps
+    upperamplitudes = amps
     # give the natural decay rates of the species (upper and lower bounds for parameter search)
     lowerdecayrates = [-1,-1,-1,-1]
-    upperdecayrates = [-1,-1,-1,-1]
+    upperdecayrates = [-1,-1,-1,-1] #[-0.5,-0.5,-0.5]
     # give the endogenous production rates. 
     productionrates = [0.1,0.5,0.5,0.5] 
-    return variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates
+    # get upper and lower bounds
+    bigamps = [[0,4.25,Amax,Amax+4.25,0,1.0625,Amax*0.25,(Amax+4.25)*0.25],[0,2.5],[0,2.5],[0,Bmax]]
+    upperbounds = 1.1*((np.array([np.max(u) for u in bigamps]) + np.array(productionrates)) / np.abs(np.array(upperdecayrates))) # calculate upper bounds of domains
+    lowerbounds = np.zeros(upperbounds.shape)
+    return variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates, upperbounds, lowerbounds
 
 def xyz3DExample():
     '''
@@ -41,15 +51,17 @@ def xyz3DExample():
     upperdecayrates = [-0.5,-0.25,-0.25]
     # give the endogenous production rates. 
     productionrates = [0.1,0.1,0.1] 
-    return variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates
-
-def convertInputsToXML(variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates):
-    thresh,ainds,pr = makeParameterArrays(variables, affectedby, thresholds, productionrates)
-    upperbounds = 1.1*((np.array([np.max(u) for u in upperamplitudes]) + pr) / np.abs(np.array(upperdecayrates))) # calculate upper bounds of domains
+    # get upper and lower bounds
+    upperbounds = 1.1*((np.array([np.max(u) for u in upperamplitudes]) + np.array(productionrates)) / np.abs(np.array(upperdecayrates))) # calculate upper bounds of domains
     lowerbounds = np.zeros(upperbounds.shape)
+    return variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates, upperbounds, lowerbounds
+
+def convertInputsToXML(variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates, upperbounds, lowerbounds):
+    thresh,ainds,pr = makeParameterArrays(variables, affectedby, thresholds, productionrates)
     doms = getDomains(thresh,upperbounds)
     lsigs,usigs = getSigmas(doms,thresh,loweramplitudes,upperamplitudes,pr,ainds,maps)
-    generateXML(lowerbounds,upperbounds,lowerdecayrates,upperdecayrates,doms,lsigs,usigs)
+    xmlstr = generateXML(lowerbounds,upperbounds,lowerdecayrates,upperdecayrates,doms,lsigs,usigs)
+    return xmlstr
 
 def makeParameterArrays(variables, affectedby, thresholds, productionrates):
     '''
@@ -114,35 +126,37 @@ def getSigmas(doms,thresh,lamp,uamp,pr,ainds,maps):
     return lsigs,usigs
 
 def generateXML(lowerbounds,upperbounds,lowerdecayrates,upperdecayrates,doms,lsigs,usigs):
-    f = open('input.xml','w')
-    f.write("<atlas>\n")
-    f.write("  <dimension> " + str(len(lowerbounds)) + " </dimension>\n")
-    f.write("  <phasespace>\n")
-    f.write("    <bounds>\n")
-    f.write("      <lower> " + "  ".join([str(l) for l in lowerbounds]) + " </lower>\n")  
-    f.write("      <upper> " + "  ".join([str(u) for u in upperbounds]) + " </upper>\n")  
-    f.write("    </bounds>\n")
-    f.write("  </phasespace>\n")
-    f.write("  <gamma>\n")
-    f.write("    <lower> " + "  ".join([str(l) for l in lowerdecayrates]) + " </lower>\n")
-    f.write("    <upper> " + "  ".join([str(u) for u in upperdecayrates]) + " </upper>\n")
-    f.write("  </gamma>\n")
-    f.write("  <listboxes>\n")
+    xmlstr = "<atlas>\n"
+    xmlstr += "  <dimension> " + str(len(lowerbounds)) + " </dimension>\n"
+    xmlstr += "  <phasespace>\n"
+    xmlstr += "    <bounds>\n"
+    xmlstr += "      <lower> " + "  ".join([str(l) for l in lowerbounds]) + " </lower>\n"  
+    xmlstr += "      <upper> " + "  ".join([str(u) for u in upperbounds]) + " </upper>\n"  
+    xmlstr += "    </bounds>\n"
+    xmlstr += "  </phasespace>\n"
+    xmlstr += "  <gamma>\n"
+    xmlstr += "    <lower> " + "  ".join([str(l) for l in lowerdecayrates]) + " </lower>\n"
+    xmlstr += "    <upper> " + "  ".join([str(u) for u in upperdecayrates]) + " </upper>\n"
+    xmlstr += "  </gamma>\n"
+    xmlstr += "  <listboxes>\n"
     for k in range(doms.shape[0]):
-        f.write("    <box> <!-- box : " + str(k) + " -->\n")
-        f.write("      <bounds>\n")
-        f.write("        <lower> " + "  ".join([str(l) for l in doms[k,:,0]]) + " </lower>\n")
-        f.write("        <upper> " + "  ".join([str(u) for u in doms[k,:,1]]) + " </upper>\n")
-        f.write("      </bounds>\n")
-        f.write("      <sigma> \n")
-        f.write("        <lower> " + "  ".join([str(l) for l in lsigs[k]]) + " </lower>\n")
-        f.write("        <upper> " + "  ".join([str(u) for u in usigs[k]]) + " </upper>\n")
-        f.write("      </sigma>\n")
-        f.write("    </box>\n")
-    f.write("  </listboxes>\n")
-    f.write("</atlas>\n")
-    f.close()
+        xmlstr += "    <box> <!-- box : " + str(k) + " -->\n"
+        xmlstr += "      <bounds>\n"
+        xmlstr += "        <lower> " + "  ".join([str(l) for l in doms[k,:,0]]) + " </lower>\n"
+        xmlstr += "        <upper> " + "  ".join([str(u) for u in doms[k,:,1]]) + " </upper>\n"
+        xmlstr += "      </bounds>\n"
+        xmlstr += "      <sigma> \n"
+        xmlstr += "        <lower> " + "  ".join([str(l) for l in lsigs[k]]) + " </lower>\n"
+        xmlstr += "        <upper> " + "  ".join([str(u) for u in usigs[k]]) + " </upper>\n"
+        xmlstr += "      </sigma>\n"
+        xmlstr += "    </box>\n"
+    xmlstr += "  </listboxes>\n"
+    xmlstr += "</atlas>\n"
+    return xmlstr
 
 if __name__ == "__main__":
-    variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates = test4DExample()
-    convertInputsToXML(variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates)
+    xmlstr = genStringForFixedParams(12.0,2.5,12.0,5.0)
+    print(xmlstr)
+    # variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates, upperbounds, lowerbounds = xyz3DExample()
+    # xmlstr = convertInputsToXML(variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates, upperbounds, lowerbounds)
+    # print(xmlstr)
