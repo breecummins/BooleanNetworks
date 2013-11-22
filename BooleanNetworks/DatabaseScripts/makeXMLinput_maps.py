@@ -1,12 +1,7 @@
 import numpy as np
 import itertools
 
-def genStringForFixedParams(A,B,Amax,Bmax):
-    variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates, upperbounds, lowerbounds = test4DExample(A,B,Amax,Bmax)
-    xmlstr = convertInputsToXML(variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates, upperbounds, lowerbounds)
-    return xmlstr
-
-def test4DExample(A,B,Amax,Bmax):
+def test4DExample1(A,B,Amax,Bmax):
     '''
     Example inputs.
 
@@ -18,7 +13,8 @@ def test4DExample(A,B,Amax,Bmax):
     thresholds = [[2,1,1],[3],[1],[1]]
     # give the maps and amplitudes of each interaction (upper and lower bounds for parameter search)
     maps = [[(0,0,0),(1,0,0),(0,1,0),(1,1,0),(0,0,1),(1,0,1),(0,1,1),(1,1,1)],[(0,),(1,)],[(0,),(1,)],[(0,),(1,)]]
-    amps = [[0,4.25,A,A+4.25,0,1.0625,A*0.25,(A+4.25)*0.25],[0,2.5],[0,2.5],[0,B]]
+    ampfunc = lambda A,B: [[0,4.25,A,A+4.25,0,1.0625,A*0.25,(A+4.25)*0.25],[0,2.5],[0,2.5],[0,B]]
+    amps = ampfunc(A,B)
     loweramplitudes = amps
     upperamplitudes = amps
     # give the natural decay rates of the species (upper and lower bounds for parameter search)
@@ -27,7 +23,61 @@ def test4DExample(A,B,Amax,Bmax):
     # give the endogenous production rates. 
     productionrates = [0.1,0.5,0.5,0.5] 
     # get upper and lower bounds
-    bigamps = [[0,4.25,Amax,Amax+4.25,0,1.0625,Amax*0.25,(Amax+4.25)*0.25],[0,2.5],[0,2.5],[0,Bmax]]
+    bigamps = ampfunc(Amax,Bmax)
+    upperbounds = 1.1*((np.array([np.max(u) for u in bigamps]) + np.array(productionrates)) / np.abs(np.array(upperdecayrates))) # calculate upper bounds of domains
+    lowerbounds = np.zeros(upperbounds.shape)
+    return variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates, upperbounds, lowerbounds
+
+def test4DExample2(A,B,Amax,Bmax):
+    '''
+    Example inputs.
+
+    '''
+    # define the interactions between variables
+    variables = ['x','y1','y2','z']
+    affectedby = [['x','y2','z'],['x'],['y1'],['x']]
+    # give the thresholds for each interaction
+    thresholds = [[2,1,1],[1],[1],[3]]
+    # give the maps and amplitudes of each interaction (upper and lower bounds for parameter search)
+    maps = [[(0,0,0),(1,0,0),(0,1,0),(1,1,0),(0,0,1),(1,0,1),(0,1,1),(1,1,1)],[(0,),(1,)],[(0,),(1,)],[(0,),(1,)]]
+    ampfunc = lambda A,B: [[0,4.25,A,A+4.25,0,1.0625,A*0.25,(A+4.25)*0.25],[0,2.5],[0,2.5],[0,B]]
+    amps = ampfunc(A,B)
+    loweramplitudes = amps
+    upperamplitudes = amps
+    # give the natural decay rates of the species (upper and lower bounds for parameter search)
+    lowerdecayrates = [-1,-1,-1,-1]
+    upperdecayrates = [-1,-1,-1,-1] #[-0.5,-0.5,-0.5]
+    # give the endogenous production rates. 
+    productionrates = [0.1,0.5,0.5,0.5] 
+    # get upper and lower bounds
+    bigamps = ampfunc(Amax,Bmax)
+    upperbounds = 1.1*((np.array([np.max(u) for u in bigamps]) + np.array(productionrates)) / np.abs(np.array(upperdecayrates))) # calculate upper bounds of domains
+    lowerbounds = np.zeros(upperbounds.shape)
+    return variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates, upperbounds, lowerbounds
+
+def test4DExample3(A,B,Amax,Bmax):
+    '''
+    Example inputs.
+
+    '''
+    # define the interactions between variables
+    variables = ['x','y1','y2','z']
+    affectedby = [['x','y2','z'],['x'],['y1'],['x','y2']]
+    # give the thresholds for each interaction
+    thresholds = [[2,1,1],[3],[1],[1,2]]
+    # give the maps and amplitudes of each interaction (upper and lower bounds for parameter search)
+    maps = [[(0,0,0),(1,0,0),(0,1,0),(1,1,0),(0,0,1),(1,0,1),(0,1,1),(1,1,1)],[(0,),(1,)],[(0,),(1,)],[(0,0),(1,0),(0,1),(1,1)]]
+    ampfunc = lambda A,B: [[0,4.25,A,A+4.25,0,1.0625,A*0.25,(A+4.25)*0.25],[0,2.5],[0,2.5],[0,B,0.4,B+0.4]]
+    amps = ampfunc(A,B)
+    loweramplitudes = amps
+    upperamplitudes = amps
+    # give the natural decay rates of the species (upper and lower bounds for parameter search)
+    lowerdecayrates = [-1,-1,-1,-1]
+    upperdecayrates = [-1,-1,-1,-1] #[-0.5,-0.5,-0.5]
+    # give the endogenous production rates. 
+    productionrates = [0.1,0.5,0.5,0.5] 
+    # get upper and lower bounds
+    bigamps = ampfunc(Amax,Bmax)
     upperbounds = 1.1*((np.array([np.max(u) for u in bigamps]) + np.array(productionrates)) / np.abs(np.array(upperdecayrates))) # calculate upper bounds of domains
     lowerbounds = np.zeros(upperbounds.shape)
     return variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates, upperbounds, lowerbounds
@@ -55,6 +105,11 @@ def xyz3DExample():
     upperbounds = 1.1*((np.array([np.max(u) for u in upperamplitudes]) + np.array(productionrates)) / np.abs(np.array(upperdecayrates))) # calculate upper bounds of domains
     lowerbounds = np.zeros(upperbounds.shape)
     return variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates, upperbounds, lowerbounds
+
+def genStringForFixedParams(A,B,Amax,Bmax,model=test4DExample1):
+    variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates, upperbounds, lowerbounds = model(A,B,Amax,Bmax)
+    xmlstr = convertInputsToXML(variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates, upperbounds, lowerbounds)
+    return xmlstr
 
 def convertInputsToXML(variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates, upperbounds, lowerbounds):
     thresh,ainds,pr = makeParameterArrays(variables, affectedby, thresholds, productionrates)
@@ -155,7 +210,7 @@ def generateXML(lowerbounds,upperbounds,lowerdecayrates,upperdecayrates,doms,lsi
     return xmlstr
 
 if __name__ == "__main__":
-    xmlstr = genStringForFixedParams(12.0,2.5,12.0,5.0)
+    xmlstr = genStringForFixedParams(8.0,2.5,12.0,5.0,test4DExample3)
     print(xmlstr)
     # variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates, upperbounds, lowerbounds = xyz3DExample()
     # xmlstr = convertInputsToXML(variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates, upperbounds, lowerbounds)
