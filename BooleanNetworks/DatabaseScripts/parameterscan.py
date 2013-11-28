@@ -27,10 +27,8 @@ def test4DExample1(A=np.arange(0.05,12.25,0.5),B=np.arange(0.05,12.25,0.5),C=np.
     # make domains
     thresh,ainds,pr = makeboxes.makeParameterArrays(variables, affectedby, thresholds, productionrates)
     doms = makeboxes.getDomains(thresh,lowerbounds,upperbounds)
-    # make parameter sets
-    paramsets = list(itertools.product(A,B,C,D,E,F))
-    print('Total number of parameter sets to be tested: {0}'.format(len(paramsets)))
-    return paramsets, ampfunc, doms, thresh,pr,ainds,maps
+    numsets = len(A)*len(B)*len(C)*len(D)*len(E)*len(F)
+    return ampfunc, doms, thresh,pr,ainds,maps,numsets
 
 def getSigBox(sigs,doms):
     sigboxes = []
@@ -42,18 +40,61 @@ def getSigBox(sigs,doms):
                 break
     return tuple(sigboxes)
 
-def paramScan(paramsets, ampfunc, doms, thresh,pr,ainds,maps):
+def getSigBoxNew(sigs,doms):
+    sigboxes = []
+    for s in sigs:
+        sig = np.array(s)
+        inds = np.nonzero(np.all((sig - doms[:,:,0])*(sig-doms[:,:,1]) < 0,1))[0]
+        if len(inds)==1:
+            sigboxes.append(inds[0])
+        elif len(inds) == 0:
+            return None
+    return tuple(sigboxes)
+
+
+def getSigBoxWorse(sigs,doms):
+    sigboxes = []
+    for sig in sigs:
+        for d in range(doms.shape[0]):
+             if sum([sig[j] > doms[d,j,0] and sig[j] < doms[d,j,1] for j in range(len(sig))]) == len(sig):
+                sigboxes.append(d)
+                break
+    return tuple(sigboxes)
+
+def paramScanNew(ampfunc, doms, thresh,pr,ainds,maps,A=None,B=None,C=None,D=None,E=None,F=None):
     '''
     Scan across all parameter sets and calculate the sigma values and the location (domain) 
     of each sigma value.
 
     '''
-    params_sigboxes = []
+    params = []
+    sigs = []
+    sigboxes = []
+    for p in itertools.product(A,B,C,D,E,F):
+        amps = ampfunc(*p)
+        lsigs,usigs = makeboxes.getSigmas(doms,thresh,amps,amps,pr,ainds,maps)
+        sb = getSigBoxNew(usigs,doms)
+        if sb not in sigboxes and sb: #sb could be None
+            params.append(p)
+            sigs.append(usigs)
+            sigboxes.append(sb)
+    return zip(params, sigs, sigboxes)
+
+def paramScan(ampfunc, doms, thresh,pr,ainds,maps,A=None,B=None,C=None,D=None,E=None,F=None):
+    '''
+    Scan across all parameter sets and calculate the sigma values and the location (domain) 
+    of each sigma value.
+
+    '''
+    paramsets = list(itertools.product(A,B,C,D,E,F))
+    sigs = []
+    sigboxes = []
     for p in paramsets:
         amps = ampfunc(*p)
         lsigs,usigs = makeboxes.getSigmas(doms,thresh,amps,amps,pr,ainds,maps)
-        params_sigboxes.append((p,getSigBox(usigs,doms)))
-    return params_sigboxes
+        sigs.append(usigs)
+        sigboxes.append(getSigBox(usigs,doms))
+    return zip(paramsets, sigs, sigboxes)
 
 def paramsWithUniqSigBoxes(params_sigboxes):
     '''
@@ -61,23 +102,46 @@ def paramsWithUniqSigBoxes(params_sigboxes):
 
     '''
     usb = []
+    usm = []
     ups = []
-    for p,b in params_sigboxes:
-        if b not in usb:
+    for p,s,b in params_sigboxes:
+        if b not in usb and b: # b could be None
             usb.append(b)
+            usm.append(s)
             ups.append(p)
-    return ups
+    return zip(ups, usm, usb)
 
-def findMinimalParamSets(model=test4DExample1,modelargs = {'A':np.arange(0.5,8.25,1),'B':np.arange(0.5,2.75,1),'C':np.arange(0.5,2.75,1),'D':np.arange(0.5,2.75,1),'E':np.arange(0.5,5,1),'F':np.arange(0.25,1,0.25)}):
-    paramsets, ampfunc, doms, thresh,pr,ainds,maps = model(**modelargs)
-    params_sigboxes = paramScan(paramsets, ampfunc, doms, thresh,pr,ainds,maps)
+def findMinimalParamSetsNew(model=test4DExample1,modelargs = {'A':np.arange(0.5,8.25,3),'B':np.arange(0.5,2.75,1),'C':np.arange(0.5,2.75,1),'D':np.arange(0.5,2.75,1),'E':np.arange(0.5,2.75,1),'F':np.arange(0.25,1,0.5)}):
+    ampfunc, doms, thresh,pr,ainds,maps, numsets= model(**modelargs)
+    return paramScanNew(ampfunc, doms, thresh,pr,ainds,maps,**modelargs), numsets
+
+def findMinimalParamSets(model=test4DExample1,modelargs = {'A':np.arange(0.5,8.25,3),'B':np.arange(0.5,2.75,1),'C':np.arange(0.5,2.75,1),'D':np.arange(0.5,2.75,1),'E':np.arange(0.5,2.75,1),'F':np.arange(0.25,1,0.5)}):
+    ampfunc, doms, thresh,pr,ainds,maps, numsets= model(**modelargs)
+    params_sigboxes = paramScan(ampfunc, doms, thresh,pr,ainds,maps,**modelargs)
     uniqparamsets = paramsWithUniqSigBoxes(params_sigboxes)
-    return uniqparamsets
+    return uniqparamsets, numsets
 
 if __name__ == '__main__':
-    uniqparamsets = findMinimalParamSets()
-    print(uniqparamsets)
-    print('Total number of parameter sets with focal point collection in a unique set of domains: {0}'.format(len(uniqparamsets)))
+    paramsets, numsets = findMinimalParamSets()
+    for p, s, b in paramsets:
+        print(p); print(b); print(s); print('       ')
+    print('Total number of parameter sets with focal point collection in a unique set of domains: {0}'.format(len(paramsets)))
+    print('Total number of parameter sets tested: {0}'.format(numsets))
+
+    paramsetsnew, numsets = findMinimalParamSetsNew()
+    for p, s, b in paramsetsnew:
+        print(p); print(b); print(s); print('       ')
+    print('Total number of parameter sets with focal point collection in a unique set of domains: {0}'.format(len(paramsetsnew)))
+    print('Total number of parameter sets tested: {0}'.format(numsets))
+
+    diffs = []
+    for p in paramsets:
+        if p not in paramsetsnew:
+            diffs.append(p)
+
+    for d in diffs:
+        print(d[0])
+    print('Total number of param sets in old but not new: {0}'.format(len(diffs)))
 
 
 
