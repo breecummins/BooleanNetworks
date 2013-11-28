@@ -34,16 +34,6 @@ def getSigBox(sigs,doms):
     sigboxes = []
     for s in sigs:
         sig = np.array(s)
-        for d in range(doms.shape[0]):
-            if np.all(sig > doms[d,:,0]) and np.all(sig < doms[d,:,1]):
-                sigboxes.append(d)
-                break
-    return tuple(sigboxes)
-
-def getSigBoxNew(sigs,doms):
-    sigboxes = []
-    for s in sigs:
-        sig = np.array(s)
         inds = np.nonzero(np.all((sig - doms[:,:,0])*(sig-doms[:,:,1]) < 0,1))[0]
         if len(inds)==1:
             sigboxes.append(inds[0])
@@ -51,17 +41,7 @@ def getSigBoxNew(sigs,doms):
             return None
     return tuple(sigboxes)
 
-
-def getSigBoxWorse(sigs,doms):
-    sigboxes = []
-    for sig in sigs:
-        for d in range(doms.shape[0]):
-             if sum([sig[j] > doms[d,j,0] and sig[j] < doms[d,j,1] for j in range(len(sig))]) == len(sig):
-                sigboxes.append(d)
-                break
-    return tuple(sigboxes)
-
-def paramScanNew(ampfunc, doms, thresh,pr,ainds,maps,A=None,B=None,C=None,D=None,E=None,F=None):
+def paramScan(ampfunc, doms, thresh,pr,ainds,maps,A=None,B=None,C=None,D=None,E=None,F=None):
     '''
     Scan across all parameter sets and calculate the sigma values and the location (domain) 
     of each sigma value.
@@ -73,14 +53,14 @@ def paramScanNew(ampfunc, doms, thresh,pr,ainds,maps,A=None,B=None,C=None,D=None
     for p in itertools.product(A,B,C,D,E,F):
         amps = ampfunc(*p)
         lsigs,usigs = makeboxes.getSigmas(doms,thresh,amps,amps,pr,ainds,maps)
-        sb = getSigBoxNew(usigs,doms)
+        sb = getSigBox(usigs,doms)
         if sb not in sigboxes and sb: #sb could be None
             params.append(p)
             sigs.append(usigs)
             sigboxes.append(sb)
     return zip(params, sigs, sigboxes)
 
-def paramScan(ampfunc, doms, thresh,pr,ainds,maps,A=None,B=None,C=None,D=None,E=None,F=None):
+def paramScan2(ampfunc, doms, thresh,pr,ainds,maps,A=None,B=None,C=None,D=None,E=None,F=None):
     '''
     Scan across all parameter sets and calculate the sigma values and the location (domain) 
     of each sigma value.
@@ -111,13 +91,13 @@ def paramsWithUniqSigBoxes(params_sigboxes):
             ups.append(p)
     return zip(ups, usm, usb)
 
-def findMinimalParamSetsNew(model=test4DExample1,modelargs = {'A':np.arange(0.5,8.25,3),'B':np.arange(0.5,2.75,1),'C':np.arange(0.5,2.75,1),'D':np.arange(0.5,2.75,1),'E':np.arange(0.5,2.75,1),'F':np.arange(0.25,1,0.5)}):
+def findMinimalParamSets(model=test4DExample1,modelargs = {'A':np.arange(0.5,8.25,2),'B':np.arange(0.5,2.75,1),'C':np.arange(0.5,2.75,1),'D':np.arange(0.5,2.75,1),'E':np.arange(0.5,5,1),'F':np.arange(0.25,1,0.25)}):
     ampfunc, doms, thresh,pr,ainds,maps, numsets= model(**modelargs)
-    return paramScanNew(ampfunc, doms, thresh,pr,ainds,maps,**modelargs), numsets
+    return paramScan(ampfunc, doms, thresh,pr,ainds,maps,**modelargs), numsets
 
-def findMinimalParamSets(model=test4DExample1,modelargs = {'A':np.arange(0.5,8.25,3),'B':np.arange(0.5,2.75,1),'C':np.arange(0.5,2.75,1),'D':np.arange(0.5,2.75,1),'E':np.arange(0.5,2.75,1),'F':np.arange(0.25,1,0.5)}):
+def findMinimalParamSets2(model=test4DExample1,modelargs = {'A':np.arange(0.5,8.25,2),'B':np.arange(0.5,2.75,1),'C':np.arange(0.5,2.75,1),'D':np.arange(0.5,2.75,1),'E':np.arange(0.5,5,1),'F':np.arange(0.25,1,0.25)}):
     ampfunc, doms, thresh,pr,ainds,maps, numsets= model(**modelargs)
-    params_sigboxes = paramScan(ampfunc, doms, thresh,pr,ainds,maps,**modelargs)
+    params_sigboxes = paramScan2(ampfunc, doms, thresh,pr,ainds,maps,**modelargs)
     uniqparamsets = paramsWithUniqSigBoxes(params_sigboxes)
     return uniqparamsets, numsets
 
@@ -128,20 +108,12 @@ if __name__ == '__main__':
     print('Total number of parameter sets with focal point collection in a unique set of domains: {0}'.format(len(paramsets)))
     print('Total number of parameter sets tested: {0}'.format(numsets))
 
-    paramsetsnew, numsets = findMinimalParamSetsNew()
-    for p, s, b in paramsetsnew:
+    paramsets2, numsets2 = findMinimalParamSets2()
+    for p, s, b in paramsets2:
         print(p); print(b); print(s); print('       ')
-    print('Total number of parameter sets with focal point collection in a unique set of domains: {0}'.format(len(paramsetsnew)))
-    print('Total number of parameter sets tested: {0}'.format(numsets))
+    print('Total number of parameter sets with focal point collection in a unique set of domains: {0}'.format(len(paramsets2)))
+    print('Total number of parameter sets tested: {0}'.format(numsets2))
 
-    diffs = []
-    for p in paramsets:
-        if p not in paramsetsnew:
-            diffs.append(p)
-
-    for d in diffs:
-        print(d[0])
-    print('Total number of param sets in old but not new: {0}'.format(len(diffs)))
 
 
 
