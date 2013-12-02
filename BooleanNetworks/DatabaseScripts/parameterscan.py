@@ -1,10 +1,11 @@
 import numpy as np
 import makeboxes
-import itertools
+import itertools, sys
 
 def test4DExample1(A=np.arange(0.05,12.25,0.5),B=np.arange(0.05,12.25,0.5),C=np.arange(0.05,12.25,0.5),D=np.arange(0.05,12.25,0.5),E=np.arange(0.05,12.25,0.5),F=np.arange(0.05,1,0.25)):
     '''
     Create all parameter sets given as ranges in the arguments.
+    **Assume equal decay rates of 1.**
 
     '''
     # define the interactions between variables
@@ -15,20 +16,36 @@ def test4DExample1(A=np.arange(0.05,12.25,0.5),B=np.arange(0.05,12.25,0.5),C=np.
     # give the maps and amplitudes of each interaction (upper and lower bounds for parameter search)
     maps = [[(0,0,0),(1,0,0),(0,1,0),(1,1,0),(0,0,1),(1,0,1),(0,1,1),(1,1,1)],[(0,),(1,)],[(0,),(1,)],[(0,),(1,)]]
     ampfunc = lambda a,b,c,d,e,f: [[0,e,a,a+e,0,f*e,f*a,(a+e)*f],[0,c],[0,d],[0,b]]
-    # give the natural decay rates of the species (upper and lower bounds for parameter search)
-    lowerdecayrates = [-1,-1,-1,-1]
-    upperdecayrates = [-1,-1,-1,-1] #[-0.5,-0.5,-0.5]
     # give the endogenous production rates. 
     productionrates = [0.1,0.5,0.5,0.5] 
     # get upper and lower bounds
     bigamps = ampfunc(A[-1],B[-1],C[-1],D[-1],E[-1],F[-1])
-    upperbounds = 1.1*((np.array([np.max(u) for u in bigamps]) + np.array(productionrates)) / np.abs(np.array(upperdecayrates))) 
+    upperbounds = 1.1*( np.array([np.max(u) for u in bigamps]) + np.array(productionrates) ) 
     lowerbounds = np.zeros(upperbounds.shape)
     # make domains
     thresh,ainds,pr = makeboxes.makeParameterArrays(variables, affectedby, thresholds, productionrates)
     doms = makeboxes.getDomains(thresh,lowerbounds,upperbounds)
     numsets = len(A)*len(B)*len(C)*len(D)*len(E)*len(F)
     return ampfunc, doms, thresh,pr,ainds,maps,numsets
+
+def getSigmas(doms,thresh,amp,pr,ainds,maps):
+    '''
+    Find the sigma bounds in each regular domain.
+
+    '''
+    sigs = []
+    midpts = np.mean(doms,2)
+    for i in range(doms.shape[0]):
+        comp = (midpts[i,:] > thresh).astype(int) # compare domain midpts to thresholds
+        s=[]
+        for j,a in enumerate(ainds):
+            bmap = tuple( comp[j][a] ) # get the binary map for target j
+            for k,m in enumerate(maps[j]): # get the index of binary map; this method is slightly faster than k = maps[j].index(bmap)
+                if m == bmap:
+                    s.append(amp[j][k]+pr[j]) # calculate sigma (is the focal point also if decay rates are 1)
+                    break
+        sigs.append(s)
+    return sigs
 
 def getSigBox(sigs,doms):
     sigboxes = []
@@ -48,73 +65,28 @@ def paramScan(ampfunc, doms, thresh,pr,ainds,maps,A=None,B=None,C=None,D=None,E=
 
     '''
     params = []
-    sigs = []
+    allsigs = []
     sigboxes = []
     for p in itertools.product(A,B,C,D,E,F):
         amps = ampfunc(*p)
-        lsigs,usigs = makeboxes.getSigmas(doms,thresh,amps,amps,pr,ainds,maps)
-        sb = getSigBox(usigs,doms)
+        sigs = getSigmas(doms,thresh,amps,pr,ainds,maps)
+        sb = getSigBox(sigs,doms)
         if sb not in sigboxes and sb: #sb could be None
             params.append(p)
-            sigs.append(usigs)
+            allsigs.append(sigs)
             sigboxes.append(sb)
-    return zip(params, sigs, sigboxes)
-
-def paramScan2(ampfunc, doms, thresh,pr,ainds,maps,A=None,B=None,C=None,D=None,E=None,F=None):
-    '''
-    Scan across all parameter sets and calculate the sigma values and the location (domain) 
-    of each sigma value.
-
-    '''
-    paramsets = list(itertools.product(A,B,C,D,E,F))
-    sigs = []
-    sigboxes = []
-    for p in paramsets:
-        amps = ampfunc(*p)
-        lsigs,usigs = makeboxes.getSigmas(doms,thresh,amps,amps,pr,ainds,maps)
-        sigs.append(usigs)
-        sigboxes.append(getSigBox(usigs,doms))
-    return zip(paramsets, sigs, sigboxes)
-
-def paramsWithUniqSigBoxes(params_sigboxes):
-    '''
-    Find all parameter sets corresponding to unique collections of sigma locations.
-
-    '''
-    usb = []
-    usm = []
-    ups = []
-    for p,s,b in params_sigboxes:
-        if b not in usb and b: # b could be None
-            usb.append(b)
-            usm.append(s)
-            ups.append(p)
-    return zip(ups, usm, usb)
+    return zip(params, allsigs, sigboxes)
 
 def findMinimalParamSets(model=test4DExample1,modelargs = {'A':np.arange(0.5,8.25,2),'B':np.arange(0.5,2.75,1),'C':np.arange(0.5,2.75,1),'D':np.arange(0.5,2.75,1),'E':np.arange(0.5,5,1),'F':np.arange(0.25,1,0.25)}):
     ampfunc, doms, thresh,pr,ainds,maps, numsets= model(**modelargs)
     return paramScan(ampfunc, doms, thresh,pr,ainds,maps,**modelargs), numsets
 
-def findMinimalParamSets2(model=test4DExample1,modelargs = {'A':np.arange(0.5,8.25,2),'B':np.arange(0.5,2.75,1),'C':np.arange(0.5,2.75,1),'D':np.arange(0.5,2.75,1),'E':np.arange(0.5,5,1),'F':np.arange(0.25,1,0.25)}):
-    ampfunc, doms, thresh,pr,ainds,maps, numsets= model(**modelargs)
-    params_sigboxes = paramScan2(ampfunc, doms, thresh,pr,ainds,maps,**modelargs)
-    uniqparamsets = paramsWithUniqSigBoxes(params_sigboxes)
-    return uniqparamsets, numsets
-
 if __name__ == '__main__':
     paramsets, numsets = findMinimalParamSets()
     for p, s, b in paramsets:
-        print(p); print(b); print(s); print('       ')
+        print(p); print(b); # print(s); print('       ')
     print('Total number of parameter sets with focal point collection in a unique set of domains: {0}'.format(len(paramsets)))
     print('Total number of parameter sets tested: {0}'.format(numsets))
-
-    paramsets2, numsets2 = findMinimalParamSets2()
-    for p, s, b in paramsets2:
-        print(p); print(b); print(s); print('       ')
-    print('Total number of parameter sets with focal point collection in a unique set of domains: {0}'.format(len(paramsets2)))
-    print('Total number of parameter sets tested: {0}'.format(numsets2))
-
-
 
 
 

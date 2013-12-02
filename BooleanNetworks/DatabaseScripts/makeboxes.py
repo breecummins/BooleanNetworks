@@ -45,7 +45,8 @@ def getDomains(thresh,lowerbounds,upperbounds):
 
 def getSigmas(doms,thresh,lamp,uamp,pr,ainds,maps):
     '''
-    Find the sigma bounds in each regular domain.
+    Find the sigma bounds in each regular domain. Note that sigma is *not* dependent on decay rate. 
+    Sigma is the same as the focal point if the decay rates are all 1.
 
     '''
     lsigs = []
