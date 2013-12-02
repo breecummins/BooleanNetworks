@@ -1,6 +1,9 @@
+#standard libs
 import numpy as np
 import makeboxes
-import itertools, sys
+#my libs
+import itertools, os
+import StateSpace.fileops as fileops
 
 def test4DExample1(A=np.arange(0.05,12.25,0.5),B=np.arange(0.05,12.25,0.5),C=np.arange(0.05,12.25,0.5),D=np.arange(0.05,12.25,0.5),E=np.arange(0.05,12.25,0.5),F=np.arange(0.05,1,0.25)):
     '''
@@ -26,6 +29,7 @@ def test4DExample1(A=np.arange(0.05,12.25,0.5),B=np.arange(0.05,12.25,0.5),C=np.
     thresh,ainds,pr = makeboxes.makeParameterArrays(variables, affectedby, thresholds, productionrates)
     doms = makeboxes.getDomains(thresh,lowerbounds,upperbounds)
     numsets = len(A)*len(B)*len(C)*len(D)*len(E)*len(F)
+    print('Number of parameter sets to test: %d' %numsets)
     return ampfunc, doms, thresh,pr,ainds,maps,numsets
 
 def getSigmas(doms,thresh,amp,pr,ainds,maps):
@@ -77,16 +81,23 @@ def paramScan(ampfunc, doms, thresh,pr,ainds,maps,A=None,B=None,C=None,D=None,E=
             sigboxes.append(sb)
     return zip(params, allsigs, sigboxes)
 
-def findMinimalParamSets(model=test4DExample1,modelargs = {'A':np.arange(0.5,8.25,2),'B':np.arange(0.5,2.75,1),'C':np.arange(0.5,2.75,1),'D':np.arange(0.5,2.75,1),'E':np.arange(0.5,5,1),'F':np.arange(0.25,1,0.25)}):
+def findMinimalParamSets(model=test4DExample1,modelargs = {'A':np.arange(0.5,8.25,0.25),'B':np.arange(0.5,2.75,0.25),'C':np.arange(0.5,2.75,0.25),'D':np.arange(0.5,2.75,0.25),'E':np.arange(0.5,5,0.25),'F':np.arange(0.1,1,0.1)}):
     ampfunc, doms, thresh,pr,ainds,maps, numsets= model(**modelargs)
     return paramScan(ampfunc, doms, thresh,pr,ainds,maps,**modelargs), numsets
 
-if __name__ == '__main__':
+def test():
     paramsets, numsets = findMinimalParamSets()
-    for p, s, b in paramsets:
-        print(p); print(b); # print(s); print('       ')
-    print('Total number of parameter sets with focal point collection in a unique set of domains: {0}'.format(len(paramsets)))
-    print('Total number of parameter sets tested: {0}'.format(numsets))
+    # for p, s, b in paramsets:
+    #     print(p); print(len(b)); # print(s); print('       ')
+    print('Total number of parameter sets with focal point collection in a unique set of domains: %d' %len(paramsets))
+    # print('Total number of parameter sets tested: {0}'.format(numsets))
+    fileops.dumpPickle({'paramsets':paramsets,'numsets':numsets},os.path.join(os.path.expanduser("~"),'ParamScan1'))
+
+
+
+if __name__ == '__main__':
+    import timeit
+    print(timeit.timeit("test()", setup="from __main__ import test",number=1))
 
 
 
