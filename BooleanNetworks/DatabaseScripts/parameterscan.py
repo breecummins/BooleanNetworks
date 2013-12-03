@@ -167,7 +167,7 @@ def knitme():
             allsigms.append(p[1])
             allboxes.append(p[2])
         numsets += mydict['numsets']
-        print('Total sets: %d' % numsets)
+        print('Total sets: %d' % mydict['numsets'])
         print('Unique sets: %d' % len(mydict['paramsets']))
     print('New list length: %d' % len(allpsets))
     uniqparam = []
