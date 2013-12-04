@@ -1,6 +1,30 @@
 import numpy as np
 import makeboxes
 
+def Example8D_1(A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,B1,B2,B3,B4,B5,B6,A1max,A2max,A3max,A4max,A5max,A6max,A7max,A8max,A9max,A10max,B1max,B2max,B3max,B4max,B5max,B6max):
+    # define the interactions between variables
+    variables = ['x','y1','y2','y3','z','w1','w2','w3']
+    affectedby = [['x','y3','z','w1'],['x'],['x','y1','w1'],['y2','w1'],['x','w2'],['y2','w2'],['w1','w3'],['x','w2']]
+    # give the thresholds for each interaction
+    thresholds = [[2,1,1,2],[1],[4,1,1],[1,2],[3,1],[1,1],[1,1],[3,1]]
+    # give the maps and amplitudes of each interaction (upper and lower bounds for parameter search)
+    maps = [[(0,0,0,0),(1,0,0,0),(0,1,0,0),(1,1,0,0),(0,0,1,0),(1,0,1,0),(0,1,1,0),(1,1,1,0),(0,0,0,1),(1,0,0,1),(0,1,0,1),(1,1,0,1),(0,0,1,1),(1,0,1,1),(0,1,1,1),(1,1,1,1)],[(0,),(1,)],[(0,0,0),(1,0,0),(0,1,0),(1,1,0),(0,0,1),(1,0,1),(0,1,1),(1,1,1)],[(0,0),(1,0),(0,1),(1,1)],[(0,0),(1,0),(0,1),(1,1)],[(0,0),(1,0),(0,1),(1,1)],[(0,0),(1,0),(0,1),(1,1)],[(0,0),(1,0),(0,1),(1,1)] ]
+    ampfunc = lambda A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,B1,B2,B3,B4,B5,B6: [ [0,A1,A2,A1+A2,0,A1*B1,A2*B1,(A1+A2)*B1,0,A1*B2,A2*B2,(A1+A2)*B2,0,A1*B1*B2,A2*B1*B2,(A1+A2)*B1*B2],[0,A3],[0,A4,A5,A4+A5,A6,A4+A6,A5+A6,A4+A5+A6],[0,A7,0,A7*B3],[0,A8,0,A8*B4],[0,A9,0,A9*B5],[0,A10,0,A10*B6],[0,A8,0,A8*B4]  ]
+    amps = ampfunc(A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,B1,B2,B3,B4,B5,B6)
+    loweramplitudes = amps
+    upperamplitudes = amps
+    # give the natural decay rates of the species (upper and lower bounds for parameter search)
+    lowerdecayrates = [-1,-1,-1,-1,-1,-1,-1,-1]
+    upperdecayrates = [-1,-1,-1,-1,-1,-1,-1,-1]
+    # give the endogenous production rates. 
+    productionrates = [0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1] 
+    # get upper and lower bounds
+    bigamps = ampfunc(A1max,A2max,A3max,A4max,A5max,A6max,A7max,A8max,A9max,A10max,B1max,B2max,B3max,B4max,B5max,B6max)
+    upperbounds = 1.1*((np.array([np.max(u) for u in bigamps]) + np.array(productionrates)) / np.abs(np.array(upperdecayrates))) # calculate upper bounds of domains
+    lowerbounds = np.zeros(upperbounds.shape)
+    return variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates, upperbounds, lowerbounds
+
+
 def test4DExample1(A,B,C,D,E,F,Amax,Bmax,Cmax,Dmax,Emax,Fmax):
     '''
     Example inputs.
@@ -148,8 +172,7 @@ def generateXML(lowerbounds,upperbounds,lowerdecayrates,upperdecayrates,doms,lsi
     return xmlstr
 
 if __name__ == "__main__":
-    xmlstr = genStringForFixedParams(test4DExample1,(8.0,0.6,0.6,0.6,4.0,0.1,12.0,2.5,2.5,2.5,5.0,0.9))
-    print(xmlstr)
-    # variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates, upperbounds, lowerbounds = xyz3DExample()
-    # xmlstr = convertInputsToXML(variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates, upperbounds, lowerbounds)
+    # xmlstr = genStringForFixedParams(test4DExample1,(8.0,0.6,0.6,0.6,4.0,0.1,12.0,2.5,2.5,2.5,5.0,0.9))
     # print(xmlstr)
+    xmlstr = genStringForFixedParams(Example8D_1,(1,1,1,1,1,1,1,1,1,1,.1,.1,.1,.1,.1,.1,2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1))
+    print(xmlstr)
