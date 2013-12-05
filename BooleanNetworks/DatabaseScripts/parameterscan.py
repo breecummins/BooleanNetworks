@@ -145,23 +145,15 @@ def findMinimalParamSets(model=test4DExample1,paramranges = (numpy.arange(0.5,8.
     ampfunc, doms, thresh,pr,ainds,maps, numsets= model(*paramranges)
     return paramScan(ampfunc, doms, thresh,pr,ainds,maps,paramranges), numsets
 
-def findMinimalParamSets_Parallel(model=test4DExample1,paramranges=(numpy.arange(2.25,4.25,0.25),numpy.arange(0.75,1,0.25),numpy.arange(0.75,1,0.25),numpy.arange(0.75,1,0.25),numpy.arange(0.5,5,0.25),numpy.arange(0.1,1,0.1)),fname='ParamScanA04'):
+def findMinimalParamSets_Parallel(model,paramranges,fname):
+    # Do not make a default arg for model - it may not be in the pp name space. Hard to debug.
     ampfunc, doms, thresh,pr,ainds,maps, numsets= model(*paramranges)
     paramsets = paramScan(ampfunc, doms, thresh,pr,ainds,maps,paramranges)
-    msg = 'Total number of parameter sets with focal point collection in a unique set of domains: %d \n Total number of parameter sets tested: %d \n Saving %s.' % (len(paramsets),numsets,fname) 
-    print(msg)   
     F = open(os.path.join(os.path.expanduser("~"),fname+'.pickle'),'w')
     cPickle.Pickler(F).dump({'paramsets':paramsets,'numsets':numsets})
     F.close()
-    return None
-
-def makeparamfile(fname=os.path.join(os.path.expanduser("~"),'SimulationResults/BooleanNetworks/ParamScan1.pickle')):
-    mydict = fileops.loadPickle(fname)
-    newfname = fname[:-6] + 'txt'
-    f = open(newfname,'w')
-    for p in mydict['paramsets']:
-        f.write(str(p[0])+'\n')
-    f.close()
+    msg = 'Total number of parameter sets with focal point collection in a unique set of domains: %d \n Total number of parameter sets tested: %d \n Saving %s.' % (len(paramsets),numsets,fname) 
+    return msg
 
 def knitme():
     allpsets = []
@@ -211,9 +203,11 @@ def parallelrun_4D():
     D = numpy.arange(0.75,1,0.25)
     E = numpy.arange(0.5,5,0.1)
     F = numpy.arange(0.1,1,0.1)
+    jobs = []
     for j,f in enumerate(fnames):
-        job_server.submit(findMinimalParamSets_Parallel,( model,(A[j],B,C,D,E,F),f ), depfuncs = (model,paramScan), modules = ("cPickle","numpy", "itertools", "os"),globals=globals())
-    job_server.wait()
+        jobs.append(job_server.submit(findMinimalParamSets_Parallel,( model,(A[j],B,C,D,E,F),f ), depfuncs = (model,paramScan), modules = ("cPickle","numpy", "itertools", "os"),globals=globals()))
+    for job in jobs:
+        print(job())
     job_server.print_stats()
     knitme()
 
@@ -231,15 +225,23 @@ def parallelrun_8D():
     A4,A5,A6 = [0.4,0.6,1.0,2.0], [0.4,0.6,1.0,2.0], [0.4,0.6,1.0,2.0]
     A7,A8,A9,A10 = [1.0,5.0],[1.0,5.0],[1.0,5.0],[1.0,5.0]
     B1,B2,B3,B4,B5,B6 = [0.25,0.5,0.75],[0.25,0.5,0.75],[0.25,0.5,0.75],[0.25,0.5,0.75],[0.25,0.5,0.75],[0.25,0.5,0.75]
+    jobs = []
     for j,f in enumerate(fnames):
-        job_server.submit(findMinimalParamSets_Parallel,( model,([A1[j]],A2,A3,A4,A5,A6,A7,A8,A9,A10,B1,B2,B3,B4,B5,B6),f ), depfuncs = (model,paramScan), modules = ("cPickle","numpy", "itertools", "os"),globals=globals())
-    job_server.wait()
+        jobs.append(job_server.submit(findMinimalParamSets_Parallel,( model,([A1[j]],A2,A3,A4,A5,A6,A7,A8,A9,A10,B1,B2,B3,B4,B5,B6),f ), depfuncs = (model,paramScan), modules = ("cPickle","numpy", "itertools", "os"),globals=globals()))
+    for job in jobs:
+        print(job())
     job_server.print_stats()
     knitme()
 
+def makeparamfile(fname=os.path.join(os.path.expanduser("~"),'SimulationResults/BooleanNetworks/ParamScan1.pickle')):
+    mydict = fileops.loadPickle(fname)
+    newfname = fname[:-6] + 'txt'
+    f = open(newfname,'w')
+    for p in mydict['paramsets']:
+        f.write(str(p[0])+'\n')
+    f.close()
+
 if __name__ == '__main__':
-    # import timeit
-    # print(timeit.timeit("test()", setup="from __main__ import test",number=1))
     # makeparamfile()
     # parallelrun_4D()
     parallelrun_8D()
