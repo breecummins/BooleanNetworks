@@ -1,12 +1,7 @@
 import numpy as np
 import makeboxes
 
-def Example8D_1(paramlist):
-    # name params
-    A1 = paramlist[0];A2=paramlist[1];A3=paramlist[2];A4=paramlist[3];A5=paramlist[4];A6=paramlist[5];A7 = paramlist[6];A8=paramlist[7];A9=paramlist[8];A10=paramlist[9]
-    B1=paramlist[10];B2=paramlist[11];B3=paramlist[12];B4=paramlist[13];B5=paramlist[14];B6=paramlist[15]
-    A1max = paramlist[16];A2max=paramlist[17];A3max=paramlist[18];A4max=paramlist[19];A5max=paramlist[20];A6max=paramlist[21];A7max = paramlist[22];A8max=paramlist[23];A9max=paramlist[24];A10max=paramlist[25]
-    B1max=paramlist[26];B2max=paramlist[27];B3max=paramlist[28];B4max=paramlist[29];B5max=paramlist[30];B6max=paramlist[31]
+def Example8D_1(A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,B1,B2,B3,B4,B5,B6,A1max,A2max,A3max,A4max,A5max,A6max,A7max,A8max,A9max,A10max,B1max,B2max,B3max,B4max,B5max,B6max):
     # define the interactions between variables
     variables = ['x','y1','y2','y3','z','w1','w2','w3']
     affectedby = [['x','y3','z','w1'],['x'],['x','y1','w1'],['y2','w1'],['x','w2'],['y2','w2'],['w1','w3'],['x','w2']]
@@ -30,10 +25,11 @@ def Example8D_1(paramlist):
     return variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates, upperbounds, lowerbounds
 
 
-def test4DExample1(paramlist):
-    # name params
-    A = paramlist[0];B=paramlist[1];C=paramlist[2];D=paramlist[3];E=paramlist[4];F=paramlist[5]
-    Amax = paramlist[6];Bmax=paramlist[7];Cmax=paramlist[8];Dmax=paramlist[9];Emax=paramlist[10];Fmax=paramlist[11]
+def test4DExample1(A,B,C,D,E,F,Amax,Bmax,Cmax,Dmax,Emax,Fmax):
+    '''
+    Example inputs.
+
+    '''
     # define the interactions between variables
     variables = ['x','y1','y2','z']
     affectedby = [['x','y2','z'],['x'],['y1'],['x']]
@@ -56,9 +52,11 @@ def test4DExample1(paramlist):
     lowerbounds = np.zeros(upperbounds.shape)
     return variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates, upperbounds, lowerbounds
 
-def test4DExample2(paramlist):
-    # name params
-    A = paramlist[0];B=paramlist[1];Amax=paramlist[2];Bmax=paramlist[3]
+def test4DExample2(A,B,Amax,Bmax):
+    '''
+    Example inputs.
+
+    '''
     # define the interactions between variables
     variables = ['x','y1','y2','z']
     affectedby = [['x','y2','z'],['x'],['y1'],['x']]
@@ -81,9 +79,11 @@ def test4DExample2(paramlist):
     lowerbounds = np.zeros(upperbounds.shape)
     return variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates, upperbounds, lowerbounds
 
-def test4DExample3(paramlist):
-    # name params
-    A = paramlist[0];B=paramlist[1];Amax=paramlist[2];Bmax=paramlist[3]
+def test4DExample3(A,B,Amax,Bmax):
+    '''
+    Example inputs.
+
+    '''
     # define the interactions between variables
     variables = ['x','y1','y2','z']
     affectedby = [['x','y2','z'],['x'],['y1'],['x','y2']]
@@ -130,8 +130,8 @@ def xyz3DExample():
     lowerbounds = np.zeros(upperbounds.shape)
     return variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates, upperbounds, lowerbounds
 
-def genStringForFixedParams(model,paramlist):
-    variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates, upperbounds, lowerbounds = model(paramlist)
+def genStringForFixedParams(model,paramtuple):
+    variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates, upperbounds, lowerbounds = model(*paramtuple)
     xmlstr = convertInputsToXML(variables, affectedby, maps, thresholds, loweramplitudes, upperamplitudes, lowerdecayrates, upperdecayrates, productionrates, upperbounds, lowerbounds)
     return xmlstr
 
@@ -174,5 +174,5 @@ def generateXML(lowerbounds,upperbounds,lowerdecayrates,upperdecayrates,doms,lsi
 if __name__ == "__main__":
     # xmlstr = genStringForFixedParams(test4DExample1,(8.0,0.6,0.6,0.6,4.0,0.1,12.0,2.5,2.5,2.5,5.0,0.9))
     # print(xmlstr)
-    xmlstr = genStringForFixedParams(Example8D_1,[1,1,1,1,1,1,1,1,1,1,.1,.1,.1,.1,.1,.1,2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1])
+    xmlstr = genStringForFixedParams(Example8D_1,(1,1,1,1,1,1,1,1,1,1,.1,.1,.1,.1,.1,.1,2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1))
     print(xmlstr)
