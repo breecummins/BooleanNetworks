@@ -218,7 +218,6 @@ def parallelrun_8D():
     job_server = pp.Server(ppservers=ppservers)
     print("Starting pp with " + str(job_server.get_ncpus()) + " workers.")
     model = Example8D_1
-    fnames = ('ParamScanA1_005','ParamScanA1_01','ParamScanA1_03','ParamScanA1_05','ParamScanA1_08','ParamScanA1_10')
     A1 = [0.5,1.0,3.0,5.0,8.0,10.0]
     A2 = [0.5,1.0,5.0]
     A3 = [1.0]
@@ -226,8 +225,9 @@ def parallelrun_8D():
     A7,A8,A9,A10 = [1.0,5.0],[1.0,5.0],[1.0,5.0],[1.0,5.0]
     B1,B2,B3,B4,B5,B6 = [0.25,0.5,0.75],[0.25,0.5,0.75],[0.25,0.5,0.75],[0.25,0.5,0.75],[0.25,0.5,0.75],[0.25,0.5,0.75]
     jobs = []
-    for j,f in enumerate(fnames):
-        jobs.append(job_server.submit(findMinimalParamSets_Parallel,( model,([A1[j]],A2,A3,A4,A5,A6,A7,A8,A9,A10,B1,B2,B3,B4,B5,B6),f ), depfuncs = (model,paramScan), modules = ("cPickle","numpy", "itertools", "os"),globals=globals()))
+    for i in range(len(A1)):
+        for j in range(len(A2)):
+            jobs.append(job_server.submit(findMinimalParamSets_Parallel,( model,([A1[i]],[A2[j]],A3,A4,A5,A6,A7,A8,A9,A10,B1,B2,B3,B4,B5,B6),'ParamScan_'+str(i)+str(j) ), depfuncs = (model,paramScan), modules = ("cPickle","numpy", "itertools", "os"),globals=globals()))
     for job in jobs:
         print(job())
     job_server.print_stats()
