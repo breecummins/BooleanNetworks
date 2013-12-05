@@ -1,6 +1,27 @@
 #standard libs
-import numpy, itertools, os, pp, cPickle, glob
-from functools import partial
+import numpy, itertools, os, cPickle, pp, glob
+
+def Example8D_1(A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,B1,B2,B3,B4,B5,B6):
+    # define the interactions between variables
+    variables = ['x','y1','y2','y3','z','w1','w2','w3']
+    affectedby = [['x','y3','z','w1'],['x'],['x','y1','w1'],['y2','w1'],['x','w2'],['y2','w2'],['w1','w3'],['x','w2']]
+    # give the thresholds for each interaction
+    thresholds = [[2,1,1,2],[1],[4,1,1],[1,2],[3,1],[1,1],[1,1],[3,1]]
+    # give the maps and amplitudes of each interaction (upper and lower bounds for parameter search)
+    maps = [[(0,0,0,0),(1,0,0,0),(0,1,0,0),(1,1,0,0),(0,0,1,0),(1,0,1,0),(0,1,1,0),(1,1,1,0),(0,0,0,1),(1,0,0,1),(0,1,0,1),(1,1,0,1),(0,0,1,1),(1,0,1,1),(0,1,1,1),(1,1,1,1)],[(0,),(1,)],[(0,0,0),(1,0,0),(0,1,0),(1,1,0),(0,0,1),(1,0,1),(0,1,1),(1,1,1)],[(0,0),(1,0),(0,1),(1,1)],[(0,0),(1,0),(0,1),(1,1)],[(0,0),(1,0),(0,1),(1,1)],[(0,0),(1,0),(0,1),(1,1)],[(0,0),(1,0),(0,1),(1,1)] ]
+    ampfunc = lambda A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,B1,B2,B3,B4,B5,B6: [ [0,A1,A2,A1+A2,0,A1*B1,A2*B1,(A1+A2)*B1,0,A1*B2,A2*B2,(A1+A2)*B2,0,A1*B1*B2,A2*B1*B2,(A1+A2)*B1*B2],[0,A3],[0,A4,A5,A4+A5,A6,A4+A6,A5+A6,A4+A5+A6],[0,A7,0,A7*B3],[0,A8,0,A8*B4],[0,A9,0,A9*B5],[0,A10,0,A10*B6],[0,A8,0,A8*B4]  ]
+    # give the endogenous production rates. 
+    productionrates = [0.1,0.1,0.1,0.1,0.1,0.1,0.1,0.1] 
+    # get upper and lower bounds
+    bigamps = ampfunc(A1[-1],A2[-1],A3[-1],A4[-1],A5[-1],A6[-1],A7[-1],A8[-1],A9[-1],A10[-1],B1[-1],B2[-1],B3[-1],B4[-1],B5[-1],B6[-1])
+    upperbounds = 1.1*( numpy.array([numpy.max(u) for u in bigamps]) + numpy.array(productionrates) ) # calculate upper bounds of domains
+    lowerbounds = numpy.zeros(upperbounds.shape)
+    # make domains
+    thresh,ainds,pr = makeParameterArrays(variables, affectedby, thresholds, productionrates)
+    doms = getDomains(thresh,lowerbounds,upperbounds)
+    numsets = len(A1)*len(A2)*len(A3)*len(A4)*len(A5)*len(A6)*len(A7)*len(A8)*len(A9)*len(A10)*len(B1)*len(B2)*len(B3)*len(B4)*len(B5)*len(B6)
+    print('Number of parameter sets to test: %d' %numsets)
+    return ampfunc, doms, thresh,pr,ainds,maps,numsets
 
 def test4DExample1(A=numpy.arange(0.05,12.25,0.5),B=numpy.arange(0.05,12.25,0.5),C=numpy.arange(0.05,12.25,0.5),D=numpy.arange(0.05,12.25,0.5),E=numpy.arange(0.05,12.25,0.5),F=numpy.arange(0.05,1,0.25)):
     '''
@@ -101,7 +122,7 @@ def getSigBox(sigs,doms):
             return None
     return tuple(sigboxes)
 
-def paramScan(ampfunc, doms, thresh,pr,ainds,maps,A=None,B=None,C=None,D=None,E=None,F=None):
+def paramScan(ampfunc, doms, thresh,pr,ainds,maps,paramranges):
     '''
     Scan across all parameter sets and calculate the sigma values and the location (domain) 
     of each sigma value.
@@ -110,7 +131,7 @@ def paramScan(ampfunc, doms, thresh,pr,ainds,maps,A=None,B=None,C=None,D=None,E=
     params = []
     allsigs = []
     sigboxes = []
-    for p in itertools.product(A,B,C,D,E,F):
+    for p in itertools.product(*paramranges):
         amps = ampfunc(*p)
         sigs = getSigmas(doms,thresh,amps,pr,ainds,maps)
         sb = getSigBox(sigs,doms)
@@ -120,29 +141,19 @@ def paramScan(ampfunc, doms, thresh,pr,ainds,maps,A=None,B=None,C=None,D=None,E=
             sigboxes.append(sb)
     return zip(params, allsigs, sigboxes)
 
-def findMinimalParamSets(model=test4DExample1,modelargs = {'A':numpy.arange(0.5,8.25,0.25),'B':numpy.arange(0.5,2.75,0.25),'C':numpy.arange(0.5,2.75,0.25),'D':numpy.arange(0.5,2.75,0.25),'E':numpy.arange(0.5,5,0.25),'F':numpy.arange(0.1,1,0.1)}):
-    ampfunc, doms, thresh,pr,ainds,maps, numsets= model(**modelargs)
-    return paramScan(ampfunc, doms, thresh,pr,ainds,maps,**modelargs), numsets
+def findMinimalParamSets(model=test4DExample1,paramranges = (numpy.arange(0.5,8.25,0.25),numpy.arange(0.5,2.75,0.25),numpy.arange(0.5,2.75,0.25),numpy.arange(0.5,2.75,0.25),numpy.arange(0.5,5,0.25),numpy.arange(0.1,1,0.1))):
+    ampfunc, doms, thresh,pr,ainds,maps, numsets= model(*paramranges)
+    return paramScan(ampfunc, doms, thresh,pr,ainds,maps,paramranges), numsets
 
-def findMinimalParamSets_Parallel(modelinput = (test4DExample1,{'A':numpy.arange(2.25,4.25,0.25),'B':numpy.arange(0.75,1,0.25),'C':numpy.arange(0.75,1,0.25),'D':numpy.arange(0.75,1,0.25),'E':numpy.arange(0.5,5,0.25),'F':numpy.arange(0.1,1,0.1)},'ParamScanA04')):
-    ampfunc, doms, thresh,pr,ainds,maps, numsets= modelinput[0](**modelinput[1])
-    paramsets, numsets = paramScan(ampfunc, doms, thresh,pr,ainds,maps,**modelinput[1]), numsets
+def findMinimalParamSets_Parallel(model=test4DExample1,paramranges=(numpy.arange(2.25,4.25,0.25),numpy.arange(0.75,1,0.25),numpy.arange(0.75,1,0.25),numpy.arange(0.75,1,0.25),numpy.arange(0.5,5,0.25),numpy.arange(0.1,1,0.1)),fname='ParamScanA04'):
+    ampfunc, doms, thresh,pr,ainds,maps, numsets= model(*paramranges)
+    paramsets = paramScan(ampfunc, doms, thresh,pr,ainds,maps,paramranges)
     msg = 'Total number of parameter sets with focal point collection in a unique set of domains: %d \n Total number of parameter sets tested: %d \n Saving %s.' % (len(paramsets),numsets,fname) 
     print(msg)   
-    F = open(os.path.join(os.path.expanduser("~"),modelinput[2]+'.pickle'),'w')
+    F = open(os.path.join(os.path.expanduser("~"),fname+'.pickle'),'w')
     cPickle.Pickler(F).dump({'paramsets':paramsets,'numsets':numsets})
     F.close()
     return None
-
-def test():
-    paramsets, numsets = findMinimalParamSets()
-    # for p, s, b in paramsets:
-    #     print(p); print(len(b)); # print(s); print('       ')
-    print('Total number of parameter sets with focal point collection in a unique set of domains: %d' %len(paramsets))
-    # print('Total number of parameter sets tested: {0}'.format(numsets))
-    F = open(os.path.join(os.path.expanduser("~"),'ParamScan1.pickle'),'w')
-    cPickle.Pickler(F).dump({'paramsets':paramsets,'numsets':numsets})
-    F.close()
 
 def makeparamfile(fname=os.path.join(os.path.expanduser("~"),'SimulationResults/BooleanNetworks/ParamScan1.pickle')):
     mydict = fileops.loadPickle(fname)
@@ -186,7 +197,7 @@ def knitme():
     cPickle.Pickler(F).dump({'paramsets':zip(uniqparam,uniqsigms,uniqboxes),'numsets':numsets})
     F.close()
 
-def parallelrun():
+def parallelrun_4D():
     # tuple of all parallel python servers to connect with
     ppservers = ()
     # Creates jobserver with automatically detected # of workers
@@ -194,9 +205,34 @@ def parallelrun():
     print("Starting pp with " + str(job_server.get_ncpus()) + " workers.")
     model = test4DExample1
     fnames = ('ParamScanA02','ParamScanA04','ParamScanA06','ParamScanA08','ParamScanA10')
-    inputs = ( (model,{'A':numpy.arange(0.5,2.25,0.1),'B':numpy.arange(0.75,1,0.25),'C':numpy.arange(0.75,1,0.25),'D':numpy.arange(0.75,1,0.25),'E':numpy.arange(0.5,5,0.1),'F':numpy.arange(0.1,1,0.1)},fnames[0]), (model,{'A':numpy.arange(2.25,4.25,0.1),'B':numpy.arange(0.75,1,0.25),'C':numpy.arange(0.75,1,0.25),'D':numpy.arange(0.75,1,0.25),'E':numpy.arange(0.5,5,0.1),'F':numpy.arange(0.1,1,0.1)},fnames[1]),(model,{'A':numpy.arange(4.25,6.25,0.1),'B':numpy.arange(0.75,1,0.25),'C':numpy.arange(0.75,1,0.25),'D':numpy.arange(0.75,1,0.25),'E':numpy.arange(0.5,5,0.1),'F':numpy.arange(0.1,1,0.1)},fnames[2]),(model,{'A':numpy.arange(6.25,8.25,0.1),'B':numpy.arange(0.75,1,0.25),'C':numpy.arange(0.75,1,0.25),'D':numpy.arange(0.75,1,0.25),'E':numpy.arange(0.5,5,0.1),'F':numpy.arange(0.1,1,0.1)},fnames[3]),(model,{'A':numpy.arange(8.25,10.25,0.1),'B':numpy.arange(0.75,1,0.25),'C':numpy.arange(0.75,1,0.25),'D':numpy.arange(0.75,1,0.25),'E':numpy.arange(0.5,5,0.1),'F':numpy.arange(0.1,1,0.1)},fnames[4]) )
-    for inp in inputs:
-        job_server.submit(findMinimalParamSets_Parallel,(inp,), depfuncs = (model,getSigmas,getSigBox,paramScan), modules = ("cPickle","numpy", "itertools", "os"),globals=globals())
+    A = [numpy.arange(0.5,2.25,0.1), numpy.arange(2.25,4.25,0.1), numpy.arange(4.25,6.25,0.1), numpy.arange(6.25,8.25,0.1), numpy.arange(8.25,10.25,0.1)]
+    B = numpy.arange(0.75,1,0.25)
+    C = numpy.arange(0.75,1,0.25)
+    D = numpy.arange(0.75,1,0.25)
+    E = numpy.arange(0.5,5,0.1)
+    F = numpy.arange(0.1,1,0.1)
+    for j,f in enumerate(fnames):
+        job_server.submit(findMinimalParamSets_Parallel,( model,(A[j],B,C,D,E,F),f ), depfuncs = (model,paramScan), modules = ("cPickle","numpy", "itertools", "os"),globals=globals())
+    job_server.wait()
+    job_server.print_stats()
+    knitme()
+
+def parallelrun_8D():
+    # tuple of all parallel python servers to connect with
+    ppservers = ()
+    # Creates jobserver with automatically detected # of workers
+    job_server = pp.Server(ppservers=ppservers)
+    print("Starting pp with " + str(job_server.get_ncpus()) + " workers.")
+    model = Example8D_1
+    fnames = ('ParamScanA1_005','ParamScanA1_01','ParamScanA1_03','ParamScanA1_05','ParamScanA1_08','ParamScanA1_10')
+    A1 = [0.5,1.0,3.0,5.0,8.0,10.0]
+    A2 = [0.5,1.0,5.0]
+    A3 = [1.0]
+    A4,A5,A6 = [0.4,0.6,1.0,2.0], [0.4,0.6,1.0,2.0], [0.4,0.6,1.0,2.0]
+    A7,A8,A9,A10 = [1.0,5.0],[1.0,5.0],[1.0,5.0],[1.0,5.0]
+    B1,B2,B3,B4,B5,B6 = [0.25,0.5,0.75],[0.25,0.5,0.75],[0.25,0.5,0.75],[0.25,0.5,0.75],[0.25,0.5,0.75],[0.25,0.5,0.75]
+    for j,f in enumerate(fnames):
+        job_server.submit(findMinimalParamSets_Parallel,( model,([A1[j]],A2,A3,A4,A5,A6,A7,A8,A9,A10,B1,B2,B3,B4,B5,B6),f ), depfuncs = (model,paramScan), modules = ("cPickle","numpy", "itertools", "os"),globals=globals())
     job_server.wait()
     job_server.print_stats()
     knitme()
@@ -205,8 +241,9 @@ if __name__ == '__main__':
     # import timeit
     # print(timeit.timeit("test()", setup="from __main__ import test",number=1))
     # makeparamfile()
-    parallelrun()
-    # findMinimalParamSets_Parallel()
+    # parallelrun_4D()
+    parallelrun_8D()
+    # findMinimalParamSets_Parallel(Example8D_1, ([0.5], [0.5,1.0,5.0], [1.0], [0.4,0.6,1.0,2.0], [0.4,0.6,1.0,2.0], [0.4,0.6,1.0,2.0], [1.0,5.0],[1.0,5.0],[1.0,5.0],[1.0,5.0], [0.25,0.5,0.75],[0.25,0.5,0.75],[0.25,0.5,0.75],[0.25,0.5,0.75],[0.25,0.5,0.75],[0.25,0.5,0.75]), 'ParamScanA1_onehalf')
     # knitme()
 
 
