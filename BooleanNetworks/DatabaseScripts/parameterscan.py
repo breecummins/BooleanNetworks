@@ -215,7 +215,7 @@ def parallelrun_8D():
     # tuple of all parallel python servers to connect with
     ppservers = ()
     # Creates jobserver with automatically detected # of workers
-    job_server = pp.Server(ppservers=ppservers)
+    job_server = pp.Server(ncpus=1,ppservers=ppservers)
     print("Starting pp with " + str(job_server.get_ncpus()) + " workers.")
     model = Example8D_1
     A1 = [0.5]#,1.0,3.0,5.0,8.0,10.0]
