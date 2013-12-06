@@ -155,12 +155,12 @@ def findMinimalParamSets_Parallel(model,paramranges,fname):
     msg = 'Total number of parameter sets with focal point collection in a unique set of domains: %d \n Total number of parameter sets tested: %d \n Saving %s.' % (len(paramsets),numsets,fname) 
     return msg
 
-def knitme():
+def knitme(globstr='ParamScanA*'):
     allpsets = []
     allsigms = []
     allboxes = []
     numsets = 0
-    for f in glob.glob(os.path.join(os.path.expanduser("~"),'ParamScanA*')):
+    for f in glob.glob(os.path.join(os.path.expanduser("~"),globstr)):
         print(f)
         F=open(f,'r')
         mydict = cPickle.Unpickler(F).load()
@@ -209,7 +209,7 @@ def parallelrun_4D():
     for job in jobs:
         print(job())
     job_server.print_stats()
-    knitme()
+    knitme('ParamScanA*')
 
 def parallelrun_8D():
     # tuple of all parallel python servers to connect with
@@ -231,7 +231,7 @@ def parallelrun_8D():
     for job in jobs:
         print(job())
     job_server.print_stats()
-    knitme()
+    knitme('ParamScan_*')
 
 def makeparamfile(fname=os.path.join(os.path.expanduser("~"),'SimulationResults/BooleanNetworks/ParamScan1.pickle')):
     mydict = fileops.loadPickle(fname)
