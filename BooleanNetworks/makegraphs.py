@@ -195,7 +195,8 @@ def graphWallNodesEdges(walls,steadystates,edges,ssedges,fname='wallgraph.png'):
             graph.add_edge(pydot.Edge(wnames[i],wnames[ind]))
     graph.write_png(fname)
 
-def makeGraphFromLogic(variables,affectedby,states,logicmap,binnedsigmas,domfname='domaingraph.png',wallfname='wallgraph.png'):
+def makeGraphFromLogic(probspec,domfname='domaingraph.png',wallfname='wallgraph.png'):
+    variables,affectedby,states,logicmap,binnedsigmas=probspec()
     doms,sigs,steadystates,walls = translatelogicfunction(variables,affectedby,states,logicmap,binnedsigmas)
     domneighbors = getDomainNeighbors(doms)
     wallneighbors = getWallNeighbors(doms,walls)
@@ -206,23 +207,59 @@ def makeGraphFromLogic(variables,affectedby,states,logicmap,binnedsigmas,domfnam
     graphWallNodesEdges(walls,steadystates,walledges,sswalledges,wallfname)
     print('Output saved in '+wallfname)
 
-if __name__=='__main__':
+def getNodesEdges(probspec):
+    variables,affectedby,states,logicmap,binnedsigmas = probspec()
+    doms,sigs,steadystates,walls = translatelogicfunction(variables,affectedby,states,logicmap,binnedsigmas)
+    domneighbors = getDomainNeighbors(doms)
+    wallneighbors = getWallNeighbors(doms,walls)
+    domedges = getDomainEdges(doms,domneighbors,sigs)
+    walledges, sswalledges = getWallEdges(doms,walls,wallneighbors,steadystates,sigs)
+    return doms,domedges,walls,walledges
+
+def probspec_2D_multthresh():
+    # 2D example, multiple thresholds: x -> x at thresh 1, x -> z at thresh 2, z -| x
+    variables=['x','z']
+    affectedby=[['x','z'],['x']]
+    states=[range(3),range(2)]
+    logicmap=[[(0,0),(1,0),(2,0),(0,1),(1,1),(2,1)],[(0,),(1,),(2,)]]
+    binnedsigmas=[[0,2,2,0,0,1],[0,0,1]]
+    return variables,affectedby,states,logicmap,binnedsigmas
+
+def probspec_3D_singthresh():
     # 3D example, single thresholds: x -> y -> z -> x
     variables = ['x','y','z']
     affectedby = [['z'],['x'],['y']]
     states = [range(2),range(2),range(2)]
     logicmap = [[(0,),(1,)],[(0,),(1,)],[(0,),(1,)]]
     binnedsigmas = [[0,1],[0,1],[0,1]]
-    # # 2D example, multiple thresholds: x -> x at thresh 1, x -> z at thresh 2, z -| x
-    # variables=['x','z']
-    # affectedby=[['x','z'],['x']]
-    # states=[range(3),range(2)]
-    # logicmap=[[(0,0),(1,0),(2,0),(0,1),(1,1),(2,1)],[(0,),(1,),(2,)]]
-    # binnedsigmas=[[0,2,2,0,0,1],[0,0,1]]
-    # # 4D example
-    # variables = ['x','y1','y2','z']
-    # affectedby = [['x','y2','z'],['x'],['y1'],['x']]
-    # states = [range(4),range(2),range(2),range(2)]
-    # logicmap = [[(0,0,0),(1,0,0),(2,0,0),(3,0,0),(0,1,0),(1,1,0),(2,1,0),(3,1,0),(0,0,1),(1,0,1),(2,0,1),(3,0,1),(0,1,1),(1,1,1),(2,1,1),(3,1,1)],[(0,),(1,),(2,),(3,)],[(0,),(1,)],[(0,),(1,),(2,),(3,)]]
-    # binnedsigmas = [[0,0,3,3,2,2,3,3,0,0,1,1,1,1,3,3],[0,0,0,1],[0,1],[0,1,1,1]]
-    makeGraphFromLogic(variables,affectedby,states,logicmap,binnedsigmas)
+    return variables,affectedby,states,logicmap,binnedsigmas
+
+def probspec_3D_singthresh_noss():
+    # 3D example, single thresholds, no steady states : x -> y -> z -| x
+    variables = ['x','y','z']
+    affectedby = [['z'],['x'],['y']]
+    states = [range(2),range(2),range(2)]
+    logicmap = [[(0,),(1,)],[(0,),(1,)],[(0,),(1,)]]
+    binnedsigmas = [[1,0],[0,1],[0,1]]
+    return variables,affectedby,states,logicmap,binnedsigmas
+
+def probspec_4D_singthresh_2cycles():
+    # 4D example, single thresholds, two cycles, no steady states: x -> y -> z -| x -> u -> x
+    variables = ['x','y','z','u']
+    affectedby = [['z','u'],['x'],['y'],['x']]
+    states = [range(2),range(2),range(2),range(2)]
+    logicmap = [[(0,0),(1,0),(0,1),(1,1)],[(0,),(1,)],[(0,),(1,)],[(0,),(1,)]]
+    binnedsigmas = [[1,0,1,0],[0,1],[0,1],[0,1]]    
+    return variables,affectedby,states,logicmap,binnedsigmas
+
+def probspec_4D_ArnaudExample_2A():
+    # 4D Arnaud example
+    variables = ['x','y1','y2','z']
+    affectedby = [['x','y2','z'],['x'],['y1'],['x']]
+    states = [range(4),range(2),range(2),range(2)]
+    logicmap = [[(0,0,0),(1,0,0),(2,0,0),(3,0,0),(0,1,0),(1,1,0),(2,1,0),(3,1,0),(0,0,1),(1,0,1),(2,0,1),(3,0,1),(0,1,1),(1,1,1),(2,1,1),(3,1,1)],[(0,),(1,),(2,),(3,)],[(0,),(1,)],[(0,),(1,),(2,),(3,)]]
+    binnedsigmas = [[0,0,3,3,2,2,3,3,0,0,1,1,1,1,3,3],[0,0,0,1],[0,1],[0,1,1,1]]
+    return variables,affectedby,states,logicmap,binnedsigmas
+
+if __name__=='__main__':
+    makeGraphFromLogic(probspec_4D_singthresh_2cycles)
