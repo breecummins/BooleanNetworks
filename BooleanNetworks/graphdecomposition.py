@@ -7,7 +7,7 @@ def strongconnect(k,E):
     S.append(v)
     for e in E[k]:
         if indV[e][0] < 0:
-            strongconnect(e,E)
+            scc = strongconnect(e,E)
             indV[k][1] = min(indV[k][1],indV[e][1])
         elif indV[e][2] in S:
             indV[k][1] = min(indV[k][1],indV[e][0])
@@ -18,9 +18,7 @@ def strongconnect(k,E):
             scc.append(w)
             w = S.pop()
         scc.append(w)
-        return scc
-    else:
-        return None
+        print(scc)
 
 def getSCCs(V,E):
     # Tarjan's strongly connected components algorithm - see Wikipedia
@@ -29,14 +27,15 @@ def getSCCs(V,E):
     index = 0
     S = []
     indV = [[-1,-1,v] for v in V]
-    allsccs = []
     for k,v in enumerate(indV):
         if v[0] < 0:
-            allsccs.append(strongconnect(k,E))
-    return allsccs
+            strongconnect(k,E)
 
 if __name__=='__main__':
     import makegraphs
-    dV,dE,wV,wE = makegraphs.getNodesEdges(makegraphs.probspec_2D_multthresh)
-    allsccs = getSCCs(dV,dE)
-    print(allsccs)
+    dV,dE,wV,wE = makegraphs.getNodesEdges(makegraphs.probspec_4D_singthresh_2cycles)
+    print('Domain SCCs')
+    getSCCs(dV,dE)
+    print('\n')
+    print('Wall SCCs')
+    getSCCs(wV,wE)

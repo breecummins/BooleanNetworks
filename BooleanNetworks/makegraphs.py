@@ -214,7 +214,7 @@ def getNodesEdges(probspec):
     wallneighbors = getWallNeighbors(doms,walls)
     domedges = getDomainEdges(doms,domneighbors,sigs)
     walledges, sswalledges = getWallEdges(doms,walls,wallneighbors,steadystates,sigs)
-    return doms,domedges,walls,walledges
+    return doms,domedges,walls+steadystates,walledges+sswalledges
 
 def probspec_2D_multthresh():
     # 2D example, multiple thresholds: x -> x at thresh 1, x -> z at thresh 2, z -| x
