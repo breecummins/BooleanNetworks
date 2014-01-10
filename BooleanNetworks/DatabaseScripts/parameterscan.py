@@ -1,6 +1,38 @@
 #standard libs
 import numpy, itertools, os, cPickle, pp, glob
 
+def Example2D_singlethresh(l11,u11,l12,L21,U21):
+    # define the interactions between variables
+    variables = ['x','z']
+    affectedby = [['x','z'],['x']]
+    # give the thresholds for each interaction
+    thresholds = [[1,1],[1]]
+    # give the maps and amplitudes of each interaction (upper and lower bounds for parameter search)
+    maps = [[(0,0),(1,0),(0,1),(1,1)],[(0,),(1,)]]    
+    ampfunc = lambda l11,u11,l12,L21,U21: [[l11,u11,l12*l11,l12*u11],[L21,U21]]
+    # give the endogenous production rates. 
+    productionrates = [0.0,0.0] 
+    # get upper and lower bounds
+    upperbounds = 10*numpy.ones(2) 
+    lowerbounds = -0.1*numpy.ones(2)
+    # make domains
+    thresh,ainds,pr = makeParameterArrays(variables, affectedby, thresholds, productionrates)
+    doms = getDomains(thresh,lowerbounds,upperbounds)
+    numsets = len(l11)*len(u11)*len(l12)*len(L21)*len(U21)
+    print('Number of parameter sets to test: %d' %numsets)
+    print('--------------------')
+    print('Domains: ')
+    for j,d in enumerate(doms):
+        print(j); print(d)
+    print('--------------------')
+    midpts = numpy.mean(doms,2)
+    print('Midpts: ')
+    print(midpts)
+    print('--------------------')
+    return ampfunc, doms, thresh,pr,ainds,maps,numsets
+
+
+
 def Example8D_1(A1,A2,A3,A4,A5,A6,A7,A8,A9,A10,B1,B2,B3,B4,B5,B6):
     # define the interactions between variables
     variables = ['x','y1','y2','y3','z','w1','w2','w3']
@@ -124,8 +156,9 @@ def getSigBox(sigs,doms):
 
 def paramScan(ampfunc, doms, thresh,pr,ainds,maps,paramranges):
     '''
-    Scan across all parameter sets and calculate the sigma values and the location (domain) 
-    of each sigma value.
+    Scan across all parameter sets and calculate the sigma values and the domain
+    in which each set of sigma values occurs. Records a unique set of domain indices
+    and returns one parameter set and the sigmas associated with the domain indices.
 
     '''
     params = []
@@ -244,10 +277,19 @@ def makeparamfile(fname=os.path.join(os.path.expanduser("~"),'SimulationResults/
 if __name__ == '__main__':
     # makeparamfile()
     # parallelrun_4D()
-    parallelrun_8D()
+    # parallelrun_8D()
     # findMinimalParamSets_Parallel(Example8D_1, ([0.5], [0.5,1.0,5.0], [1.0], [0.4,0.6,1.0,2.0], [0.4,0.6,1.0,2.0], [0.4,0.6,1.0,2.0], [1.0,5.0],[1.0,5.0],[1.0,5.0],[1.0,5.0], [0.25,0.5,0.75],[0.25,0.5,0.75],[0.25,0.5,0.75],[0.25,0.5,0.75],[0.25,0.5,0.75],[0.25,0.5,0.75]), 'ParamScanA1_onehalf')
     # knitme()
-
+    psets,numsets = findMinimalParamSets(Example2D_singlethresh,(numpy.arange(0,1.25,0.2),numpy.arange(1.5,3.6,0.2),numpy.arange(0,1,0.1),numpy.arange(0,1.25,0.2),numpy.arange(1.5,3.6,0.2)))
+    print('Domain indices: ')
+    for p in psets:
+        print(p[2])
+    print('Sigma Values: ')
+    for p in psets:
+        print(p[1])
+    print('Parameter sets: ')
+    for p in psets:
+        print(p[0])
 
 
 
