@@ -14,7 +14,7 @@ def Example5D_1(A1,A2,A3,A4,A5,A6,A7,B1,A1max,A2max,A3max,A4max,A5max,A6max,A7ma
     loweramplitudes = amps
     upperamplitudes = amps
     # give the natural decay rates of the species (upper and lower bounds for parameter search)
-    lowerdecayrates = [-1,-1,-1,-1,-1,]
+    lowerdecayrates = [-1,-1,-1,-1,-1]
     upperdecayrates = [-1,-1,-1,-1,-1]
     # give the endogenous production rates. 
     productionrates = [0.1,0.1,0.1,0.1,0.1] 
