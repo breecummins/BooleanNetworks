@@ -1,5 +1,6 @@
 import numpy as np
-import pydot, itertools
+import pydot, itertools, os, functools
+import graphdecomposition
 
 def makeParameterArrays(variables, affectedby):
     '''
@@ -214,7 +215,20 @@ def getNodesEdges(probspec):
     wallneighbors = getWallNeighbors(doms,walls)
     domedges = getDomainEdges(doms,domneighbors,sigs)
     walledges, sswalledges = getWallEdges(doms,walls,wallneighbors,steadystates,sigs)
-    return doms,domedges,walls+steadystates,walledges+sswalledges
+    return doms,domedges,walls+steadystates,walledges+sswalledges,steadystates
+
+def makeMorseGraph(probspec,fname='morsegraph.png'):
+    dV,dE,wV,wE,ss=getNodesEdges(probspec)
+    SCCs=graphdecomposition.getSCCs(dV,dE)
+    redscc,sccedges=graphdecomposition.Morsegraph(dV,dE,ss,SCCs)
+    graph = pydot.Dot(graph_type='digraph')
+    dnames = [str(s) for s in range(len(redscc))]
+    for d in dnames:
+        graph.add_node(pydot.Node(d))
+    for e in sccedges:
+        graph.add_edge(pydot.Edge(str(e[0]),str(e[1])))
+    graph.write_png(fname)
+    print('Output saved in '+fname)
 
 def probspec_2D_multthresh():
     # 2D example, multiple thresholds: x -> x at thresh 1, x -> z at thresh 2, z -| x
@@ -252,14 +266,20 @@ def probspec_4D_singthresh_2cycles():
     binnedsigmas = [[1,0,1,0],[0,1],[0,1],[0,1]]    
     return variables,affectedby,states,logicmap,binnedsigmas
 
-def probspec_4D_ArnaudExample_2A():
+def probspec_4D_ArnaudExample_2A(bs=None):
     # 4D Arnaud example
     variables = ['x','y1','y2','z']
     affectedby = [['x','y2','z'],['x'],['y1'],['x']]
     states = [range(4),range(2),range(2),range(2)]
     logicmap = [[(0,0,0),(1,0,0),(2,0,0),(3,0,0),(0,1,0),(1,1,0),(2,1,0),(3,1,0),(0,0,1),(1,0,1),(2,0,1),(3,0,1),(0,1,1),(1,1,1),(2,1,1),(3,1,1)],[(0,),(1,),(2,),(3,)],[(0,),(1,)],[(0,),(1,),(2,),(3,)]]
-    binnedsigmas = [[0,0,3,3,2,2,3,3,0,0,1,1,1,1,3,3],[0,0,0,1],[0,1],[0,1,1,1]]
+    if bs is None:
+        binnedsigmas = [[0,0,3,3,2,2,3,3,0,0,1,1,1,1,3,3],[0,0,0,1],[0,1],[0,1,1,1]]
+    else:
+        binnedsigmas = bs
     return variables,affectedby,states,logicmap,binnedsigmas
 
 if __name__=='__main__':
-    makeGraphFromLogic(probspec_4D_singthresh_2cycles)
+    bs = [[0,0,3,3,1,1,3,3,0,0,1,1,1,1,3,3],[0,1,1,1],[0,1],[0,0,0,1]]
+    # domfname = os.path.expanduser('~/GIT/ResearchNotes/BooleanNetworks/domaingraph_2B_Map01.png')
+    # makeGraphFromLogic(functools.partial(probspec_4D_ArnaudExample_2A,bs),domfname=domfname)
+    makeMorseGraph(functools.partial(probspec_4D_ArnaudExample_2A,bs),fname=os.path.expanduser('~/GIT/ResearchNotes/BooleanNetworks/morsegraph_2B_Map01.png'))

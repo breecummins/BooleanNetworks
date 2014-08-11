@@ -18,24 +18,57 @@ def strongconnect(k,E):
             scc.append(w)
             w = S.pop()
         scc.append(w)
-        print(scc)
+        # print(scc)
+        SCCs.append(scc)
 
 def getSCCs(V,E):
     # Tarjan's strongly connected components algorithm - see Wikipedia
     # indV = [index,lowlink,v]
-    global indV, index, S
+    global indV, index, S, SCCs
     index = 0
     S = []
     indV = [[-1,-1,v] for v in V]
+    SCCs = []
     for k,v in enumerate(indV):
         if v[0] < 0:
             strongconnect(k,E)
+    return SCCs
+
+def Morsegraph(V,E,ss,SCCs):
+    # get relationships between strongly connected path components
+    reducedscc=[[s] for s in ss]
+    for scc in SCCs:
+        if len(scc) == 1:
+            continue
+        else:
+            reducedscc.append(scc)
+    sccedges=[]
+    for i,scc1 in enumerate(reducedscc):
+        for k,scc2 in enumerate(reducedscc):
+            if i ==k:
+                continue
+            flag=0
+            for s1 in scc1:
+                ind1=V.index(s1)
+                for s2 in scc2:
+                    ind2=V.index(s2)
+                    if ind2 in E[ind1]:
+                        sccedges.append((i,k))
+                        flag=1
+                    if flag:
+                        break
+                if flag:
+                    break
+    return reducedscc,sccedges
+
+
+
 
 if __name__=='__main__':
     import makegraphs
-    dV,dE,wV,wE = makegraphs.getNodesEdges(makegraphs.probspec_4D_singthresh_2cycles)
+    dV,dE,wV,wE,ss = makegraphs.getNodesEdges(makegraphs.probspec_4D_singthresh_2cycles)
     print('Domain SCCs')
-    getSCCs(dV,dE)
+    SCC=getSCCs(dV,dE)
     print('\n')
     print('Wall SCCs')
-    getSCCs(wV,wE)
+    SCCs=getSCCs(wV,wE)
