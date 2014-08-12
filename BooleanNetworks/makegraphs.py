@@ -279,7 +279,10 @@ def probspec_4D_ArnaudExample_2A(bs=None):
     return variables,affectedby,states,logicmap,binnedsigmas
 
 if __name__=='__main__':
-    bs = [[0,0,3,3,1,1,3,3,0,0,1,1,1,1,3,3],[0,1,1,1],[0,1],[0,0,0,1]]
-    # domfname = os.path.expanduser('~/GIT/ResearchNotes/BooleanNetworks/domaingraph_2B_Map01.png')
-    # makeGraphFromLogic(functools.partial(probspec_4D_ArnaudExample_2A,bs),domfname=domfname)
-    makeMorseGraph(functools.partial(probspec_4D_ArnaudExample_2A,bs),fname=os.path.expanduser('~/GIT/ResearchNotes/BooleanNetworks/morsegraph_2B_Map01.png'))
+    bs = [[0,0,3,3,2,2,3,3,0,0,1,1,0,0,2,2],[0,1,1,1],[0,1],[0,0,0,1]]
+    fstr = 'Map05.png'
+    basedir = os.path.expanduser('~/GIT/ResearchNotes/BooleanNetworks/')
+    domfname = basedir +'domaingraph_2B_'+fstr
+    morsefname = basedir +'morsegraph_2B_'+fstr
+    makeGraphFromLogic(functools.partial(probspec_4D_ArnaudExample_2A,bs),domfname=domfname)
+    makeMorseGraph(functools.partial(probspec_4D_ArnaudExample_2A,bs),fname=morsefname)

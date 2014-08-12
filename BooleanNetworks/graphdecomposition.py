@@ -1,3 +1,6 @@
+from collections import deque
+from functools import partial
+
 def strongconnect(k,E):
     global indV, index, S
     v=indV[k][2]
@@ -34,41 +37,79 @@ def getSCCs(V,E):
             strongconnect(k,E)
     return SCCs
 
+def breadthfirst(V,E,start,end,queue=deque([])):
+    paths = []
+    temp_path = [start]
+    queue.append(temp_path)
+    while queue:
+        tpath = queue.popleft()
+        last_node = tpath[len(tpath)-1]
+        if last_node == end:
+            paths.append(tpath)
+        for lind in E[V.index(last_node)]:
+            link_node = V[lind]
+            if link_node not in tpath:
+                new_path = tpath+[link_node]
+                queue.append(new_path)
+    return paths
+
 def Morsegraph(V,E,ss,SCCs):
     # get relationships between strongly connected path components
-    reducedscc=[[s] for s in ss]
+    sccnodes=[]
+    gradnodes=[]
     for scc in SCCs:
         if len(scc) == 1:
-            continue
+            if scc[0] in ss:
+                sccnodes.append(scc)
+            else:
+                gradnodes.append(scc[0])
         else:
-            reducedscc.append(scc)
+            sccnodes.append(scc)
     sccedges=[]
-    for i,scc1 in enumerate(reducedscc):
-        for k,scc2 in enumerate(reducedscc):
-            if i ==k:
+    for i,scc1 in enumerate(sccnodes):
+        for k,scc2 in enumerate(sccnodes):
+            if i == k:
                 continue
             flag=0
             for s1 in scc1:
-                ind1=V.index(s1)
+                if not E[V.index(s1)]:
+                    continue
                 for s2 in scc2:
-                    ind2=V.index(s2)
-                    if ind2 in E[ind1]:
-                        sccedges.append((i,k))
-                        flag=1
+                    queue=deque([])
+                    paths=breadthfirst(V,E,s1,s2,queue)
+                    for p in paths:
+                        if all([q in gradnodes for q in p[1:-1]]):
+                            sccedges.append((i,k))
+                            flag=1
+                        if flag:
+                            break
                     if flag:
                         break
                 if flag:
                     break
-    return reducedscc,sccedges
+    return sccnodes, sccedges
 
-
+    
 
 
 if __name__=='__main__':
     import makegraphs
-    dV,dE,wV,wE,ss = makegraphs.getNodesEdges(makegraphs.probspec_4D_singthresh_2cycles)
+    bs = [[0,0,3,3,1,1,3,3,0,0,1,1,1,1,3,3],[0,1,1,1],[0,1],[0,0,0,1]]
+    dV,dE,wV,wE,ss = makegraphs.getNodesEdges(partial(makegraphs.probspec_4D_ArnaudExample_2A,bs))
+    SCCs=getSCCs(dV,dE)
+    # for s in SCCs:
+    #     print(s)
+    sccnodes, sccedges = Morsegraph(dV,dE,ss,SCCs)
+
+    # # toy
+    # V = range(8)
+    # E = [[2],[0,7],[1,3],[5],[6],[4],[5,7],[]]
+    # ss = [7]
+    # SCCs = [[0,1,2],[4,5,6],[7],[3]]
+    # sccnodes, sccedges = Morsegraph2(V,E,ss,SCCs)
+
     print('Domain SCCs')
-    SCC=getSCCs(dV,dE)
-    print('\n')
-    print('Wall SCCs')
-    SCCs=getSCCs(wV,wE)
+    for s in sccnodes:
+        print(s) 
+    print('Domain SCC edges')
+    print(sccedges)
