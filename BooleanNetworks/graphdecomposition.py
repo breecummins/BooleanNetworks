@@ -89,6 +89,10 @@ def Morsegraph(V,E,ss,SCCs):
                     break
     return sccnodes, sccedges
 
+def transitivereduction(nodes,edges):
+    for n1 in range(len(nodes)):
+        for n2 in range(len(nodes)):
+            breadthfirst(nodes,edges,start,end,queue=deque([]))
     
 
 
