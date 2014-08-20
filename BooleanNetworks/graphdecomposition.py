@@ -53,6 +53,17 @@ def breadthfirst(V,E,start,end,queue=deque([])):
                 queue.append(new_path)
     return paths
 
+def transitivereduction(nodes,edges):
+    ''' helper function for Morsegraph '''
+    reducededges=[[] for _ in range(len(nodes))]
+    for i,n1 in enumerate(nodes):
+        for k,n2 in enumerate(nodes):
+            if n1 != n2:
+                paths = breadthfirst(nodes,edges,n1,n2,queue=deque([]))
+                if len(paths)==1 and len(paths[0])==2:
+                    reducededges[i].append(k)
+    return reducededges
+
 def Morsegraph(V,E,ss,SCCs):
     # get relationships between strongly connected path components
     sccnodes=[]
@@ -65,7 +76,7 @@ def Morsegraph(V,E,ss,SCCs):
                 gradnodes.append(scc[0])
         else:
             sccnodes.append(scc)
-    sccedges=[]
+    sccedges=[[] for _ in range(len(sccnodes))]
     for i,scc1 in enumerate(sccnodes):
         for k,scc2 in enumerate(sccnodes):
             if i == k:
@@ -79,7 +90,7 @@ def Morsegraph(V,E,ss,SCCs):
                     paths=breadthfirst(V,E,s1,s2,queue)
                     for p in paths:
                         if all([q in gradnodes for q in p[1:-1]]):
-                            sccedges.append((i,k))
+                            sccedges[i].append(k)
                             flag=1
                         if flag:
                             break
@@ -87,23 +98,31 @@ def Morsegraph(V,E,ss,SCCs):
                         break
                 if flag:
                     break
+    sccedges = transitivereduction(sccnodes,sccedges)
     return sccnodes, sccedges
 
-def transitivereduction(nodes,edges):
-    for n1 in range(len(nodes)):
-        for n2 in range(len(nodes)):
-            breadthfirst(nodes,edges,start,end,queue=deque([]))
+
+
     
 
 
 if __name__=='__main__':
     import makegraphs
-    bs = [[0,0,3,3,1,1,3,3,0,0,1,1,1,1,3,3],[0,1,1,1],[0,1],[0,0,0,1]]
-    dV,dE,wV,wE,ss = makegraphs.getNodesEdges(partial(makegraphs.probspec_4D_ArnaudExample_2A,bs))
-    SCCs=getSCCs(dV,dE)
-    # for s in SCCs:
-    #     print(s)
-    sccnodes, sccedges = Morsegraph(dV,dE,ss,SCCs)
+    bs = [[0,0,3,3,2,2,3,3,0,0,1,1,2,2,3,3],[0,1,1,1],[0,1],[0,0,0,1]]
+    makegraphs.makeMorseGraph(partial(makegraphs.probspec_4D_ArnaudExample_2A,bs))
+    # dV,dE,wV,wE,ss = makegraphs.getNodesEdges(partial(makegraphs.probspec_4D_ArnaudExample_2A,bs))
+    # # for d in dV:
+    # #     print(d)
+    # # print(dE)
+    # SCCs=getSCCs(dV,dE)
+    # # for s in SCCs:
+    # #     print(s)
+    # sccnodes, sccedges = Morsegraph(dV,dE,ss,SCCs)
+    # print('Domain SCCs')
+    # for s in sccnodes:
+    #     print(s) 
+    # print('Domain SCC edges')
+    # print(sccedges)
 
     # # toy
     # V = range(8)
@@ -112,8 +131,8 @@ if __name__=='__main__':
     # SCCs = [[0,1,2],[4,5,6],[7],[3]]
     # sccnodes, sccedges = Morsegraph2(V,E,ss,SCCs)
 
-    print('Domain SCCs')
-    for s in sccnodes:
-        print(s) 
-    print('Domain SCC edges')
-    print(sccedges)
+    # print('Domain SCCs')
+    # for s in sccnodes:
+    #     print(s) 
+    # print('Domain SCC edges')
+    # print(sccedges)
