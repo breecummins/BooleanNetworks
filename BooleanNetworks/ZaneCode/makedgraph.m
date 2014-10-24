@@ -1,4 +1,5 @@
-function makedgraph()
+function g = makedgraph()
+	% Saves Zane's graph as a 0-1 matrix.
 	g = zeros(16);
 	g(1,[2,3,4,9]) = 1;
 	g(2,[5,6,10]) = 1;
@@ -12,5 +13,4 @@ function makedgraph()
 	g(10,[13,14]) = 1;
 	g(11,[13,15]) = 1;
 	g(12,[14,15]) = 1;
-	% disp(g)
-	save('dgraph.mat','g')
+	save('dgraph.mat','g');
