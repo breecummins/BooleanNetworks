@@ -1,4 +1,4 @@
-function main()
+function orders = main()
 	% The ultimate goal of this function is to find all possible linear orders 
     % for the 4D multiplicative case. It is not complete as of 10/24/14.
 
@@ -17,4 +17,4 @@ function main()
 
 	% Now we need an algorithm for determining all consistent sets of orderings of the unknown pairs.
     % Try this one.
-    orders = listallorders(g);
+    orders = countallorders(g);

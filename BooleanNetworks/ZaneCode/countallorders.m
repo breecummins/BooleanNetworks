@@ -4,7 +4,7 @@ function orders = countallorders(g)
 	function orders = recurseunknown(g,unknownpairs,orders)
 		while ~isempty(unknownpairs)
 			up = unknownpairs(1,:);
-			disp(length(up));
+			disp(length(unknownpairs));
 			for q = [up;fliplr(up)].'
 				g(q(1),q(2)) = 1;
 				g = transitiverelationships(g);
@@ -18,6 +18,5 @@ function orders = countallorders(g)
 	unknownpairs = makeunknownpairs(g);
 	orders = 0;
 	orders = recurseunknown(g,unknownpairs,orders);
-	disp(length(orders))
-	save('orders.mat','orders')
+	disp(orders)
 end
