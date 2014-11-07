@@ -4,25 +4,28 @@ def flattenlessone(l):
     else:
         flat = []
         for el in l:
-            flat.append(el) if not isinstance(el,list) else flat.extend(flattenlessone(el))
+            flat.extend(flattenlessone(el))
         return flat
 
 def least(partord):
-    RHS = [item for tup in partord for item in tup[1] ]
-    return [t[0] for t in partord if t[0] not in RHS]
+    # Faster, but more opaque. Uses set intersection and differencing after splitting apart the tuple values.
+    z=zip(*partord)
+    return set(z[0]) - ( set(z[0]) & set(sum(z[1],())) )
+
+def least2(partord):
+    # This method is not as fast as the other, but clearer
+    return [t[0] for t in partord if t[0] not in set([item for tup in partord for item in tup[1]])]
     
 def recurseorder(N,partord,order=[]):
     if len(order) == N:
         return order
     else:
         orders=[]
-        smallest = least(partord)
-        for s in smallest:
+        for s in least(partord):
             orders.append(recurseorder(N,[t for t in partord if t[0] != s],order+[s]))
         return flattenlessone(orders)
 
 if __name__ == "__main__":
-    # # data model is [(1,(less thans for 1)),(2,(less thans for 2)),...]
-    # print(least([(1,(3,)),(4,(2,3)),(2,()),(3,())]))
+    # # data model is [(1,(constraints for 1)),(2,(constraints for 2)),...]
     print(recurseorder(3,[(1,(2,)),(2,()),(3,())]))
     print(recurseorder(4,[(1,(2,3,4)),(2,(4,)),(3,(4,)),(4,())]))
