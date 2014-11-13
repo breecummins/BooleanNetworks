@@ -29,3 +29,4 @@ if __name__ == "__main__":
     # # data model is [(1,(constraints for 1)),(2,(constraints for 2)),...]
     print(recurseorder(3,[(1,(2,)),(2,()),(3,())]))
     print(recurseorder(4,[(1,(2,3,4)),(2,(4,)),(3,(4,)),(4,())]))
+    # print(recurseorder(6,[(1,),(2,),(3,),(4,()),(5,(6,)),(6,())]))
