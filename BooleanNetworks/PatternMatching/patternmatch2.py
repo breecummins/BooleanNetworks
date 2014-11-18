@@ -36,7 +36,7 @@ def matchPattern(pattern,walllabels,outedges,cycle='y'):
     # w = findFirstWall(pattern[0],walllabels)
     # if w is None:
     #     return "First label not found in graph. Process aborted."
-    return recursePattern(pattern,walllabels,outedges)
+    return recursePattern(pattern,walllabels,outedges)[1:]
 
 
 
