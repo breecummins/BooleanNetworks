@@ -23,19 +23,11 @@ def recursePattern(pattern,walllabels,outedges,startnode=-1):
                     match.extend(recursePattern(pattern,walllabels,outedges,n))
         return match
 
-def findFirstWall(p0,walllabels):
-    for i,w in enumerate(walllabels):
-        if w == p0:
-            return i
-
 def matchPattern(pattern,walllabels,outedges,cycle='y'):
     # make start node with an output to every edge
     outedges = outedges + [tuple(range(len(walllabels)))]
     if cycle == 'y' and pattern[0] != pattern[-1]:
         pattern = pattern + [pattern[0]]
-    # w = findFirstWall(pattern[0],walllabels)
-    # if w is None:
-    #     return "First label not found in graph. Process aborted."
     return recursePattern(pattern,walllabels,outedges)[1:]
 
 

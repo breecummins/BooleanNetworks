@@ -1,8 +1,37 @@
 def labelOptions(p):
     return set([p, ''.join([ c if c not in ['m','M'] else 'd' if c == 'm' else 'u' for c in p ])])
 
-def searchAdjacent(oe,p,walllabels):
-    return [walllabels.index(l) for l in set(oe).intersection(labelOptions(p))]
+def searchAdjacent(p,walllabels,nextedges):
+    next=[]
+    for o in nextedges:
+        if walllabels[o] in labelOptions(p):
+            next.append(o)
+    return next
+
+def pathToEnd(start,end,walllabels,outedges):
+    # start is an index, end is a label
+    # trivial case
+    if start == end:
+        return [start]
+    # end is one step away
+    startinds = outedges[start]
+    startlabels = [walllabels[i] for i in startinds]
+    if end in startlabels:
+        return [start,startinds[startlabels.index(end)]]
+    # end is n steps away, where all intermediate n-1 steps have the same label
+    endlabels = labelOptions(end)
+    intermediate = endlabels.intersection(startlabels)
+    nextlabels = startlabels
+    path = [start]
+    while intermediate in nextlabels:
+        ind = nextlabels.index(intermediate)
+        path.append(ind)
+        nextinds = outedges[ind]
+        nextlabels = [walllabels[i] for i in nextinds]
+        if end in nextlabels:
+            return path.append(nextinds[nextlabels.index(end)])
+    return []
+
 
 def recursePattern(pattern,walllabels,outedges,startnode=-1):
     if not pattern:
@@ -10,23 +39,25 @@ def recursePattern(pattern,walllabels,outedges,startnode=-1):
     else:
         match=[startnode]
         p = pattern[0]
-        next = searchAdjacent(outedges[match[-1]],p,walllabels)
+        next = searchAdjacent(p,walllabels,outedges[match[-1]])
         for n in next:
             if walllabels[n] == p:
                 match.extend(recursePattern(pattern[1:],walllabels,outedges,n))
             else:
                 # need path between walllabels[n] and p
-                match.extend(recursePattern([p],walllabels,outedges,n))
+                match.extend(pathToEnd(n,p,walllabels,outedges))
+                match.extend(recursePattern(pattern[1:],walllabels,outedges,match[-1]))
         return match
 
-def makeNewOutedges(walllabels,outedges):
-    return [[walllabels[o] for o in outedges[w]] for w in range(len(walllabels))]
-
 def matchPattern(pattern,walllabels,outedges,cycle='y'):
+    # make sure there is a wall associated to each entry (assumes each p in pattern has exactly one m or M)
+    for p in pattern:
+        if p not in walllabels:
+            return None
     # make start node with an output to every edge
     outedges.extend([tuple(range(len(walllabels)))])
     walllabels.append('-1')
-    outedges = makeNewOutedges(walllabels,outedges)
+    # if looking for a cycle, make sure data is cyclic
     if cycle == 'y' and pattern[0] != pattern[-1]:
         pattern = pattern + [pattern[0]]
     return recursePattern(pattern,walllabels,outedges)[1:]
