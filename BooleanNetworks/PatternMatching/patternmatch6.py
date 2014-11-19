@@ -1,24 +1,36 @@
-def labelOptions(p):
-    return set([p, ''.join([ c if c not in ['m','M'] else 'd' if c == 'm' else 'u' for c in p ])])
+def flattenlessone(l):
+    if all(isinstance(el, list) for el in l) and not any(isinstance(a,list) for el in l for a in el):
+        return l
+    else:
+        flat = []
+        for el in l:
+            flat.extend(flattenlessone(el))
+        return flat
+
+def labelOptions(p,q):
+    lo = set([p, ''.join([ c if c not in ['m','M'] else 'd' if c == 'm' else 'u' for c in p ])])
+    return lo.difference(set(q))
 
 def searchAdjacent(w,p,walllabels,outedges):
     next=[]
-    lo = labelOptions(p)
+    lo = labelOptions(p,walllabels[w])
     for o in outedges[w]:
         if walllabels[o] in lo:
             next.append(o)
     return next
 
-def recursePattern(startnode,pattern,walllabels,outedges):
-    if not pattern:
-        return []
-    else:
-        match=[startnode]
-        for p in pattern:
-            next = searchAdjacent(match[-1],p,walllabels,outedges)
-            for n in next:
-                match.extend(recursePattern(n,pattern[1:],walllabels,outedges))
+def recursePattern(startnode,pattern,match,walllabels,outedges,start,stop):
+    # match needs to be initialized with first startnode
+    if len(match) > 1 and match[0]==start and walllabels[match[-1]] == stop:
         return match
+    else:
+        matches=[]
+        for p in pattern:
+            next = searchAdjacent(startnode,p,walllabels,outedges)
+            print(next)
+            for n in next:
+                matches.append(recursePattern(n,pattern[1:],match+[n],walllabels,outedges,start,stop))
+        return flattenlessone(matches)
 
 def findFirstWall(p0,walllabels):
     for i,w in enumerate(walllabels):
@@ -32,33 +44,31 @@ def matchPattern(pattern,walllabels,outedges):
     w = findFirstWall(pattern[0],walllabels)
     if w is None:
         return "First label not found in graph. Process aborted."
+    elif len(pattern)==1:
+        return [w]
     else:
-        return recursePattern(w,pattern[1:],walllabels,outedges)
+        R = recursePattern(w,pattern[1:],[w],walllabels,outedges,w,pattern[-1])
+        return list(set(tuple(l) for l in R))
 
 
 
 if __name__ == "__main__":
-    # ASSUME ALL WALLS UNIQUE
-
     outedges=[] # list of tuples of integers, position is wall index
     walllabels=[] # list of tuples of labels ('u','d','m','M'), position is wall index
     pattern=[] # list of tuples of labels, position is not meaningful, exactly one 'm' or 'M' allowed per tuple (i.e. already split data appropriately and 0's all removed)
 
-    # EXAMPLE 1
-    outedges=[(1,2),(3,),(4,5),(7,),(8,),(4,6),(0,),(8,),(8,)]
-    walllabels=['uuu','uuM','uMu','uud','udM','udu','umu','uMd','udd']
+    # ASSUME ALL WALLS UNIQUE, ASSUME GIVEN PATH EXISTS EXACTLY IN GRAPH
+
+    # EXAMPLE 0
+    outedges=[(1,),(2,),(3,),(0,)]
+    walllabels=['uuu','uMu','udu','umu']
     pattern=['uuu','uMu','udu','umu','uuu']
     match = matchPattern(pattern,walllabels,outedges)
     print(match) # == [0,2,5,6,0]
 
-    outedges=[(1,2),(3,),(4,5),(7,),(8,),(4,6),(0,),(8,),(8,)]
-    walllabels=['uuu','uuM','uMu','uud','udM','udu','umu','uMd','udd']
-    pattern=['uMu','udu','umu','uuu','uMu']
+    outedges=[(1,),(2,),(3,),(0,)]
+    walllabels=['uuu','uMu','udu','umu']
+    pattern=['uMu','udu','umu','uuu','uMu'] # permuted pattern
     match = matchPattern(pattern,walllabels,outedges)
     print(match)
 
-    outedges=[(1,2),(3,),(4,5),(7,),(8,),(4,6),(0,),(8,),(8,)]
-    walllabels=['uuu','uuM','uMu','uud','udM','udu','umu','uMd','udd']
-    pattern=['uMu','udu','udM','uMd','udd','Mdd']
-    match = matchPattern(pattern,walllabels,outedges)
-    print(match)
