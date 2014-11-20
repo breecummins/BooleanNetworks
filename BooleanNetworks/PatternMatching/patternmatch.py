@@ -50,7 +50,7 @@ def matchPattern(pattern,walllabels,outedges,suppress=0):
 
     outedges: list of tuples of integers, index is wall number
     walllabels: list of uniform-length strings of labels from the alphabet ('u','d','m','M'), index is wall number
-    pattern: list of uniform-length strings of labels from the alphabet ('u','d','m','M'); index is not meaningful except that the order of the pattern is preserved; exactly one 'm' or 'M' allowed per tuple; to find a path, all elements of pattern must be wall labels that exist in the graph (eventually may change this); patterns containing exactly repeating sequences will not be found (eventually may change this).
+    pattern: list of uniform-length strings of labels from the alphabet ('u','d','m','M'); index is not meaningful except that the order of the pattern is preserved; exactly one 'm' or 'M' allowed per tuple; to find a path, all elements of pattern must be wall labels that exist in the graph; patterns containing exactly repeating sequences will not be found if they induce the tranversal of a cycle more than once.
     suppress: 0 means give information about cyclic or acyclic pattern request, 1 means suppress it
 
     See patternmatch_unittests.py for examples of function calls.
@@ -64,7 +64,7 @@ def matchPattern(pattern,walllabels,outedges,suppress=0):
         return "None. Pattern elements {} do not exist as wall labels in the graph.".format(missing)
     firstwalls=[i for i in range(len(walllabels)) if walllabels[i] == pattern[0]]
     if len(pattern)==1:
-        return [ tuple(w) for w in firstwalls ]
+        return [ (w,) for w in firstwalls ]
     # give information about the type of pattern received
     if not suppress:
         if pattern[0] != pattern[-1]:

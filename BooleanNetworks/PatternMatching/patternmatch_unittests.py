@@ -100,7 +100,7 @@ print(match == [(1, 3, 7, 9, 10, 9)])
 # EXAMPLE 4: THE FOLLOWING PATTERN DNE
 outedges=[(11,2),(3,4),(5,),(7,12),(8,),(6,),(0,),(9,),(8,),(10,),(9,13),(1,),(2,),(3,)]
 walllabels=['uuu','uuM','uMu','uud','uMd','udu','umu','uMd','udd','Mdd','mdd','uuu','uum','umd']
-pattern=['uuM','uMd','Mdd','mdd','Mdd','mdd']
+pattern=['uuM','uMd','Mdd','mdd','Mdd','mdd'] # repeating sequence should fail
 match = matchPattern(pattern,walllabels,outedges,suppress=1)
 print(match is None or 'None' in match)# == [(1, 3, 7, 9, 10, 9, 10)]) # but search should fail
 
@@ -124,3 +124,17 @@ walllabels=['uuu','uuM','uMu','uud','uMd','udu','umu','uMd','udd','Mdd','mdd','u
 pattern=['uMd','Mdd','mdd','umd']
 match = matchPattern(pattern,walllabels,outedges,suppress=1)
 print(match == [(7, 9, 10, 13)])
+
+# EXAMPLE 5
+outedges=[(1,),(2,),(3,),(4,5),(0,3),(6,),(3,)]
+walllabels=['umd','uud','uMd','Mdd','mdd','ddd','mdd']
+pattern=['uMd','Mdd','mdd','Mdd','mdd'] # repeating sequence should succeed
+match = matchPattern(pattern,walllabels,outedges,suppress=1)
+print(match == [(2, 3, 5, 6, 3, 4), (2, 3, 4, 3, 5, 6)])
+
+# EXAMPLE 5
+outedges=[(1,),(2,),(3,),(4,5),(0,3),(6,),(3,)]
+walllabels=['umd','uud','uMd','Mdd','mdd','ddd','mdd']
+pattern=['mdd'] # trivial case
+match = matchPattern(pattern,walllabels,outedges,suppress=1)
+print(match == [(4,), (6,)])
