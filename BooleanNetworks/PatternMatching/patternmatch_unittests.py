@@ -1,4 +1,4 @@
-from patternmatch8 import matchPattern 
+from patternmatch import matchPattern 
 
 # ASSUME ALL WALLS UNIQUE, ASSUME GIVEN PATTERN EXISTS EXACTLY IN GRAPH
 
