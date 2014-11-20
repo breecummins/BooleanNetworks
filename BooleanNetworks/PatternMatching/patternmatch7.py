@@ -51,108 +51,35 @@ def findFirstWall(p0,walllabels):
     return None
 
 def matchPattern(pattern,walllabels,outedges):
+    '''
+    Matches pattern in a labelled graph with edges in outedges and labels in walllabels. The pattern is 
+    described in terms of walllabels, and a pattern label of the wrong type will return no match. If there
+    is a match to the pattern, the paths that respect it will be returned in terms of wall number (the index
+    of outedges).
+
+    outedges: list of tuples of integers, index is wall number
+    walllabels: list of uniform-length strings of labels from the alphabet ('u','d','m','M'), index is wall number
+    pattern: list of uniform-length strings of labels from the alphabet ('u','d','m','M'); index is not meaningful except that the order of the pattern is preserved; exactly one 'm' or 'M' allowed per tuple; if there is no 'm' or 'M' in the first element of pattern, then the element must be a wall label that exists in the graph (eventually may change this); patterns containing exactly repeating sequences will not be found (eventually may change this).
+
+    See patternmatch_unittests.py for examples of function calls.
+
+    '''
+    # give information about the type of pattern received
     if pattern[0] != pattern[-1]:
-        print('Seeking path, not cycle.')
+        print('Seeking acyclic path.')
+    else:
+        print('Seeking cyclic path. May not succeed unless walls are unique.')
     if any([p not in walllabels and ('m' in p or 'M' in p) for p in pattern]):
-        return "None. The following extrema in the pattern do not exist on the walls: {}.".format(list(set(pattern).difference(set(pattern).intersection(set(walllabels)))))
+        return "None. The following extremal elements of the pattern do not exist as wall labels in the graph: {}.".format(list(set(pattern).difference(set(pattern).intersection(set(walllabels)))))
     w = findFirstWall(pattern[0],walllabels)
     if w is None:
-        return "None. First element of pattern not found in graph."
+        return "None. First element of pattern {} not found in graph.".format(pattern[0])
     elif len(pattern)==1:
-        return [w]
+        return [tuple(w)]
     else:
         R = recursePattern(w,pattern[1:],[w],walllabels,outedges,w,pattern[-1])
         L = list(set(tuple(l) for l in R if l))
         if L:
-            return "Paths are {}.".format(L)
+            return L
         else:
             return None
-
-
-
-if __name__ == "__main__":
-    outedges=[] # list of tuples of integers, position is wall index
-    walllabels=[] # list of tuples of labels ('u','d','m','M'), position is wall index
-    pattern=[] # list of tuples of labels, position is not meaningful, exactly one 'm' or 'M' allowed per tuple (i.e. already split data appropriately and 0's all removed)
-
-    # # ASSUME ALL WALLS UNIQUE, ASSUME GIVEN PATH EXISTS EXACTLY IN GRAPH, ASSUME FIRST ELEMENT OF PATTERN IS A WALL
-
-    # # EXAMPLE 0
-    # outedges=[(1,),(2,),(3,),(0,)]
-    # walllabels=['uuu','uMu','udu','umu']
-    # pattern=['uuu','uMu','udu','umu','uuu']
-    # match = matchPattern(pattern,walllabels,outedges)
-    # print(match) # == [0,1,2,3,0]
-
-    # # EXAMPLE 0
-    # outedges=[(1,),(2,),(3,),(0,)]
-    # walllabels=['uuu','uMu','udu','umu']
-    # pattern=['uMu','udu','umu','uuu','uMu'] # permuted pattern
-    # match = matchPattern(pattern,walllabels,outedges)
-    # print(match) # == [1,2,3,0,1]
-
-    # # ASSUME ALL WALLS UNIQUE, GIVEN PATH HAS INTERMEDIATE LOWERCASE WALLS ONLY, ASSUME FIRST ELEMENT OF PATTERN IS A WALL
-
-    # # EXAMPLE 1
-    # outedges=[(1,),(2,3),(3,),(0,)]
-    # walllabels=['uuu','uMu','udu','umu']
-    # pattern=['uMu','umu','uMu'] # permuted pattern
-    # match = matchPattern(pattern,walllabels,outedges)
-    # print(match) # == [(1, 2, 3, 0, 1), (1, 3, 0, 1)]
-
-    # # EXAMPLE 2
-    # outedges=[(1,2),(3,),(4,5),(7,),(8,),(4,6),(0,),(8,),(8,)]
-    # walllabels=['uuu','uuM','uMu','uud','udM','udu','umu','uMd','udd']
-    # pattern=['uuu','uMu','udu','umu','uuu']
-    # match = matchPattern(pattern,walllabels,outedges)
-    # print(match) # == [0,2,5,6,0]
-
-    # # EXAMPLE 2
-    # outedges=[(1,2),(3,),(4,5),(7,),(8,),(4,6),(0,),(8,),(8,)]
-    # walllabels=['uuu','uuM','uMu','uud','udM','udu','umu','uMd','udd']
-    # pattern=['uMu','udu','umu','uuu','uMu'] # permuted pattern
-    # match = matchPattern(pattern,walllabels,outedges)
-    # print(match) # == [2,5,6,0,2]
-
-    # # EXAMPLE 2
-    # outedges=[(1,2),(3,),(4,5),(7,),(8,),(4,6),(0,),(8,),(8,)]
-    # walllabels=['uuu','uuM','uMu','uud','udM','udu','umu','uMd','udd']
-    # pattern=['uMu','umu','uuM']
-    # match = matchPattern(pattern,walllabels,outedges)
-    # print(match) # == [2,5,6,0,1]
-
-    # # EXAMPLE 2: THE FOLLOWING PATTERN DNE
-    # outedges=[(1,2),(3,),(4,5),(7,),(8,),(4,6),(0,),(8,),(8,)]
-    # walllabels=['uuu','uuM','uMu','uud','udM','udu','umu','uMd','udd']
-    # pattern=['uMu','udu','udM','uMd','udd','Mdd']
-    # match = matchPattern(pattern,walllabels,outedges)
-    # print(match) # == None
-
-    # # EXAMPLE 2: THE FOLLOWING PATTERN DNE
-    # outedges=[(1,2),(3,),(4,5),(7,),(8,),(4,6),(0,),(8,),(8,)]
-    # walllabels=['uuu','uuM','uMu','uud','udM','udu','umu','uMd','udd']
-    # pattern=['udM','udd','uMd']
-    # match = matchPattern(pattern,walllabels,outedges)
-    # print(match) # == None
-
-    # # EXAMPLE 3: THE FOLLOWING PATTERN DNE
-    # outedges=[(1,2),(3,),(4,5),(7,),(8,),(4,6),(0,),(8,),(9,),(10,),(8,)]
-    # walllabels=['uuu','uuM','uMu','uud','udM','udu','umu','uMd','udd','Mdd','mdd']
-    # pattern=['udM','udd','uMd']
-    # match = matchPattern(pattern,walllabels,outedges)
-    # print(match) # == None
-
-    # EXAMPLE 3
-    outedges=[(1,2),(3,),(4,5),(7,),(8,),(4,6),(0,),(8,),(8,9),(10,),(8,)]
-    walllabels=['uuu','uuM','uMu','uud','udM','udu','umu','uMd','udd','Mdd','mdd']
-    pattern=['umu','uuM','uMd','Mdd']
-    match = matchPattern(pattern,walllabels,outedges)
-    print(match) # == [6,0,1,3,7,8,9]
-
-    # # EXAMPLE 3: THE FOLLOWING PATTERN DNE
-    # outedges=[(1,2),(3,),(4,5),(7,),(8,),(4,6),(0,),(8,),(9,),(10,),(8,)]
-    # walllabels=['uuu','uuM','uMu','uud','udM','udu','umu','uMd','udd','Mdd','mdd']
-    # pattern=['umu','uuM','uMd','Mdd','mdd','udM']
-    # match = matchPattern(pattern,walllabels,outedges)
-    # print(match) # == None
-
