@@ -1,36 +1,33 @@
-function [g, algexp] = makedgraph(c12,c34)
+function [partialorder, algexp, C, D] = makedgraph(partialorder,diff12,diff34)
 	
 	% Makes Zane's graph into a partial order. Records algebraic expressions at each node 
 	% and records the first two constraints.
 
-	g = {  {1,[2,3,4,9]}, {2,[5,6,10]}, {3,[5,7,11]}, {4,[6,7,12]}, {5,[8,13]}, {6,[8,14]}, {7,[8,15]}, {8,[16]}, {9,[10,11,12]}, {10,[13,14]}, {11,[13,15]}, {12,[14,15]}, {13,[16]}, {14,[16]}, {15,[16]}, {16,[]} };
+	syms aa12 ba12 ab12 bb12 aa34 ba34 ab34 bb34;
 
-	syms a1 b1 a2 b2 a3 b3 a4 b4;
+	% assume( (b1 > a1 > 0) & (b2 > a2 > 0) & (b3 > a3 > 0) & (b4 > a4 > 0) )
 
-	assume( (b1 > a1 > 0) & (b2 > a2 > 0) & (b3 > a3 > 0) & (b4 > a4 > 0) )
+	% c={a1+a2, b1+a2, a1+b2, b1+b2}; 
+	% d={a3+a4, b3+a4, a3+b4, b3+b4}; 
 
-	c={a1+a2, b1+a2, a1+b2, b1+b2}; 
-	d={a3+a4, b3+a4, a3+b4, b3+b4}; 
+	C={aa12, ba12, ab12, bb12}; 
+	D={aa34, ba34, ab34, bb34}; 
 
-	algexp = { c{1}*d{1}, c{1}*d{3}, c{2}*d{1}, c{1}*d{2}, c{2}*d{3}, c{1}*d{4}, c{2}*d{2}, c{2}*d{4}, 
-			   c{3}*d{1}, c{3}*d{3}, c{4}*d{1}, c{3}*d{2}, c{4}*d{3}, c{3}*d{4}, c{4}*d{2}, c{4}*d{4} };
+	algexp = { [1,1]; [1,3]; [2,1]; [1,2]; [2,3]; [1,4]; [2,2]; [2,4]; 
+			   [3,1]; [3,3]; [4,1]; [3,2]; [4,3]; [3,4]; [4,2]; [4,4] };
 
-    for 
-   	for e = d
-
-
-	if c12
-		assumeAlso( c{1} < c{2} < c{3} < c{4} )
+	if diff12
+		assumeAlso( 0 < C{1} < C{2} < C{3} < C{4} )
 	else
-		assumeAlso( c{1} < c{3} < c{2} < c{4} )
+		assumeAlso( 0 < C{1} < C{3} < C{2} < C{4} )
 	end
 
-	if c34
-		assumeAlso( d{1} < d{2} < d{3} < d{4} )
+	if diff34
+		assumeAlso( D{1} < D{2} < D{3} < D{4} )
 	else
-		assumeAlso( d{1} < d{3} < d{2} < d{4} )
+		assumeAlso( D{1} < D{3} < D{2} < D{4} )
     end
 
-
+	partialorder = symboliccomparisons(partialorder,algexp,C,D);
 end
 

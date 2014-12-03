@@ -12,7 +12,7 @@ function ispath = breadthfirst(g,first,last)
 			ispath = true;
 			break % If a path is found, stop searching and report that first < last.
 		else
-			for node = find(g(temppath(end),:)>0)
+			for node = g{temppath(end)}{2}
 				if ~ismember(node,temppath)
 					newpath=cat(1,temppath,node);
 					queue.add(newpath);
