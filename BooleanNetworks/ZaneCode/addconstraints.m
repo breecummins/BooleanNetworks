@@ -1,4 +1,4 @@
-function g = addconstraints(diff12,diff34)
+function [g,unknownpairs] = addconstraints(diff12,diff34)
 	% c1 to c4 must be assigned a permutation of the integers 1 to 4
 
 	% The following if statements encode specific 
@@ -32,6 +32,9 @@ function g = addconstraints(diff12,diff34)
     end
 
     g = transitiverelationships(g);
+
+    [knownpairs,unknownpairs] = makeunknownpairs(g);
+
 
 end
 
