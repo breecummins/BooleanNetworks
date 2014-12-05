@@ -24,6 +24,7 @@ def booleantomanyvalues(vardict):
     return vardict
 
 def removeboundaries(walls):
+    # also must remove or mark steady states
     for k,w in enumerate(walls):
         if 0 in w[1:]:
             walls.pop(k)
