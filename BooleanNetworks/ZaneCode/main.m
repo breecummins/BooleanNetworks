@@ -23,10 +23,10 @@ function orders = main(diff12,diff34)
         end
     end
 
-    % celldisp(unknownpairs)
+    celldisp(unknownpairs)
     % length(unknownpairs)
 
-    celldisp(partialorder)
+    % celldisp(partialorder)
 
 	% % Now we add the edges to the partial order induced by the constraints.  
 	% partialorder = symbolicdifferences(partialorder, algexp);
