@@ -1,15 +1,3 @@
-def flattenlessone(l):
-    if all(isinstance(el, list) for el in l) and not any(isinstance(a,list) for el in l for a in el):
-        return l
-    else:
-        flat = []
-        for el in l:
-            if any(isinstance(a,list) for a in el):
-                flat.extend(flattenlessone(el))
-            else:
-                flat.append(el)
-        return flat
-
 def repeatingLoop(match):
     N=len(match)
     if len(set(match)) == N:
@@ -21,25 +9,30 @@ def repeatingLoop(match):
         return False
 
 def labelOptions(p):
-    return set([p, ''.join([ c if c not in ['m','M'] else 'd' if c == 'm' else 'u' for c in p ])])
-
-def searchAdjacent(w,p,walllabels,outedges):
-    return [o for o in outedges[w] if walllabels[o] in labelOptions(p)]
-
-def recursePattern(startnode,pattern,match,walllabels,outedges,start,stop,lenpattern):
-    # this algorithm assumes we start at the first node matching pattern[0]
-    if len(match) >= lenpattern and match[0]==start and walllabels[match[-1]] == stop:
-        return match
+    # there can be at most one 'm' or 'M' in p
+    # optimized
+    if 'm' in p:
+        return [p,p.replace('m','d')]
+    elif 'M' in p:
+        return [p,p.replace('M','u')]
     else:
-        matches=[]
-        for p in pattern:
-            next = searchAdjacent(startnode,p,walllabels,outedges)
+        return [p]
+
+def recursePattern(startnode,pattern,patternoptions,match,walllabels,outedges,stop,lenpattern,matches):
+    # optimized
+    if len(match) >= lenpattern and walllabels[match[-1]] == stop:
+        matches.append(match)
+        return matches
+    else:
+        for p,P in zip(pattern,patternoptions):
+            next = [o for o in outedges[startnode] if walllabels[o] in P] # get adjacent nodes with labels that are compatible with the pattern
             for n in next:
-                if n == p: # if we hit the next node, reduce pattern by one
-                    matches.append(recursePattern(n,pattern[1:],match+[n],walllabels,outedges,start,stop,lenpattern))
+                if n == p: # if we hit the next pattern element, reduce pattern by one
+                    matches=recursePattern(n,pattern[1:],patternoptions[1:],match+[n],walllabels,outedges,stop,lenpattern,matches)
                 elif not repeatingLoop(match+[n]): # if we hit an intermediate node, call pattern again, provided there isn't a repeating loop
-                    matches.append(recursePattern(n,pattern,match+[n],walllabels,outedges,start,stop,lenpattern))
-        return flattenlessone(matches)
+                # checking repeatingLoop over and over again is slow
+                    matches=recursePattern(n,pattern,patternoptions,match+[n],walllabels,outedges,stop,lenpattern,matches)
+        return matches
 
 def matchPattern(pattern,walllabels,outedges,suppress=0):
     '''
@@ -72,10 +65,11 @@ def matchPattern(pattern,walllabels,outedges,suppress=0):
         else:
             print('Seeking cyclic path. May return acyclic paths if wall labels are not unique.')
     # find matches
+    patternoptions=[labelOptions(p) for p in pattern[1:]]
     results=[]
     for w in firstwalls:
         # seek match starting at w
-        R = recursePattern(w,pattern[1:],[w],walllabels,outedges,w,pattern[-1],len(pattern))
+        R = recursePattern(w,pattern[1:],patternoptions,[w],walllabels,outedges,pattern[-1],len(pattern),[])
         # pull out the unique paths found
         results.extend(list(set(tuple(l) for l in R if l)))
     if results:
