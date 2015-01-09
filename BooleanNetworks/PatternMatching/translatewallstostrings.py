@@ -27,7 +27,7 @@ def removeboundaries(walls):
     # also must remove or mark steady states
     for k,w in enumerate(walls):
         if 0 in w[1:]:
-            walls.pop(k)
+            walls.pop(k) #FIXME, index is changing
     return walls
     
 def parsewalls(f):
