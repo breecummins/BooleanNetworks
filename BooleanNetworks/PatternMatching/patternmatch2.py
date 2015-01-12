@@ -1,10 +1,16 @@
-def pathDependentStringConstruction(previouswall,wall,nextwall=None):
+import itertools
+
+def pathDependentStringConstruction(previouswall,wall,nextwall,walldomains):
     walllabels=['']
-    for p,w,n in zip(previouswall,wall,nextwall):
+    for p,w,n in zip(walldomains[previouswall],walldomains[wall],walldomains[nextwall]):
         if p<w<n:
             chars = ['u']
         elif p>w>n:
             chars = ['d']
+        elif p<w and w>n:
+            chars=['M']
+        elif p>w and w<n:
+            chars=['m']
         elif p<w==n:
             chars=['u','M']
         elif p==w<n:
@@ -39,8 +45,8 @@ def recursePattern(startnode,match,matches,patterns,previouspattern,walllabels,p
     else:
         for p,P in patterns:
             for n in getAdjacentNodes(startnode,pDict['outedges']):  # every wall has an outgoing edge by graph construction
-                if len(match) == 1 or set(previouspattern).intersection(pathDependentStringConstruction(match[-2],match[-1],n)): # consistency check to catch false positives
-                    walllabels = [w for q in getAdjacentNodes(n,pDict['outedges']) for w in pathDependentStringConstruction(match[-1],n,q) ]
+                if len(match) == 1 or set(previouspattern).intersection(pathDependentStringConstruction(match[-2],match[-1],n,pDict['walldomains'])): # consistency check to catch false positives
+                    walllabels = [w for q in getAdjacentNodes(n,pDict['outedges']) for w in pathDependentStringConstruction(match[-1],n,q,pDict['walldomains']) ]
                     if p in walllabels: # if we hit the next pattern element, reduce pattern by one
                         # WE MAY GET FALSE POSITIVES WITHOUT THE CONSISTENCY CHECK ABOVE (this is because we have to pick the right q in the next step)
                         matches=recursePattern(n,match+[n],matches,patterns[1:],patterns[0][1],walllabels,pDict)
@@ -64,7 +70,7 @@ def sanitycheck(pattern):
         return "None. Pattern element(s) {} are not extrema. An 'm' or 'M' is required in every element.".format(notextrema)
     return "sane"  
 
-def matchPattern(pattern,outedges,suppress=0):
+def matchPattern(pattern,walldomains,outedges,suppress=0):
     '''
     Matches pattern in a labeled graph with edges in outedges and labels in walllabels. The pattern is 
     described in terms of walllabels, and a pattern label of the wrong type will return no match. If there
@@ -94,17 +100,25 @@ def matchPattern(pattern,outedges,suppress=0):
             print('Seeking acyclic path.')
         else:
             print('Seeking cyclic path. Acyclic paths that match the pattern may exist if wall labels are not unique, but these will not be returned.')
-    # FIXME: have no wall labels
-    # calculate all possible starting nodes and return trivial length one patterns
-    firstwalls=[i for i in range(len(walllabels)) if walllabels[i] == pattern[0]]
+    # calculate all possible starting nodes 
+    R=range(len(outedges))
+    inedges=[tuple([j for j,o in enumerate(outedges) if i in o ]) for i in R]
+    firstwalls=[]
+    for k in R:
+        ie=inedges[k]
+        oe=outedges[k]
+        wl=[]
+        for i,o in itertools.product(ie,oe):
+            wl.extend(pathDependentStringConstruction(i,k,o,walldomains))
+        if pattern[0] in wl:
+            firstwalls.append(k)
+    # return trivial length one patterns
     if len(pattern)==1:
         return [ (w,) for w in firstwalls ]
-    # FIXME: handle 2 node graph as a separate case
-    #.....
     # pre-cache intermediate nodes that may exist in the wall graph (saves time in recursive call)
     patternoptions=[labelOptions(p) for p in pattern[1:]]
     patternParams = zip(pattern[1:],patternoptions)
-    paramDict = {'outedges':outedges,'stop':pattern[-1],'lenpattern':len(pattern)}
+    paramDict = {'walldomains':walldomains,'outedges':outedges,'stop':pattern[-1],'lenpattern':len(pattern)}
     # find matches
     results=[]
     for w in firstwalls:
@@ -123,6 +137,8 @@ def matchPattern(pattern,outedges,suppress=0):
 
 
 if __name__=='__main__':
-    print pathDependentStringConstruction((2.5,1),(2,1.5),(1.5,2))
-    print pathDependentStringConstruction((2.5,1),(2,1.5),(1,1.5))
+    walldomains=[(1,0.5),(2,0.5),(2.5,1),(2,1.5),(1.5,1),(1,1.5),(0.5,1)]
+    print pathDependentStringConstruction(2,3,5,walldomains)
+    print pathDependentStringConstruction(3,5,6,walldomains)
+    print pathDependentStringConstruction(4,5,6,walldomains)
 
