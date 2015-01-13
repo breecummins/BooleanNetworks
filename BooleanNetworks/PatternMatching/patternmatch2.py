@@ -1,14 +1,6 @@
-import itertools,sys
+import itertools
 
 def isVarGTorLT(nodeval,nodelist,walldomains,varind):
-    # this function requires 3 loops over list. Can reduce to 1? Yes
-    A=[nodeval-walldomains[k][varind] for k in nodelist]
-    if any(A):
-        return all([a>=0 for a in A]),all([a<=0 for a in A])
-    else:
-        return 0,0
-
-def isVarGTorLT2(nodeval,nodelist,walldomains,varind):
     gt=True
     lt=True
     nz=False
@@ -36,13 +28,6 @@ def getChars(Z,previouswall,nextwall,outedges,walldomains):
     elif p==w and w!=n:
         nn=getNextNodes(previouswall,outedges)
         pgt,plt=isVarGTorLT(p,nn,walldomains,q)
-        pgt2,plt2=isVarGTorLT2(p,nn,walldomains,q)
-        if pgt != pgt2 or plt != plt2:
-            print "Versions 1 and 2 don't match"
-            print "p==w and w!=n"
-            print (pgt,pgt2)
-            print (plt,plt2)
-            sys.exit()
         if w>n:
             if pgt:
                 chars=['d']
@@ -60,13 +45,6 @@ def getChars(Z,previouswall,nextwall,outedges,walldomains):
     elif w==n and w!=p:
         pp=getPreviousNodes(nextwall,outedges)
         ngt,nlt=isVarGTorLT(n,pp,walldomains,q)
-        ngt2,nlt2=isVarGTorLT2(n,pp,walldomains,q)
-        if ngt != ngt2 or nlt != nlt2:
-            print "Versions 1 and 2 don't match"
-            print "w==n and w!=p"
-            print (ngt,ngt2)
-            print (nlt,nlt2)
-            sys.exit()
         if p<w:
             if ngt:
                 chars=['u']
@@ -86,22 +64,6 @@ def getChars(Z,previouswall,nextwall,outedges,walldomains):
         pp=getPreviousNodes(nextwall,outedges)
         pgt,plt=isVarGTorLT(p,nn,walldomains,q)
         ngt,nlt=isVarGTorLT(n,pp,walldomains,q)
-        pgt2,plt2=isVarGTorLT2(p,nn,walldomains,q)
-        ngt2,nlt2=isVarGTorLT2(n,pp,walldomains,q)
-        if pgt != pgt2 or plt != plt2 or ngt != ngt2 or nlt != nlt2:
-            print "Versions 1 and 2 don't match"
-            print "p==w==n"
-            print (pgt,pgt2)
-            print (plt,plt2)
-            print (ngt,ngt2)
-            print (nlt,nlt2)
-            print (q,p,w,n)
-            print pp
-            print (previouswall,nextwall)
-            A=[nodeval-walldomains[k][varind] for k in nodelist]  
-            print A
-            print   
-            sys.exit()
         if pgt:
             if ngt:
                 chars=['m']
@@ -133,38 +95,6 @@ def pathDependentStringConstruction(previouswall,wall,nextwall,walldomains,outed
         chars=getChars(Z[0],previouswall,nextwall,outedges,walldomains)
         walllabels=[l+c for l in walllabels for c in chars]
         Z.pop(0)
-    return walllabels
-
-def pathDependentStringConstruction2(previouswall,wall,nextwall,walldomains,outedges):
-    # simplified, but with more computations and so more than 2x slower
-    walllabels=['']
-    for q,(p,w,n) in enumerate(zip(walldomains[previouswall],walldomains[wall],walldomains[nextwall])):
-        nn=getNextNodes(previouswall,outedges)
-        pp=getPreviousNodes(nextwall,outedges)
-        pgt=all([p>=walldomains[k][q] for k in nn])
-        plt=all([p<=walldomains[k][q] for k in nn])
-        ngt=all([n>=walldomains[k][q] for k in pp])
-        nlt=all([n<=walldomains[k][q] for k in pp])
-        if   (p<w<n) or (p==w<n and plt) or (p<w==n and ngt) or (plt and ngt):
-            chars = ['u']
-        elif (p>w>n) or (p==w>n and pgt) or (p>w==n and nlt) or (pgt and nlt):
-            chars = ['d']
-        elif (p<w>n) or (p==w>n and plt) or (p<w==n and nlt) or (plt and nlt):
-            chars=['M']
-        elif (p>w<n) or (p==w<n and pgt) or (p>w==n and ngt) or (pgt and ngt):
-            chars=['m']
-        elif (p==w>n) or nlt:
-            chars=['d','M']
-        elif (p==w<n) or ngt:
-            chars=['u','m']
-        elif (p<w==n) or plt:
-            chars=['u','M']
-        elif (p>w==n) or pgt:
-            chars=['d','m']
-        else:
-            chars=['d','M','u','m']
-        addition=[[ l+c for l in walllabels] for c in chars]
-        walllabels=[b for a in addition for b in a]
     return walllabels
 
 def repeatingLoop(match):
