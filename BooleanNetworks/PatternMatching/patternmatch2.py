@@ -1,19 +1,17 @@
 import itertools
 
 def isVarGTorLT(nodeval,nodelist,walldomains,varind):
-    nodegt=True
-    nodelt=True
-    for k in nodelist:
-        W=walldomains[k][varind]
-        if nodeval>W:
-            nodelt=False
-        elif nodeval<W:
-            nodegt=False
-    return nodegt,nodelt
-
+    # this function requires three loops over list. Can be shorter? 
+    A=[nodeval-walldomains[k][varind] for k in nodelist]
+    if any(A):
+        return all([a>=0 for a in A]),all([a<=0 for a in A])
+    else:
+        return False,False
 
 def pathDependentStringConstruction(previouswall,wall,nextwall,walldomains,outedges):
     # this works but is heinous
+    if wall==nextwall: #if at steady state, do not label
+        return []
     walllabels=['']
     for q,(p,w,n) in enumerate(zip(walldomains[previouswall],walldomains[wall],walldomains[nextwall])):
         if p<w<n:
@@ -27,8 +25,6 @@ def pathDependentStringConstruction(previouswall,wall,nextwall,walldomains,outed
         elif p==w and w!=n:
             nn=getNextNodes(previouswall,outedges)
             pgt,plt=isVarGTorLT(p,nn,walldomains,q)
-            # pgt=all([p>=walldomains[k][q] for k in nn])
-            # plt=all([p<=walldomains[k][q] for k in nn])
             if w>n:
                 if pgt:
                     chars=['d']
@@ -46,8 +42,6 @@ def pathDependentStringConstruction(previouswall,wall,nextwall,walldomains,outed
         elif w==n and w!=p:
             pp=getPreviousNodes(nextwall,outedges)
             ngt,nlt=isVarGTorLT(n,pp,walldomains,q)
-            # ngt=all([n>=walldomains[k][q] for k in pp])
-            # nlt=all([n<=walldomains[k][q] for k in pp])
             if p<w:
                 if ngt:
                     chars=['u']
@@ -67,10 +61,6 @@ def pathDependentStringConstruction(previouswall,wall,nextwall,walldomains,outed
             pp=getPreviousNodes(nextwall,outedges)
             pgt,plt=isVarGTorLT(p,nn,walldomains,q)
             ngt,nlt=isVarGTorLT(n,pp,walldomains,q)
-            # pgt=all([p>=walldomains[k][q] for k in nn])
-            # plt=all([p<=walldomains[k][q] for k in nn])
-            # ngt=all([n>=walldomains[k][q] for k in pp])
-            # nlt=all([n<=walldomains[k][q] for k in pp])
             if pgt:
                 if ngt:
                     chars=['m']
@@ -141,7 +131,7 @@ def getNextNodes(node,outedges):
     return [o for o in outedges[node]]
 
 def getPreviousNodes(node,outedges):
-    return [j for j,o in enumerate(outedges) if node in o ]
+    return [j for j,o in enumerate(outedges) if node in o]
 
 def recursePattern(startnode,match,matches,patterns,previouspattern,walllabels,pDict):
     if len(match) >= pDict['lenpattern'] and pDict['stop'] in walllabels: # the first condition requires all walls to be present in the pattern. A way to ensure this is to have only extrema in the pattern - i.e. every p in pattern has exactly one 'm' or 'M'. This is why this condition exists in the input sanity check.
@@ -150,8 +140,8 @@ def recursePattern(startnode,match,matches,patterns,previouspattern,walllabels,p
     else:
         for p,P in patterns:
             for n in getNextNodes(startnode,pDict['outedges']):  # every wall has an outgoing edge by graph construction
-                if len(match) == 1 or set(previouspattern).intersection(pathDependentStringConstruction(match[-2],match[-1],n,pDict['walldomains'])): # consistency check to catch false positives
-                    walllabels = [w for q in getNextNodes(n,pDict['outedges']) for w in pathDependentStringConstruction(match[-1],n,q,pDict['walldomains']) ]
+                if len(match) == 1 or set(previouspattern).intersection(pathDependentStringConstruction(match[-2],match[-1],n,pDict['walldomains'],pDict['outedges'])): # consistency check to catch false positives
+                    walllabels = [w for q in getNextNodes(n,pDict['outedges']) for w in pathDependentStringConstruction(match[-1],n,q,pDict['walldomains'],pDict['outedges']) ]
                     if p in walllabels: # if we hit the next pattern element, reduce pattern by one
                         # WE MAY GET FALSE POSITIVES WITHOUT THE CONSISTENCY CHECK ABOVE (this is because we have to pick the right q in the next step)
                         matches=recursePattern(n,match+[n],matches,patterns[1:],patterns[0][1],walllabels,pDict)
@@ -175,7 +165,7 @@ def sanitycheck(pattern):
         return "None. Pattern element(s) {} are not extrema. An 'm' or 'M' is required in every element.".format(notextrema)
     return "sane"  
 
-def matchPattern(pattern,walldomains,outedges,suppress=0):
+def matchPattern(pattern,walldomains,outedges,suppress=0,cycliconly=1):
     '''
     Matches pattern in a labeled graph with edges in outedges and labels in walllabels. The pattern is 
     described in terms of walllabels, and a pattern label of the wrong type will return no match. If there
@@ -204,7 +194,7 @@ def matchPattern(pattern,walldomains,outedges,suppress=0):
         if pattern[0] != pattern[-1]:
             print('Seeking acyclic path.')
         else:
-            print('Seeking cyclic path. Acyclic paths that match the pattern may exist if wall labels are not unique, but these will not be returned.')
+            print('If wall labels are unique, only cyclic paths will be returned. Otherwise, acyclic paths may be returned if the argument cycliconly is 1.')
     # calculate all possible starting nodes 
     R=range(len(outedges))
     inedges=[tuple([j for j,o in enumerate(outedges) if i in o ]) for i in R]
@@ -214,7 +204,7 @@ def matchPattern(pattern,walldomains,outedges,suppress=0):
         oe=outedges[k]
         wl=[]
         for i,o in itertools.product(ie,oe):
-            wl.extend(pathDependentStringConstruction(i,k,o,walldomains))
+            wl.extend(pathDependentStringConstruction(i,k,o,walldomains,outedges))
         if pattern[0] in wl:
             firstwalls.append(k)
     # return trivial length one patterns
@@ -232,18 +222,32 @@ def matchPattern(pattern,walldomains,outedges,suppress=0):
     # prep matches for return
     if results:
         results = list(set(results))
-        if pattern[0]==pattern[-1]:
+        if cycliconly and pattern[0]==pattern[-1]:
             # remove acyclic paths from a cyclic search
             results = [r for r in results if r[0]==r[-1]]
         return results
     else:
         return "None. No results found."
 
+def testStringConstruction(walldomains,outedges):
+    R=range(len(outedges))
+    inedges=[tuple([j for j,o in enumerate(outedges) if i in o ]) for i in R]
+    for k in R:
+        ie=inedges[k]
+        oe=outedges[k]
+        wl=[]
+        for i,o in itertools.product(ie,oe):
+            wl.extend(pathDependentStringConstruction(i,k,o,walldomains,outedges))
+        # print ie
+        # print oe
+        print(list(set(wl)))
 
 
 if __name__=='__main__':
-    walldomains=[(1,0.5),(2,0.5),(2.5,1),(2,1.5),(1.5,1),(1,1.5),(0.5,1)]
-    print pathDependentStringConstruction(2,3,5,walldomains)
-    print pathDependentStringConstruction(3,5,6,walldomains)
-    print pathDependentStringConstruction(4,5,6,walldomains)
+    # walldomains=[(0,0.5),(0,1.5),(0.5,0),(0.5,1),(0.5,2),(1,0.5),(1,1.5),(1.5,0),(1.5,1),(1.5,2),(2,0.5),(2,1.5),(2.5,0),(2.5,1),(2.5,2),(3,0.5),(3,1.5)]
+    # outedges=[(5,),(3,),(5,),(5,),(3,),(10,),(3,),(10,),(10,),(6,),(13,),(6,8),(13,),(11,),(11,),(13,),(11,)]
+    # testStringConstruction(walldomains,outedges)
 
+    walldomains=[(0,0.5),(0,1.5),(0.5,0),(0.5,1),(0.5,2),(1,0.5),(1,1.5),(1.5,0),(1.5,1),(1.5,2),(2,0.5),(2,1.5),(2.5,0),(2.5,1),(2.5,2),(3,0.5),(3,1.5),(0.5,0.5)]
+    outedges=[(17,),(3,),(17,),(17,),(3,),(10,17),(3,),(10,),(10,),(6,),(13,),(6,8),(13,),(11,),(11,),(13,),(11,),(17,)]
+    testStringConstruction(walldomains,outedges)
