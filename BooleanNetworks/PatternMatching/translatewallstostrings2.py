@@ -34,6 +34,7 @@ def testParseWalls():
 def filterBoundaryWallsAndSteadyStates(outedges):
     # get rid of boundary walls and steady states, because we shall assume that 
     # searchable patterns have only extrema
+    # for use with patternmatch3
     inedges=[tuple([j for j,o in enumerate(outedges) if i in o ]) for i in range(len(outedges))]
     interiorinds=[]
     interioroutedges=[]

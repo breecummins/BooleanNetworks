@@ -1,4 +1,4 @@
-from patternmatch2 import matchPattern, pathDependentStringConstruction, pathDependentStringConstruction2
+from patternmatch2 import matchPattern
 import itertools
 
 def testme():

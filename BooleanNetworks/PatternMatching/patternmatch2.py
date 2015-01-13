@@ -1,6 +1,7 @@
 import itertools
 
 def isVarGTorLT(nodeval,nodelist,walldomains,varind):
+    # optimized; previous version iterated over list 3 times
     gt=True
     lt=True
     nz=False
@@ -226,16 +227,6 @@ def testStringConstruction(walldomains,outedges):
         # print ie
         # print oe
         print(list(set(wl)))
-
-def timeVarFunctions():
-    walldomains=[(0,0.5),(0,1.5),(0.5,0),(0.5,1),(0.5,2),(1,0.5),(1,1.5),(1.5,0),(1.5,1),(1.5,2),(2,0.5),(2,1.5),(2.5,0),(2.5,1),(2.5,2),(3,0.5),(3,1.5),(0.5,0.5)]
-    for _ in range(1000000):
-        isVarGTorLT(1.5,[6,8],walldomains,1)
-
-def timeVarFunctions2():
-    walldomains=[(0,0.5),(0,1.5),(0.5,0),(0.5,1),(0.5,2),(1,0.5),(1,1.5),(1.5,0),(1.5,1),(1.5,2),(2,0.5),(2,1.5),(2.5,0),(2.5,1),(2.5,2),(3,0.5),(3,1.5),(0.5,0.5)]
-    for _ in range(1000000):
-        isVarGTorLT2(1.5,[6,8],walldomains,1)
 
 if __name__=='__main__':
     # walldomains=[(0,0.5),(0,1.5),(0.5,0),(0.5,1),(0.5,2),(1,0.5),(1,1.5),(1.5,0),(1.5,1),(1.5,2),(2,0.5),(2,1.5),(2.5,0),(2.5,1),(2.5,2),(3,0.5),(3,1.5)]
