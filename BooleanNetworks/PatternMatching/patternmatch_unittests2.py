@@ -9,11 +9,11 @@ def testme():
     outedges=[(5,),(3,),(5,),(5,),(3,),(10,),(3,),(10,),(10,),(6,),(13,),(6,8),(13,),(11,),(11,),(13,),(11,)]
 
     pattern=['md','um','Mu','dM','md']
-    match = matchPattern(pattern,walldomains,outedges,suppress=1)
+    match = matchPattern(pattern,walldomains,outedges,suppresscycleinfo=1)
     print match==[(3,5,10,13,11,6,3),(8,10,13,11,8)]
 
     pattern=['um','md']
-    match = matchPattern(pattern,walldomains,outedges,suppress=1)
+    match = matchPattern(pattern,walldomains,outedges,suppresscycleinfo=1)
     print 'None' in match
 
     pattern=['ud','um','Mu']
@@ -24,23 +24,23 @@ def testme():
     outedges=[(17,),(3,),(17,),(17,),(3,),(10,17),(3,),(10,),(10,),(6,),(13,),(6,8),(13,),(11,),(11,),(13,),(11,),(17,)]
 
     pattern=['Md'] # this label only exists because of entrance from boundary
-    match=matchPattern(pattern,walldomains,outedges,suppress=1)
+    match=matchPattern(pattern,walldomains,outedges,suppresscycleinfo=1)
     print match==[(3,)]
 
     pattern=['md','um','Mu','dM','md']
-    match=matchPattern(pattern,walldomains,outedges,suppress=1)
+    match=matchPattern(pattern,walldomains,outedges,suppresscycleinfo=1)
     print match==[(8, 10, 13, 11, 8)] # acyclic path (8,10,13,11,6,3) exists but should be weeded out
 
     pattern=['md','um','Mu','dM','md']
-    match=matchPattern(pattern,walldomains,outedges,suppress=1,cycliconly=0)
+    match=matchPattern(pattern,walldomains,outedges,suppresscycleinfo=1,cycliconly=0)
     print match==[(8, 10, 13, 11, 8),(8,10,13,11,6,3)] # now acyclic path should be returned
 
     pattern=['md','um','Mu','dM','Md'] # even though wall 3 can be 'Md', this comes from the boundary, so search should fail
-    match=matchPattern(pattern,walldomains,outedges,suppress=1)
+    match=matchPattern(pattern,walldomains,outedges,suppresscycleinfo=1)
     print 'None' in match 
 
     pattern=['md','Mu','dM','md'] # even though wall 10 can be 'uu', this comes from wall 5, so search should fail
-    match=matchPattern(pattern,walldomains,outedges,suppress=1)
+    match=matchPattern(pattern,walldomains,outedges,suppresscycleinfo=1)
     print 'None' in match
 
 
