@@ -1,4 +1,4 @@
-from patternmatch2 import matchPattern, pathDependentStringConstruction
+from patternmatch2 import matchPattern, pathDependentStringConstruction, pathDependentStringConstruction2
 import itertools
 
 def testme():
@@ -15,9 +15,20 @@ def testme():
         wl=[]
         for i,o in itertools.product(ie,oe):
             wl.extend(pathDependentStringConstruction(i,k,o,walldomains,outedges))
-        print ie
-        print oe
+        # print ie
+        # print oe
         print(list(set(wl)))
+    # print('------------------------------------')
+
+    # for k in R:
+    #     ie=inedges[k]
+    #     oe=outedges[k]
+    #     wl=[]
+    #     for i,o in itertools.product(ie,oe):
+    #         wl.extend(pathDependentStringConstruction2(i,k,o,walldomains,outedges))
+    #     # print ie
+    #     # print oe
+    #     print(list(set(wl)))
 
     # pattern=[]
     # match = matchPattern(pattern,walldomains,outedges,suppress=1)

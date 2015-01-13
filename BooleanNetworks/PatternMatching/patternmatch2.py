@@ -1,5 +1,17 @@
 import itertools
 
+def isVarGTorLT(nodeval,nodelist,walldomains,varind):
+    nodegt=True
+    nodelt=True
+    for k in nodelist:
+        W=walldomains[k][varind]
+        if nodeval>W:
+            nodelt=False
+        elif nodeval<W:
+            nodegt=False
+    return nodegt,nodelt
+
+
 def pathDependentStringConstruction(previouswall,wall,nextwall,walldomains,outedges):
     # this works but is heinous
     walllabels=['']
@@ -14,55 +26,103 @@ def pathDependentStringConstruction(previouswall,wall,nextwall,walldomains,outed
             chars=['m']
         elif p==w and w!=n:
             nn=getNextNodes(previouswall,outedges)
+            pgt,plt=isVarGTorLT(p,nn,walldomains,q)
+            # pgt=all([p>=walldomains[k][q] for k in nn])
+            # plt=all([p<=walldomains[k][q] for k in nn])
             if w>n:
-                if all([p>=walldomains[k][q] for k in nn]):
+                if pgt:
                     chars=['d']
-                elif all([p<=walldomains[k][q] for k in nn]):
+                elif plt:
                     chars=['M']
                 else:
                     chars=['d','M']
             elif w<n:
-                if all([p>=walldomains[k][q] for k in nn]):
+                if pgt:
                     chars=['m']
-                elif all([p<=walldomains[k][q] for k in nn]):
+                elif plt:
                     chars=['u']
                 else:
                     chars=['u','m']
         elif w==n and w!=p:
             pp=getPreviousNodes(nextwall,outedges)
-            if p<n:
-                if all([n>=walldomains[k][q] for k in pp]):
+            ngt,nlt=isVarGTorLT(n,pp,walldomains,q)
+            # ngt=all([n>=walldomains[k][q] for k in pp])
+            # nlt=all([n<=walldomains[k][q] for k in pp])
+            if p<w:
+                if ngt:
                     chars=['u']
-                elif all([n<=walldomains[k][q] for k in pp]):
+                elif nlt:
                     chars=['M']
                 else:
                     chars=['u','M']
-            elif p>n:
-                if all([n>=walldomains[k][q] for k in pp]):
+            elif p>w:
+                if ngt:
                     chars=['m']
-                elif all([n<=walldomains[k][q] for k in pp]):
+                elif nlt:
                     chars=['d']
                 else:
                     chars=['d','m']
         else:
             nn=getNextNodes(previouswall,outedges)
             pp=getPreviousNodes(nextwall,outedges)
-            if all([p>=walldomains[k][q] for k in nn]):
-                if all([n>=walldomains[k][q] for k in pp]):
+            pgt,plt=isVarGTorLT(p,nn,walldomains,q)
+            ngt,nlt=isVarGTorLT(n,pp,walldomains,q)
+            # pgt=all([p>=walldomains[k][q] for k in nn])
+            # plt=all([p<=walldomains[k][q] for k in nn])
+            # ngt=all([n>=walldomains[k][q] for k in pp])
+            # nlt=all([n<=walldomains[k][q] for k in pp])
+            if pgt:
+                if ngt:
                     chars=['m']
-                elif all([n<=walldomains[k][q] for k in pp]):
+                elif nlt:
                     chars=['d']
                 else:
                     chars=['m','d']
-            elif all([p<=walldomains[k][q] for k in nn]):
-                if all([n>=walldomains[k][q] for k in pp]):
+            elif plt:
+                if ngt:
                     chars=['u']
-                elif all([n<=walldomains[k][q] for k in pp]):
+                elif nlt:
                     chars=['M']
                 else:
                     chars=['M','u']
+            elif ngt:
+                chars=['u','m']
+            elif nlt:
+                chars=['d','M']
             else:
                 chars=['d','M','u','m']
+        addition=[[ l+c for l in walllabels] for c in chars]
+        walllabels=[b for a in addition for b in a]
+    return walllabels
+
+def pathDependentStringConstruction2(previouswall,wall,nextwall,walldomains,outedges):
+    # simplified, but with more computations and so more than 2x slower
+    walllabels=['']
+    for q,(p,w,n) in enumerate(zip(walldomains[previouswall],walldomains[wall],walldomains[nextwall])):
+        nn=getNextNodes(previouswall,outedges)
+        pp=getPreviousNodes(nextwall,outedges)
+        pgt=all([p>=walldomains[k][q] for k in nn])
+        plt=all([p<=walldomains[k][q] for k in nn])
+        ngt=all([n>=walldomains[k][q] for k in pp])
+        nlt=all([n<=walldomains[k][q] for k in pp])
+        if   (p<w<n) or (p==w<n and plt) or (p<w==n and ngt) or (plt and ngt):
+            chars = ['u']
+        elif (p>w>n) or (p==w>n and pgt) or (p>w==n and nlt) or (pgt and nlt):
+            chars = ['d']
+        elif (p<w>n) or (p==w>n and plt) or (p<w==n and nlt) or (plt and nlt):
+            chars=['M']
+        elif (p>w<n) or (p==w<n and pgt) or (p>w==n and ngt) or (pgt and ngt):
+            chars=['m']
+        elif (p==w>n) or nlt:
+            chars=['d','M']
+        elif (p==w<n) or ngt:
+            chars=['u','m']
+        elif (p<w==n) or plt:
+            chars=['u','M']
+        elif (p>w==n) or pgt:
+            chars=['d','m']
+        else:
+            chars=['d','M','u','m']
         addition=[[ l+c for l in walllabels] for c in chars]
         walllabels=[b for a in addition for b in a]
     return walllabels
