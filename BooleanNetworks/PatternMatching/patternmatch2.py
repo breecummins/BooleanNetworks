@@ -1,26 +1,68 @@
 import itertools
 
-def pathDependentStringConstruction(previouswall,wall,nextwall,walldomains):
+def pathDependentStringConstruction(previouswall,wall,nextwall,walldomains,outedges):
+    # this works but is heinous
     walllabels=['']
-    for p,w,n in zip(walldomains[previouswall],walldomains[wall],walldomains[nextwall]):
+    for q,(p,w,n) in enumerate(zip(walldomains[previouswall],walldomains[wall],walldomains[nextwall])):
         if p<w<n:
             chars = ['u']
         elif p>w>n:
             chars = ['d']
-        elif p<w and w>n:
+        elif p<w>n:
             chars=['M']
-        elif p>w and w<n:
+        elif p>w<n:
             chars=['m']
-        elif p<w==n:
-            chars=['u','M']
-        elif p==w<n:
-            chars=['u','m']
-        elif p>w==n:
-            chars=['d','m']
-        elif p==w>n:
-            chars=['d','M']
+        elif p==w and w!=n:
+            nn=getNextNodes(previouswall,outedges)
+            if w>n:
+                if all([p>=walldomains[k][q] for k in nn]):
+                    chars=['d']
+                elif all([p<=walldomains[k][q] for k in nn]):
+                    chars=['M']
+                else:
+                    chars=['d','M']
+            elif w<n:
+                if all([p>=walldomains[k][q] for k in nn]):
+                    chars=['m']
+                elif all([p<=walldomains[k][q] for k in nn]):
+                    chars=['u']
+                else:
+                    chars=['u','m']
+        elif w==n and w!=p:
+            pp=getPreviousNodes(nextwall,outedges)
+            if p<n:
+                if all([n>=walldomains[k][q] for k in pp]):
+                    chars=['u']
+                elif all([n<=walldomains[k][q] for k in pp]):
+                    chars=['M']
+                else:
+                    chars=['u','M']
+            elif p>n:
+                if all([n>=walldomains[k][q] for k in pp]):
+                    chars=['m']
+                elif all([n<=walldomains[k][q] for k in pp]):
+                    chars=['d']
+                else:
+                    chars=['d','m']
         else:
-            chars=['d','M','u','m']
+            nn=getNextNodes(previouswall,outedges)
+            pp=getPreviousNodes(nextwall,outedges)
+            if all([p>=walldomains[k][q] for k in nn]):
+                if all([n>=walldomains[k][q] for k in pp]):
+                    chars=['m']
+                elif all([n<=walldomains[k][q] for k in pp]):
+                    chars=['d']
+                else:
+                    chars=['m','d']
+            elif all([p<=walldomains[k][q] for k in nn]):
+                if all([n>=walldomains[k][q] for k in pp]):
+                    chars=['u']
+                elif all([n<=walldomains[k][q] for k in pp]):
+                    chars=['M']
+                else:
+                    chars=['M','u']
+            else:
+                chars=['d','M','u','m']
         addition=[[ l+c for l in walllabels] for c in chars]
         walllabels=[b for a in addition for b in a]
     return walllabels
@@ -35,8 +77,11 @@ def repeatingLoop(match):
                 return True
         return False
 
-def getAdjacentNodes(node,outedges):
+def getNextNodes(node,outedges):
     return [o for o in outedges[node]]
+
+def getPreviousNodes(node,outedges):
+    return [j for j,o in enumerate(outedges) if node in o ]
 
 def recursePattern(startnode,match,matches,patterns,previouspattern,walllabels,pDict):
     if len(match) >= pDict['lenpattern'] and pDict['stop'] in walllabels: # the first condition requires all walls to be present in the pattern. A way to ensure this is to have only extrema in the pattern - i.e. every p in pattern has exactly one 'm' or 'M'. This is why this condition exists in the input sanity check.
@@ -44,9 +89,9 @@ def recursePattern(startnode,match,matches,patterns,previouspattern,walllabels,p
         return matches
     else:
         for p,P in patterns:
-            for n in getAdjacentNodes(startnode,pDict['outedges']):  # every wall has an outgoing edge by graph construction
+            for n in getNextNodes(startnode,pDict['outedges']):  # every wall has an outgoing edge by graph construction
                 if len(match) == 1 or set(previouspattern).intersection(pathDependentStringConstruction(match[-2],match[-1],n,pDict['walldomains'])): # consistency check to catch false positives
-                    walllabels = [w for q in getAdjacentNodes(n,pDict['outedges']) for w in pathDependentStringConstruction(match[-1],n,q,pDict['walldomains']) ]
+                    walllabels = [w for q in getNextNodes(n,pDict['outedges']) for w in pathDependentStringConstruction(match[-1],n,q,pDict['walldomains']) ]
                     if p in walllabels: # if we hit the next pattern element, reduce pattern by one
                         # WE MAY GET FALSE POSITIVES WITHOUT THE CONSISTENCY CHECK ABOVE (this is because we have to pick the right q in the next step)
                         matches=recursePattern(n,match+[n],matches,patterns[1:],patterns[0][1],walllabels,pDict)
