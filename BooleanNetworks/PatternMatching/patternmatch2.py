@@ -1,7 +1,14 @@
 import itertools
 
 def isVarGTorLT(nodeval,nodelist,walldomains,varind):
+    # Find out whether nodeval (associated to varind) is 
+    # >= or <= all the values in the corresponding element 
+    # of the walldomain entry for each value of nodelist.
+    # This helps determine the behavior of the variable 
+    # varind at the current wall.
+    #
     # optimized; previous version iterated over list 3 times
+    #
     gt=True
     lt=True
     nz=False
@@ -16,7 +23,13 @@ def isVarGTorLT(nodeval,nodelist,walldomains,varind):
     return gt*nz,lt*nz
 
 def getChars(Z,previouswall,nextwall,outedges,walldomains):
-    # this works but is heinous; making it shorter means slower
+    # Z contains the variable index and the values of variable at the previous, 
+    # current, and next walls respectively. Given the graph labeled with walldomains, 
+    # we find all possible behaviors of the variable at the current wall given the
+    # trajectory defined by the previous and next walls.
+    #
+    # this algorithm works but is heinous to read; making it shorter means it runs slower
+    #
     q,p,w,n=Z
     if p<w<n:
         chars = ['u']
@@ -88,6 +101,7 @@ def getChars(Z,previouswall,nextwall,outedges,walldomains):
     return chars
 
 def pathDependentStringConstruction(previouswall,wall,nextwall,walldomains,outedges):
+    # make a label for 'wall' that depends on where the path came from and where it's going
     if wall==nextwall: #if at steady state, do not label
         return []
     walllabels=['']
@@ -99,6 +113,7 @@ def pathDependentStringConstruction(previouswall,wall,nextwall,walldomains,outed
     return walllabels
 
 def repeatingLoop(match):
+    # see if the match has a repeating loop inside it
     N=len(match)
     if len(set(match)) == N:
         return False
@@ -131,13 +146,17 @@ def recursePattern(startnode,match,matches,patterns,previouspattern,walllabels,p
         return matches
 
 def labelOptions(p):
-    # there is exactly one 'm' or 'M' in p
+    # Construct the intermediate nodes that are allowed for 
+    # each word (p) in pattern. This algorithm depends on the
+    # fact that there is exactly one 'm' or 'M' in each word.
     if 'm' in p:
         return [p,p.replace('m','d')]
     elif 'M' in p:
         return [p,p.replace('M','u')]
 
 def getFirstWalls(firstpattern,outedges,walldomains):
+    # Given the first word in the pattern, find the nodes in the graph that have 
+    # this pattern for some path. Our searches will start at each of these nodes.
     inedges=[tuple([j for j,o in enumerate(outedges) if i in o]) for i in range(len(outedges))]
     firstwalls=[]
     for k,(ie,oe) in enumerate(zip(inedges,outedges)):
@@ -149,13 +168,14 @@ def getFirstWalls(firstpattern,outedges,walldomains):
     return firstwalls
 
 def cycleInfo(pattern):
+    # Potentially useful message for user.
     if pattern[0] != pattern[-1]:
         return('Seeking acyclic path.')
     else:
         return('If wall labels are unique or the input cycliconly is 1, only cyclic paths will be returned. Otherwise, acyclic paths may be returned.')
 
 def sanityCheck(pattern):
-    # make sure inputs meet requirements of algorithm
+    # Make sure the input pattern meets the requirements of the algorithm.
     if not pattern:
         return "None. Pattern is empty."
     notextrema = [p for p in pattern if not set(p).intersection(['m','M'])]
@@ -165,24 +185,28 @@ def sanityCheck(pattern):
 
 def matchPattern(pattern,walldomains,outedges,suppresscycleinfo=0,cycliconly=1):
     '''
-    Matches pattern in a labeled graph with edges in outedges and labels in walllabels. The pattern is 
-    described in terms of walllabels, and a pattern label of the wrong type will return no match. If there
-    is a match to the pattern, the paths that respect it will be returned in terms of wall number (the index
-    of outedges).
+    This function finds paths in a directed graph that are consistent with a target pattern. The nodes
+    of the directed graph are called walls, and each node is associated with a wall label (in walldomains)
+    and a wall number (the index of the label in walldomains). The outgoing edges of a node with wall
+    number w are stored in outedges at index w. Each element of outedges is a collection of wall numbers.
+    The pattern is a sequence of words from the alphabet ('u','d','m','M'). The labels in walldomains
+    will be transformed in a path-dependent manner into words of the same type. The paths in the graph 
+    that have word labels that match the pattern will be returned as sequences of wall numbers.
 
-    outedges: list of tuples of integers, index is wall number
-    pattern: list of uniform-length strings of labels from the alphabet ('u','d','m','M'); exactly one 'm' or 'M' REQUIRED per string; patterns containing exactly repeating sequences will not be found if the same walls must be traversed to match the pattern
+    pattern: list of uniform-length words from the alphabet ('u','d','m','M'); exactly one 'm' or 'M' REQUIRED per string; patterns containing exactly repeating sequences will not be found if the same walls must be traversed to match the pattern
+    walldomains: list of tuples of floats from data using translatewallstostrings2, index is wall number
+    outedges: list of tuples of integers from data using translatewallstostrings2, index is wall number
     suppresscycleinfo: default 0 means give information about cyclic or acyclic pattern request, 1 means suppress it
     cycliconly: only applies when the first and last elements of pattern agree; default 1 
         means return only cyclic paths, 0 means return all matching paths 
 
-    No unit tests currently available.
+    See patternmatch_unittests2.py for examples of function calls.
 
-    See notes for meaning of alphabet. Briefly, 'uMdd' means that the first variable is increasing (up), the 
-    second variable is at a maximum (Max), and the third and fourth variables are decreasing (down). The character
-    'm' means a variable is at a minimum (min). There can be at most one 'm' or 'M' at each wall, because we 
-    assume that the input graph arises from a switching network where each regulation event occurs at a unique 
-    threshold.
+    See notes for the meaning of alphabet. Briefly, 'uMdd' means that the first variable is increasing 
+    (up), the second variable is at a maximum (Max), and the third and fourth variables are decreasing 
+    (down). The character 'm' means a variable is at a minimum (min). There can be at most one 'm' or 
+    'M' at each wall, because we assume that the input graph arises from a switching network where each
+    regulation event occurs at a unique threshold.
 
     '''
     # sanity check the input, abort if insane 
