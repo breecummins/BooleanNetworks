@@ -112,6 +112,19 @@ def pathDependentStringConstruction(previouswall,wall,nextwall,walldomains,outed
         Z.pop(0)
     return walllabels
 
+def testStringConstruction(walldomains,outedges):
+    R=range(len(outedges))
+    inedges=[tuple([j for j,o in enumerate(outedges) if i in o ]) for i in R]
+    for k in R:
+        ie=inedges[k]
+        oe=outedges[k]
+        wl=[]
+        for i,o in itertools.product(ie,oe):
+            wl.extend(pathDependentStringConstruction(i,k,o,walldomains,outedges))
+        # print ie
+        # print oe
+        print(list(set(wl)))
+
 def repeatingLoop(match):
     # see if the match has a repeating loop inside it
     N=len(match)
@@ -167,12 +180,15 @@ def getFirstWalls(firstpattern,outedges,walldomains):
             firstwalls.append(k)
     return firstwalls
 
-def cycleInfo(pattern):
+def cycleInfo(pattern,cycliconly):
     # Potentially useful message for user.
     if pattern[0] != pattern[-1]:
-        return('Seeking acyclic path.')
+        return 'Seeking acyclic paths.'
     else:
-        return('If wall labels are unique or the input cycliconly is 1, only cyclic paths will be returned. Otherwise, acyclic paths may be returned.')
+        if cycliconly:
+            return 'Seeking cyclic paths.'
+        else:
+            return('Seeking both cyclic and acyclic paths.')
 
 def sanityCheck(pattern):
     # Make sure the input pattern meets the requirements of the algorithm.
@@ -215,7 +231,7 @@ def matchPattern(pattern,walldomains,outedges,suppresscycleinfo=0,cycliconly=1):
         return S
     # give information about the type of pattern received
     if not suppresscycleinfo:
-        print cycleInfo(pattern)
+        print cycleInfo(pattern,cycliconly)
     # find all possible starting nodes for a matching path
     firstwalls=getFirstWalls(pattern[0],outedges,walldomains)
     # return trivial length one patterns
@@ -239,25 +255,66 @@ def matchPattern(pattern,walldomains,outedges,suppresscycleinfo=0,cycliconly=1):
     else:
         return "None. No results found."
 
-def testStringConstruction(walldomains,outedges):
-    R=range(len(outedges))
-    inedges=[tuple([j for j,o in enumerate(outedges) if i in o ]) for i in R]
-    for k in R:
-        ie=inedges[k]
-        oe=outedges[k]
-        wl=[]
-        for i,o in itertools.product(ie,oe):
-            wl.extend(pathDependentStringConstruction(i,k,o,walldomains,outedges))
-        # print ie
-        # print oe
-        print(list(set(wl)))
-
 if __name__=='__main__':
     # walldomains=[(0,0.5),(0,1.5),(0.5,0),(0.5,1),(0.5,2),(1,0.5),(1,1.5),(1.5,0),(1.5,1),(1.5,2),(2,0.5),(2,1.5),(2.5,0),(2.5,1),(2.5,2),(3,0.5),(3,1.5)]
     # outedges=[(5,),(3,),(5,),(5,),(3,),(10,),(3,),(10,),(10,),(6,),(13,),(6,8),(13,),(11,),(11,),(13,),(11,)]
     # testStringConstruction(walldomains,outedges)
 
-    walldomains=[(0,0.5),(0,1.5),(0.5,0),(0.5,1),(0.5,2),(1,0.5),(1,1.5),(1.5,0),(1.5,1),(1.5,2),(2,0.5),(2,1.5),(2.5,0),(2.5,1),(2.5,2),(3,0.5),(3,1.5),(0.5,0.5)]
+    # walldomains=[(0,0.5),(0,1.5),(0.5,0),(0.5,1),(0.5,2),(1,0.5),(1,1.5),(1.5,0),(1.5,1),(1.5,2),(2,0.5),(2,1.5),(2.5,0),(2.5,1),(2.5,2),(3,0.5),(3,1.5),(0.5,0.5)]
     # outedges=[(17,),(3,),(17,),(17,),(3,),(10,17),(3,),(10,),(10,),(6,),(13,),(6,8),(13,),(11,),(11,),(13,),(11,),(17,)]
     # testStringConstruction(walldomains,outedges)
+
+    # Arnaud's simulation data
+    import translatewallstostrings2 as tw
+    import os
+
+    # pattern=['uum','Muu','dMu','ddM','mdd','umd','uum'] # all maxes in order X1 X2 X3, then all mins in same order
+
+    # print "-------------------"
+    # print "3D Cycle 1, MGCC 30"
+    # print "-------------------"
+    # basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/3D_Cycle_1_Data/MGCC_30/')    
+    # walldomains=tw.parseWalls(basedir+'walls.txt')
+    # outedges=tw.parseOutEdges(basedir+'outEdges.txt')
+    # print matchPattern(pattern, walldomains,outedges)
+
+    # print "-------------------"
+    # print "3D Cycle 1, MGCC 45"
+    # print "-------------------"
+    # basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/3D_Cycle_1_Data/MGCC_45/')
+    # walldomains=tw.parseWalls(basedir+'walls.txt')
+    # outedges=tw.parseOutEdges(basedir+'outEdges.txt')
+    # print matchPattern(pattern, walldomains,outedges)
+
+    pattern=['Muuuu','dMuuu','ddMuu','dddMu','ddddM','mdddd','umddd','uumdd','uuumd','uuuum','Muuuu'] # maxes in order X Y1 Y2 Y3 Z, then mins in same order
+    pattern=['Muuuu','dMuuu','ddMuu','ddduM','dddMd','mdddd','umddd','uumdd','uuudm','uuumu','Muuuu'] # maxes in order X Y1 Y2 Z Y3, then mins in same order
+    pattern=['uuuum','uuuMu','uMudu','Mdudu','ddMdu','ddddM','dddmd','mddud','umdud','uumud','uuuum']  
+    pattern=['uuuum','uuuMu','uMudu','Mdudu','ddMdu','ddddM','dddmd','dmdud','mudud','uumud','uuuum']  
+    pattern=['uuuMu','uuudm','uMudu','Mdudu','ddMdu','dddmu','ddduM','dmdud','mudud','uumud','uuuum'] 
+    pattern=['uuumu','uMuuu','Mduuu','dduuM','ddMud','dddMd','mdddd','umddd','uuddm','uumdu','uuumu'] 
+    pattern=['Muuuu','duuMu','duudM']
+
+    print "-------------------"
+    print "5D Model B1, MGCC 1"
+    print "-------------------"
+    basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/5D_ModelB1_Data/MGCC_1/')
+    walldomains=tw.parseWalls(basedir+'walls.txt')
+    outedges=tw.parseOutEdges(basedir+'outEdges.txt')
+    print matchPattern(pattern, walldomains,outedges)
+   
+    print "--------------------"
+    print "5D Model B1, MGCC 188"
+    print "--------------------"
+    basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/5D_ModelB1_Data/MGCC_188/')
+    walldomains=tw.parseWalls(basedir+'walls.txt')
+    outedges=tw.parseOutEdges(basedir+'outEdges.txt')
+    print matchPattern(pattern, walldomains,outedges)
+
+    print "---------------------"
+    print "5D Model B1, MGCC 522"
+    print "---------------------"
+    basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/5D_ModelB1_Data/MGCC_522/')
+    walldomains=tw.parseWalls(basedir+'walls.txt')
+    outedges=tw.parseOutEdges(basedir+'outEdges.txt')
+    print matchPattern(pattern, walldomains,outedges)
 
