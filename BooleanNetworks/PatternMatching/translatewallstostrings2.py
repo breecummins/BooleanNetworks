@@ -20,7 +20,7 @@ def parseWalls(fname='walls.txt'):
         L = [float(n) for n in L]
         T = []
         for k in range(0,len(L)-1,2):
-            T.append(sum(L[k:k+2])/2)
+            T.append(sum(L[k:k+2])/2) # thresholds are integers, regular domains end in .5
         walldomains.append(tuple(T))
     return walldomains
 

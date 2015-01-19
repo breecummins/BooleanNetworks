@@ -268,6 +268,16 @@ if __name__=='__main__':
     import translatewallstostrings2 as tw
     import os
 
+    pattern=['uum','Muu','dMu','ddM','mdd','umd','uum'] # all maxes in order X1 X2 X3, then all mins in same order
+
+    print "-------------------"
+    print "3D Example, MGCC 5"
+    print "-------------------"
+    basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/3D_Example/MGCC_5/')    
+    walldomains=tw.parseWalls(basedir+'walls.txt')
+    outedges=tw.parseOutEdges(basedir+'outEdges.txt')
+    print matchPattern(pattern, walldomains,outedges)
+
     # pattern=['uum','Muu','dMu','ddM','mdd','umd','uum'] # all maxes in order X1 X2 X3, then all mins in same order
 
     # print "-------------------"
@@ -286,35 +296,35 @@ if __name__=='__main__':
     # outedges=tw.parseOutEdges(basedir+'outEdges.txt')
     # print matchPattern(pattern, walldomains,outedges)
 
-    pattern=['Muuuu','dMuuu','ddMuu','dddMu','ddddM','mdddd','umddd','uumdd','uuumd','uuuum','Muuuu'] # maxes in order X Y1 Y2 Y3 Z, then mins in same order
-    pattern=['Muuuu','dMuuu','ddMuu','ddduM','dddMd','mdddd','umddd','uumdd','uuudm','uuumu','Muuuu'] # maxes in order X Y1 Y2 Z Y3, then mins in same order
-    pattern=['uuuum','uuuMu','uMudu','Mdudu','ddMdu','ddddM','dddmd','mddud','umdud','uumud','uuuum']  
-    pattern=['uuuum','uuuMu','uMudu','Mdudu','ddMdu','ddddM','dddmd','dmdud','mudud','uumud','uuuum']  
-    pattern=['uuuMu','uuudm','uMudu','Mdudu','ddMdu','dddmu','ddduM','dmdud','mudud','uumud','uuuum'] 
-    pattern=['uuumu','uMuuu','Mduuu','dduuM','ddMud','dddMd','mdddd','umddd','uuddm','uumdu','uuumu'] 
-    pattern=['Muuuu','duuMu','duudM']
+    # pattern=['Muuuu','dMuuu','ddMuu','dddMu','ddddM','mdddd','umddd','uumdd','uuumd','uuuum','Muuuu'] # maxes in order X Y1 Y2 Y3 Z, then mins in same order
+    # pattern=['Muuuu','dMuuu','ddMuu','ddduM','dddMd','mdddd','umddd','uumdd','uuudm','uuumu','Muuuu'] # maxes in order X Y1 Y2 Z Y3, then mins in same order
+    # pattern=['uuuum','uuuMu','uMudu','Mdudu','ddMdu','ddddM','dddmd','mddud','umdud','uumud','uuuum']  
+    # pattern=['uuuum','uuuMu','uMudu','Mdudu','ddMdu','ddddM','dddmd','dmdud','mudud','uumud','uuuum']  
+    # pattern=['uuuMu','uuudm','uMudu','Mdudu','ddMdu','dddmu','ddduM','dmdud','mudud','uumud','uuuum'] 
+    # pattern=['uuumu','uMuuu','Mduuu','dduuM','ddMud','dddMd','mdddd','umddd','uuddm','uumdu','uuumu'] 
+    # pattern=['Muuuu','duuMu','duudM']
 
-    print "-------------------"
-    print "5D Model B1, MGCC 1"
-    print "-------------------"
-    basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/5D_ModelB1_Data/MGCC_1/')
-    walldomains=tw.parseWalls(basedir+'walls.txt')
-    outedges=tw.parseOutEdges(basedir+'outEdges.txt')
-    print matchPattern(pattern, walldomains,outedges)
+    # print "-------------------"
+    # print "5D Model B1, MGCC 1"
+    # print "-------------------"
+    # basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/5D_ModelB1_Data/MGCC_1/')
+    # walldomains=tw.parseWalls(basedir+'walls.txt')
+    # outedges=tw.parseOutEdges(basedir+'outEdges.txt')
+    # print matchPattern(pattern, walldomains,outedges)
    
-    print "--------------------"
-    print "5D Model B1, MGCC 188"
-    print "--------------------"
-    basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/5D_ModelB1_Data/MGCC_188/')
-    walldomains=tw.parseWalls(basedir+'walls.txt')
-    outedges=tw.parseOutEdges(basedir+'outEdges.txt')
-    print matchPattern(pattern, walldomains,outedges)
+    # print "--------------------"
+    # print "5D Model B1, MGCC 188"
+    # print "--------------------"
+    # basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/5D_ModelB1_Data/MGCC_188/')
+    # walldomains=tw.parseWalls(basedir+'walls.txt')
+    # outedges=tw.parseOutEdges(basedir+'outEdges.txt')
+    # print matchPattern(pattern, walldomains,outedges)
 
-    print "---------------------"
-    print "5D Model B1, MGCC 522"
-    print "---------------------"
-    basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/5D_ModelB1_Data/MGCC_522/')
-    walldomains=tw.parseWalls(basedir+'walls.txt')
-    outedges=tw.parseOutEdges(basedir+'outEdges.txt')
-    print matchPattern(pattern, walldomains,outedges)
+    # print "---------------------"
+    # print "5D Model B1, MGCC 522"
+    # print "---------------------"
+    # basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/5D_ModelB1_Data/MGCC_522/')
+    # walldomains=tw.parseWalls(basedir+'walls.txt')
+    # outedges=tw.parseOutEdges(basedir+'outEdges.txt')
+    # print matchPattern(pattern, walldomains,outedges)
 
