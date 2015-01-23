@@ -234,6 +234,7 @@ def matchPattern(pattern,walldomains,outedges,suppresscycleinfo=0,cycliconly=1):
         print cycleInfo(pattern,cycliconly)
     # find all possible starting nodes for a matching path
     firstwalls=getFirstWalls(pattern[0],outedges,walldomains)
+    print firstwalls
     # return trivial length one patterns
     if len(pattern)==1:
         return [ (w,) for w in firstwalls ]
@@ -268,7 +269,7 @@ if __name__=='__main__':
     import translatewallstostrings2 as tw
     import os
 
-    pattern=['uum','Muu','dMu','ddM','mdd','umd','uum'] # all maxes in order X1 X2 X3, then all mins in same order
+    pattern=['Mud','dum','dMu','mdu','udM','umd','Mud'] # x max, y min, z max, x min, y max, z min; explicitly calculated, should be there; NOTE THAT Y AND Z are swapped.
 
     print "-------------------"
     print "3D Example, MGCC 5"
