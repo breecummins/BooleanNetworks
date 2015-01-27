@@ -234,7 +234,6 @@ def matchPattern(pattern,walldomains,outedges,suppresscycleinfo=0,cycliconly=1):
         print cycleInfo(pattern,cycliconly)
     # find all possible starting nodes for a matching path
     firstwalls=getFirstWalls(pattern[0],outedges,walldomains)
-    print firstwalls
     # return trivial length one patterns
     if len(pattern)==1:
         return [ (w,) for w in firstwalls ]
@@ -244,7 +243,9 @@ def matchPattern(pattern,walldomains,outedges,suppresscycleinfo=0,cycliconly=1):
     paramDict = {'walldomains':walldomains,'outedges':outedges,'stop':pattern[-1],'lenpattern':len(pattern)}
     # find matches
     results=[]
+    print "All first walls {}".format(firstwalls)
     for w in firstwalls:
+        print "First wall {}".format(w)
         R = recursePattern(w,[w],[],patternParams,[],[],paramDict) # seek match starting at w
         results.extend([tuple(l) for l in R if l]) # pull out nonempty paths
     # prep matches for return
@@ -269,15 +270,32 @@ if __name__=='__main__':
     import translatewallstostrings2 as tw
     import os
 
-    pattern=['Mud','dum','dMu','mdu','udM','umd','Mud'] # x max, y min, z max, x min, y max, z min; explicitly calculated, should be there; NOTE THAT Y AND Z are swapped.
+    # from TOS4
+    pattern=['uumdu', 'Muudu', 'duudM', 'duumd', 'dMuud', 'mduud', 'uduum', 'umuuu', 'uuMuu', 'uudMu', 'uumdu']
+    pattern=['uumdu', 'Muudu', 'duumu', 'duuuM', 'dMuud', 'mduud', 'uduum', 'umuuu', 'uuMuu', 'uudMu', 'uumdu']
+    pattern=['uumdu', 'Muudu', 'duudM', 'duumd', 'dMuud', 'mduud', 'uduum', 'umuuu', 'uuuMu', 'uuMdu', 'uumdu']
+    pattern=['uumdu', 'Muudu', 'duumu', 'duuuM', 'dMuud', 'mduud', 'uduum', 'umuuu', 'uuuMu', 'uuMdu', 'uumdu']
+    pattern=['uuddm', 'uumdu', 'Muudu', 'duumu', 'dMuuu', 'dduuM', 'mduud', 'umuud', 'uuMud', 'uudMd', 'uuddm']
+    pattern=['uuddm', 'uumdu', 'Muudu', 'duumu', 'dMuuu', 'dduuM', 'mduud', 'umuud', 'uuuMd', 'uuMdd', 'uuddm']
 
-    print "-------------------"
-    print "3D Example, MGCC 5"
-    print "-------------------"
-    basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/3D_Example/MGCC_5/')    
+    print "----------------------"
+    print "5D Cycle 1, MGCC 14419"
+    print "----------------------"
+    basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/5D_cycle_1/MGCC_14419/')    
     walldomains=tw.parseWalls(basedir+'walls.txt')
     outedges=tw.parseOutEdges(basedir+'outEdges.txt')
     print matchPattern(pattern, walldomains,outedges)
+
+
+    # pattern=['Mud','dum','dMu','mdu','udM','umd','Mud'] # x max, y min, z max, x min, y max, z min; explicitly calculated, should be there; NOTE THAT Y AND Z are swapped.
+
+    # print "-------------------"
+    # print "3D Example, MGCC 5"
+    # print "-------------------"
+    # basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/3D_Example/MGCC_5/')    
+    # walldomains=tw.parseWalls(basedir+'walls.txt')
+    # outedges=tw.parseOutEdges(basedir+'outEdges.txt')
+    # print matchPattern(pattern, walldomains,outedges)
 
     # pattern=['uum','Muu','dMu','ddM','mdd','umd','uum'] # all maxes in order X1 X2 X3, then all mins in same order
 
