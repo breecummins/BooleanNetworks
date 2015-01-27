@@ -1,4 +1,4 @@
-import itertools
+import itertools, sys
 
 def isVarGTorLT(nodeval,nodelist,walldomains,varind):
     # Find out whether nodeval (associated to varind) is 
@@ -246,6 +246,7 @@ def matchPattern(pattern,walldomains,outedges,suppresscycleinfo=0,cycliconly=1):
     print "All first walls {}".format(firsfpalls)
     for w in firsfpalls:
         print "First wall {}".format(w)
+        sys.stdout.flush()
         R = recursePattern(w,[w],[],patternParams,[],[],paramDict) # seek match starting at w
         results.extend([tuple(l) for l in R if l]) # pull out nonempty paths
     # prep matches for return
