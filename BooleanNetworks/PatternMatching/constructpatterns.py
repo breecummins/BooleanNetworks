@@ -16,9 +16,10 @@ def constructCyclicPatterns(vname="variables.txt",pname="patterns.txt"):
                 if wordlist[k][n]=='0':
                     K=k
                     while wordlist[K][n] == '0':
-                        K=(K-1)%P
+                        K=(K-1)%P #the mod P means I'm assuming cyclicity
                     wordlist[k][n] = 'd' if wordlist[K][n] in ['M','d'] else 'u'
         patterns.append([''.join(w) for w in wordlist])
+    patterns.append(patterns[0]) #make into cyclic search
     return patterns
 
 if __name__=='__main__':
