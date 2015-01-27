@@ -276,6 +276,7 @@ if __name__=='__main__':
     print "5D Cycle 1, MGCC 14419"
     print "----------------------"
     basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/5D_cycle_1/MGCC_14419/')    
+    basedir=os.path.expanduser('')    
     walldomains=fp.parseWalls(basedir+'walls.txt')
     outedges=fp.parseOutEdges(basedir+'outEdges.txt')
     # patterns from TOS4
