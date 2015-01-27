@@ -268,15 +268,9 @@ if __name__=='__main__':
 
     # Arnaud's simulation data
     import fileparsers as fp
+    import constructpatterns as cp
     import os
 
-    # from TOS4
-    pattern=['uumdu', 'Muudu', 'duudM', 'duumd', 'dMuud', 'mduud', 'uduum', 'umuuu', 'uuMuu', 'uudMu', 'uumdu']
-    pattern=['uumdu', 'Muudu', 'duumu', 'duuuM', 'dMuud', 'mduud', 'uduum', 'umuuu', 'uuMuu', 'uudMu', 'uumdu']
-    pattern=['uumdu', 'Muudu', 'duudM', 'duumd', 'dMuud', 'mduud', 'uduum', 'umuuu', 'uuuMu', 'uuMdu', 'uumdu']
-    pattern=['uumdu', 'Muudu', 'duumu', 'duuuM', 'dMuud', 'mduud', 'uduum', 'umuuu', 'uuuMu', 'uuMdu', 'uumdu']
-    pattern=['uuddm', 'uumdu', 'Muudu', 'duumu', 'dMuuu', 'dduuM', 'mduud', 'umuud', 'uuMud', 'uudMd', 'uuddm']
-    pattern=['uuddm', 'uumdu', 'Muudu', 'duumu', 'dMuuu', 'dduuM', 'mduud', 'umuud', 'uuuMd', 'uuMdd', 'uuddm']
 
     print "----------------------"
     print "5D Cycle 1, MGCC 14419"
@@ -284,7 +278,11 @@ if __name__=='__main__':
     basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/5D_cycle_1/MGCC_14419/')    
     walldomains=fp.parseWalls(basedir+'walls.txt')
     outedges=fp.parseOutEdges(basedir+'outEdges.txt')
-    print matchPattern(pattern, walldomains,outedges)
+    # patterns from TOS4
+    patterns=cp.constructCyclicPatterns(basedir+'variables.txt','patterns.txt')
+    for pattern in patterns:
+        print pattern
+        print matchPattern(pattern, walldomains,outedges)
 
 
     # pattern=['Mud','dum','dMu','mdu','udM','umd','Mud'] # x max, y min, z max, x min, y max, z min; explicitly calculated, should be there; NOTE THAT Y AND Z are swapped.

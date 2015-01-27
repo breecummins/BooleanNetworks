@@ -5,13 +5,6 @@ def parseOutEdges(fname='outEdges.txt'):
         outedges.append(tuple([int(i) for i in l.split(' ')[1:-1]]))
     return outedges
 
-def testParseOutEdges():
-    # compare the output file to the input file by eye
-    g=open('parsedoutedges.txt','w')
-    for oe in parseOutEdges():
-        g.write(str(oe)+'\n')
-    g.close()
-
 def parseWalls(fname='walls.txt'):
     f=open(fname,'r')
     walldomains=[]
@@ -24,17 +17,26 @@ def parseWalls(fname='walls.txt'):
         walldomains.append(tuple(T))
     return walldomains
 
-def testParseWalls():
-    # compare the output file to the input file by eye
-    g=open('parsedwalls.txt','w')
-    for wd in parseWalls():
-        g.write(str(wd)+'\n')
-    g.close()
+def parseVars(fname="variables.txt"):
+    # this parser depends on the file being small enough to fit in memory
+    f=open(fname,'r')
+    R=f.read().split()
+    return R[1::2]     
+
+def parsePatterns(fname="patterns.txt"):
+    f=open(fname,'r')
+    Maxmin=[]
+    varnames=[]
+    for l in f:
+        L=l.replace(',',' ').split()
+        varnames.append(L[::2])
+        Maxmin.append(L[1::2])
+    return varnames, Maxmin
 
 def filterBoundaryWallsAndSteadyStates(outedges):
+    # CURRENTLY NOT USED - is possible future optimization
     # get rid of boundary walls and steady states, because we shall assume that 
     # searchable patterns have only extrema
-    # for use with patternmatch3
     inedges=[tuple([j for j,o in enumerate(outedges) if i in o ]) for i in range(len(outedges))]
     interiorinds=[]
     interioroutedges=[]
@@ -48,5 +50,5 @@ def filterBoundaryWallsAndSteadyStates(outedges):
     return interiorinds,interioroutedges
 
 if __name__=='__main__':
-    # testParseOutEdges()
-    testParseWalls()
+    # print parseVars("/Users/bcummins/ProjectData/DatabaseSimulations/5D_cycle_1/MGCC_14419/variables.txt")
+    print parsePatterns()
