@@ -22,7 +22,7 @@ def isVarGTorLT(nodeval,nodelist,walldomains,varind):
             gt=False
     return gt*nz,lt*nz
 
-def getChars(Z,previouswall,nexfpall,outedges,walldomains):
+def getChars(Z,previouswall,nextwall,outedges,walldomains):
     # Z contains the variable index and the values of variable at the previous, 
     # current, and next walls respectively. Given the graph labeled with walldomains, 
     # we find all possible behaviors of the variable at the current wall given the
@@ -57,7 +57,7 @@ def getChars(Z,previouswall,nexfpall,outedges,walldomains):
             else:
                 chars=['u','m']
     elif w==n and w!=p:
-        pp=getPreviousNodes(nexfpall,outedges)
+        pp=getPreviousNodes(nextwall,outedges)
         ngt,nlt=isVarGTorLT(n,pp,walldomains,q)
         if p<w:
             if ngt:
@@ -75,7 +75,7 @@ def getChars(Z,previouswall,nexfpall,outedges,walldomains):
                 chars=['d','m']
     else:
         nn=getNextNodes(previouswall,outedges)
-        pp=getPreviousNodes(nexfpall,outedges)
+        pp=getPreviousNodes(nextwall,outedges)
         pgt,plt=isVarGTorLT(p,nn,walldomains,q)
         ngt,nlt=isVarGTorLT(n,pp,walldomains,q)
         if pgt:
@@ -100,14 +100,63 @@ def getChars(Z,previouswall,nexfpall,outedges,walldomains):
             chars=['d','M','u','m']
     return chars
 
-def pathDependentStringConstruction(previouswall,wall,nexfpall,walldomains,outedges):
+def getChars2(z,varatwall):
+    # z contains the variable index and the values of variable at the previous, 
+    # current, and next walls respectively. Given the graph labeled with walldomains, 
+    # we find all possible behaviors of the variable at the current wall given the
+    # trajectory defined by the previous and next walls, mediated by whether or
+    # not the variable in z[0] can be affected at the current wall. The variable
+    # that's affected at the wall is stored in varatwall.
+    q,p,w,n=z
+    if p<w<n:
+        chars=['u']
+    elif p>w>n:
+        chars=['d']
+    elif q==varatwall:
+        if p<w==n:
+            chars = ['u','M']
+        elif p==w<n:
+            chars = ['u','m']
+        elif p>w==n:
+            chars = ['d','m']
+        elif p==w>n:
+            chars = ['d','M']
+        else:
+            chars = ['u','d','m','M']
+    else:
+        if p<w==n or p==w<n:
+            chars = ['u']
+        elif p>w==n or p==w>n:
+            chars = ['d']
+        elif p==w==n:
+            chars = ['u','d']
+        else:
+            chars = [] # if the path indicates a max or a min, then this is a nonviable path
+    return chars
+
+def pathDependentStringConstruction2(previouswall,wall,nextwall,walldomains,varatwall):
     # make a label for 'wall' that depends on where the path came from and where it's going
-    if wall==nexfpall: #if at steady state, do not label
+    if wall==nextwall: #if at steady state, do not label
         return []
     walllabels=['']
-    Z=zip(range(len(walldomains[0])),walldomains[previouswall],walldomains[wall],walldomains[nexfpall])
+    Z=zip(range(len(walldomains[0])),walldomains[previouswall],walldomains[wall],walldomains[nextwall])
     while Z:
-        chars=getChars(Z[0],previouswall,nexfpall,outedges,walldomains)
+        chars=getChars2(Z[0],varatwall)
+        if chars:
+            walllabels=[l+c for l in walllabels for c in chars]
+            Z.pop(0)
+        else:
+            return []
+    return walllabels
+
+def pathDependentStringConstruction(previouswall,wall,nextwall,walldomains,outedges):
+    # make a label for 'wall' that depends on where the path came from and where it's going
+    if wall==nextwall: #if at steady state, do not label
+        return []
+    walllabels=['']
+    Z=zip(range(len(walldomains[0])),walldomains[previouswall],walldomains[wall],walldomains[nextwall])
+    while Z:
+        chars=getChars(Z[0],previouswall,nextwall,outedges,walldomains)
         walllabels=[l+c for l in walllabels for c in chars]
         Z.pop(0)
     return walllabels
@@ -149,8 +198,8 @@ def recursePattern(startnode,match,matches,patterns,previouspattern,walllabels,p
     else:
         for p,P in patterns:
             for n in getNextNodes(startnode,pDict['outedges']):  # every wall has an outgoing edge by graph construction
-                if len(match) == 1 or set(previouspattern).intersection(pathDependentStringConstruction(match[-2],match[-1],n,pDict['walldomains'],pDict['outedges'])): # consistency check to catch false positives
-                    walllabels = [w for q in getNextNodes(n,pDict['outedges']) for w in pathDependentStringConstruction(match[-1],n,q,pDict['walldomains'],pDict['outedges']) ]
+                if len(match) == 1 or set(previouspattern).intersection(pathDependentStringConstruction2(match[-2],match[-1],n,pDict['walldomains'],pDict['varsaffectedatwall'][match[-1]])): # consistency check to catch false positives
+                    walllabels = [w for q in getNextNodes(n,pDict['outedges']) for w in pathDependentStringConstruction2(match[-1],n,q,pDict['walldomains'],pDict['varsaffectedatwall'][n]) ]
                     if p in walllabels: # if we hit the next pattern element, reduce pattern by one
                         # WE MAY GET FALSE POSITIVES WITHOUT THE CONSISTENCY CHECK ABOVE (this is because we have to pick the right q in the next step)
                         matches=recursePattern(n,match+[n],matches,patterns[1:],patterns[0][1],walllabels,pDict)
@@ -167,18 +216,18 @@ def labelOptions(p):
     elif 'M' in p:
         return [p,p.replace('M','u')]
 
-def getFirsfpalls(firstpattern,outedges,walldomains):
+def getFirstwalls(firstpattern,outedges,walldomains,varsaffectedatwall):
     # Given the first word in the pattern, find the nodes in the graph that have 
     # this pattern for some path. Our searches will start at each of these nodes.
     inedges=[tuple([j for j,o in enumerate(outedges) if i in o]) for i in range(len(outedges))]
-    firsfpalls=[]
+    firstwalls=[]
     for k,(ie,oe) in enumerate(zip(inedges,outedges)):
         wl=[]
         for i,o in itertools.product(ie,oe):
-            wl.extend(pathDependentStringConstruction(i,k,o,walldomains,outedges))
+            wl.extend(pathDependentStringConstruction2(i,k,o,walldomains,varsaffectedatwall[k]))
         if firstpattern in wl:
-            firsfpalls.append(k)
-    return firsfpalls
+            firstwalls.append(k)
+    return firstwalls
 
 def cycleInfo(pattern,cycliconly):
     # Potentially useful message for user.
@@ -199,7 +248,7 @@ def sanityCheck(pattern):
         return "None. Pattern element(s) {} are not extrema. An 'm' or 'M' is required in every element.".format(notextrema)
     return "sane"  
 
-def matchPattern(pattern,walldomains,outedges,suppresscycleinfo=0,cycliconly=1):
+def matchPattern(pattern,walldomains,outedges,varsaffectedatwall,suppresscycleinfo=0,cycliconly=1):
     '''
     This function finds paths in a directed graph that are consistent with a target pattern. The nodes
     of the directed graph are called walls, and each node is associated with a wall label (in walldomains)
@@ -212,6 +261,7 @@ def matchPattern(pattern,walldomains,outedges,suppresscycleinfo=0,cycliconly=1):
     pattern: list of uniform-length words from the alphabet ('u','d','m','M'); exactly one 'm' or 'M' REQUIRED per string; patterns containing exactly repeating sequences will not be found if the same walls must be traversed to match the pattern
     walldomains: list of tuples of floats from data using translatewallstostrings2, index is wall number
     outedges: list of tuples of integers from data using translatewallstostrings2, index is wall number
+    varsaffectedatwall:
     suppresscycleinfo: default 0 means give information about cyclic or acyclic pattern request, 1 means suppress it
     cycliconly: only applies when the first and last elements of pattern agree; default 1 
         means return only cyclic paths, 0 means return all matching paths 
@@ -221,7 +271,7 @@ def matchPattern(pattern,walldomains,outedges,suppresscycleinfo=0,cycliconly=1):
     See notes for the meaning of alphabet. Briefly, 'uMdd' means that the first variable is increasing 
     (up), the second variable is at a maximum (Max), and the third and fourth variables are decreasing 
     (down). The character 'm' means a variable is at a minimum (min). There can be at most one 'm' or 
-    'M' at each wall, because we assume that the input graph arises from a switching nefpork where each
+    'M' at each wall, because we assume that the input graph arises from a switching network where each
     regulation event occurs at a unique threshold.
 
     '''
@@ -233,18 +283,18 @@ def matchPattern(pattern,walldomains,outedges,suppresscycleinfo=0,cycliconly=1):
     if not suppresscycleinfo:
         print cycleInfo(pattern,cycliconly)
     # find all possible starting nodes for a matching path
-    firsfpalls=getFirsfpalls(pattern[0],outedges,walldomains)
+    firstwalls=getFirstwalls(pattern[0],outedges,walldomains,varsaffectedatwall)
     # return trivial length one patterns
     if len(pattern)==1:
-        return [ (w,) for w in firsfpalls ]
+        return [ (w,) for w in firstwalls ]
     # pre-cache intermediate nodes that may exist in the wall graph (saves time in recursive call)
     patternoptions=[labelOptions(p) for p in pattern[1:]]
     patternParams = zip(pattern[1:],patternoptions)
-    paramDict = {'walldomains':walldomains,'outedges':outedges,'stop':pattern[-1],'lenpattern':len(pattern)}
+    paramDict = {'walldomains':walldomains,'outedges':outedges,'stop':pattern[-1],'lenpattern':len(pattern),'varsaffectedatwall':varsaffectedatwall}
     # find matches
     results=[]
-    print "All first walls {}".format(firsfpalls)
-    for w in firsfpalls:
+    print "All first walls {}".format(firstwalls)
+    for w in firstwalls:
         print "First wall {}".format(w)
         sys.stdout.flush()
         R = recursePattern(w,[w],[],patternParams,[],[],paramDict) # seek match starting at w
@@ -258,6 +308,26 @@ def matchPattern(pattern,walldomains,outedges,suppresscycleinfo=0,cycliconly=1):
     else:
         return "None. No results found."
 
+def callPatternMatch(basedir='',message=''):
+    if message:
+        print "-"*len(message)
+        print message
+        print "-"*len(message)
+    patterns,walldomains,outedges,varsaffectedatwall=pp.makeAll(basedir+'outEdges.txt',basedir+'walls.txt',basedir+'variables.txt',basedir+'equations.txt',basedir+'patterns.txt') 
+    inds=[141, 150, 161, 170, 179]  
+    inds=[10, 20, 30, 40, 50]
+    inds=[549, 553, 558, 562, 567, 571, 578, 580, 1029, 1038, 1047]
+    inds=[197, 205, 213, 221, 245, 246, 253, 254, 333, 341, 349, 357, 366, 374]
+    inds=[297, 306, 315, 324]
+    for pattern in patterns:
+        print pattern
+        for i in inds:
+            print (varsaffectedatwall[i],walldomains[i])
+        print matchPattern(pattern, walldomains,outedges,varsaffectedatwall)
+
+
+
+
 if __name__=='__main__':
     # walldomains=[(0,0.5),(0,1.5),(0.5,0),(0.5,1),(0.5,2),(1,0.5),(1,1.5),(1.5,0),(1.5,1),(1.5,2),(2,0.5),(2,1.5),(2.5,0),(2.5,1),(2.5,2),(3,0.5),(3,1.5)]
     # outedges=[(5,),(3,),(5,),(5,),(3,),(10,),(3,),(10,),(10,),(6,),(13,),(6,8),(13,),(11,),(11,),(13,),(11,)]
@@ -268,52 +338,27 @@ if __name__=='__main__':
     # testStringConstruction(walldomains,outedges)
 
     # Arnaud's simulation data
-    import fileparsers as fp
-    import constructpatterns as cp
+    import prepforpatternmatch as pp
     import os
 
 
-    print "----------------------"
-    print "5D Cycle 1, MGCC 14419"
-    print "----------------------"
-    basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/5D_cycle_1/MGCC_14419/')    
-    basedir=os.path.expanduser('')    
-    walldomains=fp.parseWalls(basedir+'walls.txt')
-    outedges=fp.parseOutEdges(basedir+'outEdges.txt')
-    # patterns from TOS4
-    patterns=cp.constructCyclicPatterns(basedir+'variables.txt','patterns.txt')
-    for pattern in patterns:
-        print pattern
-        print matchPattern(pattern, walldomains,outedges)
+    basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/5D_cycle_1/MGCC_14419/')  
+    callPatternMatch(basedir,'5D Cycle 1, MGCC 14419')
 
+    # # pattern=['Mud','dum','dMu','mdu','udM','umd','Mud'] # x max, y min, z max, x min, y max, z min; explicitly calculated, should be there; NOTE THAT Y AND Z are swapped.
 
-    # pattern=['Mud','dum','dMu','mdu','udM','umd','Mud'] # x max, y min, z max, x min, y max, z min; explicitly calculated, should be there; NOTE THAT Y AND Z are swapped.
-
-    # print "-------------------"
-    # print "3D Example, MGCC 5"
-    # print "-------------------"
-    # basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/3D_Example/MGCC_5/')    
-    # walldomains=fp.parseWalls(basedir+'walls.txt')
-    # outedges=fp.parseOutEdges(basedir+'outEdges.txt')
-    # print matchPattern(pattern, walldomains,outedges)
+    basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/3D_Example/MGCC_5/')    
+    callPatternMatch(basedir,'3D Example, MGCC 5')
 
     # pattern=['uum','Muu','dMu','ddM','mdd','umd','uum'] # all maxes in order X1 X2 X3, then all mins in same order
 
-    # print "-------------------"
-    # print "3D Cycle 1, MGCC 30"
-    # print "-------------------"
-    # basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/3D_Cycle_1_Data/MGCC_30/')    
-    # walldomains=fp.parseWalls(basedir+'walls.txt')
-    # outedges=fp.parseOutEdges(basedir+'outEdges.txt')
-    # print matchPattern(pattern, walldomains,outedges)
+    # The variables.txt file for 3D Cycle 1 may be wrong. I MADE IT UP as a placeholder until
+    # I hear from Arnaud
+    basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/3D_Cycle_1_Data/MGCC_30/')    
+    callPatternMatch(basedir,'3D Cycle 1, MGCC 30')
 
-    # print "-------------------"
-    # print "3D Cycle 1, MGCC 45"
-    # print "-------------------"
-    # basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/3D_Cycle_1_Data/MGCC_45/')
-    # walldomains=fp.parseWalls(basedir+'walls.txt')
-    # outedges=fp.parseOutEdges(basedir+'outEdges.txt')
-    # print matchPattern(pattern, walldomains,outedges)
+    basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/3D_Cycle_1_Data/MGCC_45/')    
+    callPatternMatch(basedir,'3D Cycle 1, MGCC 45')
 
     # pattern=['Muuuu','dMuuu','ddMuu','dddMu','ddddM','mdddd','umddd','uumdd','uuumd','uuuum','Muuuu'] # maxes in order X Y1 Y2 Y3 Z, then mins in same order
     # pattern=['Muuuu','dMuuu','ddMuu','ddduM','dddMd','mdddd','umddd','uumdd','uuudm','uuumu','Muuuu'] # maxes in order X Y1 Y2 Z Y3, then mins in same order

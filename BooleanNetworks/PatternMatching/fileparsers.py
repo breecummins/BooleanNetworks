@@ -8,20 +8,30 @@ def parseOutEdges(fname='outEdges.txt'):
 def parseWalls(fname='walls.txt'):
     f=open(fname,'r')
     walldomains=[]
+    varatthresh=[]
     for l in f:
-        L = filter(None,l.replace('[',' ').replace('x',' ').replace(']',' ').replace(',',' ').split(' ')[2:-1])
-        L = [float(n) for n in L]
+        L = filter(None,l.replace('[',' ').replace('x',' ').replace(']',' ').replace(',',' ').split(' ')[1:-1])
+        varatthresh.append(int(L[0]))
+        L = [float(n) for n in L[1:]]
         T = []
         for k in range(0,len(L)-1,2):
             T.append(sum(L[k:k+2])/2) # thresholds are integers, regular domains end in .5
         walldomains.append(tuple(T))
-    return walldomains
+    return walldomains,varatthresh
 
 def parseVars(fname="variables.txt"):
     # this parser depends on the file being small enough to fit in memory
     f=open(fname,'r')
     R=f.read().split()
-    return R[1::2]     
+    return R[1::2]  
+
+def parseEqns(fname="equations.txt"):
+    f=open(fname,'r')
+    threshvars=[]
+    for l in f:
+        L=l.split(':')
+        threshvars.append(tuple([L[0].replace(' ',''),L[2].split()]))
+    return threshvars
 
 def parsePatterns(fname="patterns.txt"):
     f=open(fname,'r')
@@ -33,22 +43,10 @@ def parsePatterns(fname="patterns.txt"):
         Maxmin.append(L[1::2])
     return varnames, Maxmin
 
-def filterBoundaryWallsAndSteadyStates(outedges):
-    # CURRENTLY NOT USED - is possible future optimization
-    # get rid of boundary walls and steady states, because we shall assume that 
-    # searchable patterns have only extrema
-    inedges=[tuple([j for j,o in enumerate(outedges) if i in o ]) for i in range(len(outedges))]
-    interiorinds=[]
-    interioroutedges=[]
-    for q,(o,i) in enumerate(zip(outedges,inedges)):
-        if i and (o!=(q,)): 
-            interiorinds.append(q)
-            interioroutedges.append([o])
-    for k,o in enumerate(interioroutedges):
-        newo = [j for j in o if j in interiorinds]
-        interioroutedges[k] = newo
-    return interiorinds,interioroutedges
+def parseAll(oname='outEdges.txt',wname='walls.txt',vname="variables.txt",ename="equations.txt",pname="patterns.txt"):
+    return parseOutEdges(oname), parseWalls(wname), parseVars(vname), parseEqns(ename), parsePatterns(pname)
 
 if __name__=='__main__':
     # print parseVars("/Users/bcummins/ProjectData/DatabaseSimulations/5D_cycle_1/MGCC_14419/variables.txt")
-    print parsePatterns()
+    # print parsePatterns()
+    print parseEqns("/Users/bcummins/ProjectData/DatabaseSimulations/5D_cycle_1/MGCC_14419/equations.txt")
