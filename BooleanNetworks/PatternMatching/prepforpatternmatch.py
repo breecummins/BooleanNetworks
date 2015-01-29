@@ -35,21 +35,23 @@ def varsAtWalls(threshnames,walldomains,wallthresh,varnames):
             varsaffectedatwall[j]=varsaffectedatthresh[k][int(w[k]-1)]
     return varsaffectedatwall
 
-def filterBoundaryWallsAndSteadyStates(outedges):
+def filterBoundaryWallsAndSteadyStates(outedges,walldomains,varsaffectedatwall):
     # CURRENTLY NOT USED - is possible future optimization
     # get rid of boundary walls and steady states, because we shall assume that 
     # searchable patterns have only extrema
     inedges=[tuple([j for j,o in enumerate(outedges) if i in o ]) for i in range(len(outedges))]
     interiorinds=[]
     interioroutedges=[]
-    for q,(o,i) in enumerate(zip(outedges,inedges)):
+    interiorwalls=[]
+    interioraffectedvars=[]
+    for q,(o,i,w,v) in enumerate(zip(outedges,inedges,walldomains,varsaffectedatwall)):
         if i and (o!=(q,)): 
             interiorinds.append(q)
-            interioroutedges.append([o])
-    for k,o in enumerate(interioroutedges):
-        newo = [j for j in o if j in interiorinds]
-        interioroutedges[k] = newo
-    return interiorinds,interioroutedges
+            interiorwalls.append(w)
+            interioraffectedvars.append(v)
+    for k in interiorinds:
+        interioroutedges.append(tuple([interiorinds.index(j) for j in outedges[k] if j in interiorinds]))
+    return interiorinds,interioroutedges,interiorwalls,interioraffectedvars
 
 if __name__=='__main__':
     for p in constructCyclicPatterns("/Users/bcummins/ProjectData/DatabaseSimulations/5D_cycle_1/MGCC_14419/variables.txt"):
