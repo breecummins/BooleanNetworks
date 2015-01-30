@@ -1,48 +1,55 @@
-from patternmatch2 import matchPattern
-import itertools
+from patternmatch3 import matchCyclicPattern
+import testcases as tc
 
 def testme():
-    # PATTERN CONTAINS ALL EXTREMA (INTERMEDIATE EXTREMA NOT ALLOWED IN PATH MATCH), UNIQUENESS NOT REQUIRED
 
-    # EXAMPLE 0, NO STEADY STATES
-    walldomains=[(0,0.5),(0,1.5),(0.5,0),(0.5,1),(0.5,2),(1,0.5),(1,1.5),(1.5,0),(1.5,1),(1.5,2),(2,0.5),(2,1.5),(2.5,0),(2.5,1),(2.5,2),(3,0.5),(3,1.5)]
-    outedges=[(5,),(3,),(5,),(5,),(3,),(10,),(3,),(10,),(10,),(6,),(13,),(6,8),(13,),(11,),(11,),(13,),(11,)]
+    #################################
+
+    walldomains,outedges,varsaffectedatwall=tc.test0()
 
     pattern=['md','um','Mu','dM','md']
-    match = matchPattern(pattern,walldomains,outedges,suppresscycleinfo=1)
-    print match==[(3,5,10,13,11,6,3),(8,10,13,11,8)]
+    match = matchCyclicPattern(pattern,walldomains,outedges,varsaffectedatwall,cyclewarn=0)
+    print match==[(3, 5, 10, 13, 11, 6, 3), (8, 10, 13, 11, 8)]
 
-    pattern=['um','md']
-    match = matchPattern(pattern,walldomains,outedges,suppresscycleinfo=1)
+    pattern=['um','md'] #intermediate extrema
+    match = matchCyclicPattern(pattern,walldomains,outedges,varsaffectedatwall,cyclewarn=0)
     print 'None' in match
 
-    pattern=['ud','um','Mu']
+    pattern=['ud','um','Mu'] # only exists as acyclic path, no associated cycle
+    match = matchCyclicPattern(pattern,walldomains,outedges,varsaffectedatwall,cyclewarn=0)
     print 'None' in match
 
-    # EXAMPLE 1, HAS STEADY STATE
-    walldomains=[(0,0.5),(0,1.5),(0.5,0),(0.5,1),(0.5,2),(1,0.5),(1,1.5),(1.5,0),(1.5,1),(1.5,2),(2,0.5),(2,1.5),(2.5,0),(2.5,1),(2.5,2),(3,0.5),(3,1.5),(0.5,0.5)]
-    outedges=[(17,),(3,),(17,),(17,),(3,),(10,17),(3,),(10,),(10,),(6,),(13,),(6,8),(13,),(11,),(11,),(13,),(11,),(17,)]
+    #################################
 
-    pattern=['Md'] # this label only exists because of entrance from boundary
-    match=matchPattern(pattern,walldomains,outedges,suppresscycleinfo=1)
-    print match==[(3,)]
+    walldomains,outedges,varsaffectedatwall=tc.test1()
 
     pattern=['md','um','Mu','dM','md']
-    match=matchPattern(pattern,walldomains,outedges,suppresscycleinfo=1)
-    print match==[(8, 10, 13, 11, 8)] # acyclic path (8,10,13,11,6,3) exists but should be weeded out
+    match = matchCyclicPattern(pattern,walldomains,outedges,varsaffectedatwall,cyclewarn=0)
+    print match==[(8, 10, 13, 11, 8)]
 
-    pattern=['md','um','Mu','dM','md']
-    match=matchPattern(pattern,walldomains,outedges,suppresscycleinfo=1,cycliconly=0)
-    print match==[(8, 10, 13, 11, 8),(8,10,13,11,6,3)] # now acyclic path should be returned
-
-    pattern=['md','um','Mu','dM','Md'] # even though wall 3 can be 'Md', this comes from the boundary, so search should fail
-    match=matchPattern(pattern,walldomains,outedges,suppresscycleinfo=1)
+    pattern=['md','um','Mu','dM','Md'] # 'Md' DNE in graph
+    match = matchCyclicPattern(pattern,walldomains,outedges,varsaffectedatwall,cyclewarn=0)
     print 'None' in match 
 
-    pattern=['md','Mu','dM','md'] # even though wall 10 can be 'uu', this comes from wall 5, so search should fail
-    match=matchPattern(pattern,walldomains,outedges,suppresscycleinfo=1)
+    pattern=['md','Mu','dM','md'] # intermediate extrema
+    match = matchCyclicPattern(pattern,walldomains,outedges,varsaffectedatwall,cyclewarn=0)
     print 'None' in match
 
+    #################################
+
+    walldomains,outedges,varsaffectedatwall=tc.test2()
+
+    pattern=['dM','md','um','Mu','dM']
+    match = matchCyclicPattern(pattern,walldomains,outedges,varsaffectedatwall,cyclewarn=0)
+    print match==[(6,3,5,8,6),(6,3,5,10,13,11,6)]
+
+    pattern=['Mu','dM','md','um','Mu']
+    match = matchCyclicPattern(pattern,walldomains,outedges,varsaffectedatwall,cyclewarn=0)
+    print match==[(8,6,3,5,8),(13,11,6,3,5,10,13)]
+
+    pattern=['um','Mu'] #acyclic
+    match = matchCyclicPattern(pattern,walldomains,outedges,varsaffectedatwall,cyclewarn=0)
+    print 'None' in match
 
 if __name__=='__main__':
 	testme()
