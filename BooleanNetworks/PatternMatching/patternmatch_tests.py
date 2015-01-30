@@ -1,4 +1,4 @@
-from patternmatch3 import matchCyclicPattern
+from patternmatch import matchCyclicPattern
 import testcases as tc
 
 def testme():

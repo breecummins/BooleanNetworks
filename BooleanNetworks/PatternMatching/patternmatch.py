@@ -1,5 +1,5 @@
 import sys
-import makewalllabels as mwl
+import walllabels as WL
 import prepatternmatch as ppm
 
 def repeatingLoop(match):
@@ -19,9 +19,9 @@ def recursePattern(startnode,match,matches,patterns,previouspattern,walllabels,p
         return matches
     else:
         for p,P in patterns:
-            for n in mwl.getNextNodes(startnode,pDict['outedges']):  # every wall has an outgoing edge by graph construction
-                if len(match) == 1 or set(previouspattern).intersection(mwl.pathDependentStringConstruction3(match[-2],match[-1],n,pDict['walldomains'],pDict['outedges'],pDict['varsaffectedatwall'][match[-1]])): # consistency check to catch false positives
-                    walllabels = [w for q in mwl.getNextNodes(n,pDict['outedges']) for w in mwl.pathDependentStringConstruction3(match[-1],n,q,pDict['walldomains'],pDict['outedges'],pDict['varsaffectedatwall'][n]) ]
+            for n in WL.getNextNodes(startnode,pDict['outedges']):  # every wall has an outgoing edge by graph construction
+                if len(match) == 1 or set(previouspattern).intersection(WL.pathDependentStringConstruction(match[-2],match[-1],n,pDict['walldomains'],pDict['outedges'],pDict['varsaffectedatwall'][match[-1]])): # consistency check to catch false positives
+                    walllabels = [w for q in WL.getNextNodes(n,pDict['outedges']) for w in WL.pathDependentStringConstruction(match[-1],n,q,pDict['walldomains'],pDict['outedges'],pDict['varsaffectedatwall'][n]) ]
                     if p in walllabels: # if we hit the next pattern element, reduce pattern by one
                         # WE MAY GET FALSE POSITIVES WITHOUT THE CONSISTENCY CHECK ABOVE (this is because we have to pick the right q in the next step)
                         matches=recursePattern(n,match+[n],matches,patterns[1:],patterns[0][1],walllabels,pDict)
@@ -85,7 +85,7 @@ def matchCyclicPattern(pattern,walldomains,outedges,varsaffectedatwall,showfirst
     # filter out boundaries, steady states, and white walls
     origwallinds,outedges,walldomains,varsaffectedatwall = ppm.filterBoundaryWallsSteadyStatesWhiteWalls(outedges,walldomains,varsaffectedatwall)
     # find all possible starting nodes for a matching path
-    firstwalls=mwl.getFirstwalls(pattern[0],outedges,walldomains,varsaffectedatwall)
+    firstwalls=WL.getFirstwalls(pattern[0],outedges,walldomains,varsaffectedatwall)
     # return trivial length one patterns
     if len(pattern)==1:
         return [ (origwallinds.index(w),) for w in firstwalls ]

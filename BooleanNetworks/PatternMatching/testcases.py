@@ -39,3 +39,15 @@ def test2():
     for k in [5,6]:
         varsaffectedatwall[k]=1
     return walldomains,outedges,varsaffectedatwall
+
+def test3():
+    # PATTERN CONTAINS ALL EXTREMA (INTERMEDIATE EXTREMA NOT ALLOWED IN PATH MATCH), UNIQUENESS NOT REQUIRED
+    # X : ~Z : Y
+    # Y : ~X : Z
+    # Z : ~Y : X
+    # EXAMPLE 3, NEGATIVE FEEDBACK, NO STEADY STATES, SEE NOTES FOR FLOW ACROSS WALLS
+    # IGNORING BOUNDARY WALLS
+    pass
+
+if __name__=='__main__':
+    test3()
