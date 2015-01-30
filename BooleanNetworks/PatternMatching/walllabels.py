@@ -1,5 +1,11 @@
 import itertools
 
+def getNextNodes(node,outedges):
+    return [o for o in outedges[node]]
+
+def getPreviousNodes(node,outedges):
+    return [j for j,o in enumerate(outedges) if node in o]
+
 def isVarGTorLT(nodeval,nodelist,walldomains,varind):
     # Find out whether nodeval (associated to varind) is 
     # >= or <= all the values in the corresponding element 
@@ -100,6 +106,122 @@ def getChars(Z,previouswall,nextwall,outedges,walldomains):
             chars=['d','M','u','m']
     return chars
 
+def helper2(q,w,n,nextwall,outedges,walldomains):
+    nn=getPreviousNodes(nextwall,outedges)
+    ngtw,nltw=isVarGTorLT(n,nn,walldomains,q)
+    qn=getNextNodes(q,outedges)
+    wgtn,wltn=isVarGTorLT(w,qn,walldomains,q)
+    return wgtn,wltn,ngtw,nltw
+
+def helper1(q,p,w,previouswall,outedges,walldomains):
+    pp=getNextNodes(previouswall,outedges)
+    pgtw,pltw=isVarGTorLT(p,pp,walldomains,q)
+    qp=getPreviousNodes(q,outedges)
+    wgtp,wltp=isVarGTorLT(w,qp,walldomains,q)
+    return wgtp,wltp,pgtw,pltw
+
+
+def getChars3(Z,previouswall,nextwall,outedges,walldomains,varatwall):
+    # Z contains the variable index and the values of variable at the previous, 
+    # current, and next walls respectively. Given the graph labeled with walldomains, 
+    # we find all possible behaviors of the variable at the current wall given the
+    # trajectory defined by the previous and next walls.
+    #
+    # this algorithm works but is heinous to read; making it shorter means it runs slower
+    #
+    q,p,w,n=Z
+    if p<w<n:
+        chars = ['u']
+    elif p>w>n:
+        chars = ['d']
+    elif q != varatwall:
+        if p<w>n or p>w<n:
+            chars=[]
+        elif p<w==n or p==w<n:
+            chars = ['u']
+        elif p>w==n or p==w>n:
+            chars = ['d']
+        else: #p==w==n
+            wgtp,wltp,pgtw,pltw = helper1(q,p,w,previouswall,outedges,walldomains)
+            wgtn,wltn,ngtw,nltw = helper2(q,w,n,nextwall,outedges,walldomains)
+            if pgtw or wltp:
+                if ngtw or wltn:
+                    chars=[] 
+                else:
+                    chars=['d']
+            elif pltw or wgtp:
+                if nltw or wgtn:
+                    chars=[]
+                else:
+                    chars=['u']
+            elif ngtw or wltn:
+                chars=['u']
+            elif nltw or wgtn:
+                chars=['d']
+            else:
+                chars=['d','u']
+    else: #q==varatwall
+        if p<w>n:
+            chars=['M']
+        elif p>w<n:
+            chars=['m']
+        elif p==w and w!=n:
+            wgtp,wltp,pgtw,pltw = helper1(q,p,w,previouswall,outedges,walldomains)
+            if w>n:
+                if wgtp or pltw:
+                    chars=['M']
+                elif wltp or pgtw:
+                    chars=['d']
+                else:
+                    chars=['d','M']
+            elif w<n:
+                if wgtp or pltw:
+                    chars=['u']
+                elif wltp or pgtw:
+                    chars=['m']
+                else:
+                    chars=['u','m']
+        elif w==n and w!=p:
+            wgtn,wltn,ngtw,nltw = helper2(q,w,n,nextwall,outedges,walldomains)
+            if p<w:
+                if ngtw or wltn:
+                    chars=['u']
+                elif nltw or wgtn:
+                    chars=['M']
+                else:
+                    chars=['u','M']
+            elif p>w:
+                if ngtw or wltn:
+                    chars=['m']
+                elif nltw or wgtn:
+                    chars=['d']
+                else:
+                    chars=['d','m']
+        else: #p==w==n
+            wgtp,wltp,pgtw,pltw = helper1(q,p,w,previouswall,outedges,walldomains)
+            wgtn,wltn,ngtw,nltw = helper2(q,w,n,nextwall,outedges,walldomains)
+            if pgtw or wltp:
+                if ngtw or wltn:
+                    chars=['m']
+                elif nltw or wgtn:
+                    chars=['d']
+                else:
+                    chars=['m','d']
+            elif pltw or wgtp:
+                if ngtw or wltn:
+                    chars=['u']
+                elif nltw or wgtn:
+                    chars=['M']
+                else:
+                    chars=['M','u']
+            elif ngtw or wltn:
+                chars=['u','m']
+            elif nltw or wgtn:
+                chars=['d','M']
+            else:
+                chars=['d','M','u','m']
+    return chars
+
 def getChars2(z,varatwall):
     # z contains the variable index and the values of variable at the previous, 
     # current, and next walls respectively. Given the graph labeled with walldomains, 
@@ -138,6 +260,21 @@ def getChars2(z,varatwall):
             chars = [] # if the path indicates a max or a min, then this is a nonviable path
     return chars
 
+def pathDependentStringConstruction3(previouswall,wall,nextwall,walldomains,outedges,varatwall):
+    # make a label for 'wall' that depends on where the path came from and where it's going
+    if wall==nextwall: #if at steady state, do not label
+        return []
+    walllabels=['']
+    Z=zip(range(len(walldomains[0])),walldomains[previouswall],walldomains[wall],walldomains[nextwall])
+    while Z:
+        chars=getChars3(Z[0],previouswall,nextwall,outedges,walldomains,varatwall)
+        if chars:
+            walllabels=[l+c for l in walllabels for c in chars]
+            Z.pop(0)
+        else:
+            return []
+    return walllabels
+
 def pathDependentStringConstruction2(previouswall,wall,nextwall,walldomains,varatwall):
     # make a label for 'wall' that depends on where the path came from and where it's going
     if wall==nextwall: #if at steady state, do not label
@@ -164,19 +301,6 @@ def pathDependentStringConstruction(previouswall,wall,nextwall,walldomains,outed
         walllabels=[l+c for l in walllabels for c in chars]
         Z.pop(0)
     return walllabels
-
-def testStringConstruction(walldomains,outedges):
-    R=range(len(outedges))
-    inedges=[tuple([j for j,o in enumerate(outedges) if i in o ]) for i in R]
-    for k in R:
-        ie=inedges[k]
-        oe=outedges[k]
-        wl=[]
-        for i,o in itertools.product(ie,oe):
-            wl.extend(pathDependentStringConstruction(i,k,o,walldomains,outedges))
-        # print ie
-        # print oe
-        print(list(set(wl)))
 
 def getFirstwalls(firstpattern,outedges,walldomains,varsaffectedatwall):
     # Given the first word in the pattern, find the nodes in the graph that have 

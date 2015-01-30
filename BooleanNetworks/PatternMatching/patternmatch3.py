@@ -37,16 +37,6 @@ def labelOptions(p):
     elif 'M' in p:
         return [p,p.replace('M','u')]
 
-def cycleInfo(pattern,cycliconly):
-    # Potentially useful message for user.
-    if pattern[0] != pattern[-1]:
-        return 'Seeking acyclic paths.'
-    else:
-        if cycliconly:
-            return 'Seeking cyclic paths.'
-        else:
-            return('Seeking both cyclic and acyclic paths.')
-
 def sanityCheck(pattern):
     # Make sure the input pattern meets the requirements of the algorithm.
     if not pattern:
@@ -56,7 +46,8 @@ def sanityCheck(pattern):
         return "None. Pattern element(s) {} are not extrema. An 'm' or 'M' is required in every element.".format(notextrema)
     return "sane"  
 
-def matchPattern(pattern,walldomains,outedges,varsaffectedatwall,suppresscycleinfo=0,cycliconly=1):
+def matchPattern(pattern,walldomains,outedges,varsaffectedatwall):
+    # FIXME: Alter to handle no boundaries or steady states
     '''
     This function finds paths in a directed graph that are consistent with a target pattern. The nodes
     of the directed graph are called walls, and each node is associated with a wall label (in walldomains)
@@ -70,9 +61,6 @@ def matchPattern(pattern,walldomains,outedges,varsaffectedatwall,suppresscyclein
     walldomains: list of tuples of floats from data using translatewallstostrings2, index is wall number
     outedges: list of tuples of integers from data using translatewallstostrings2, index is wall number
     varsaffectedatwall:
-    suppresscycleinfo: default 0 means give information about cyclic or acyclic pattern request, 1 means suppress it
-    cycliconly: only applies when the first and last elements of pattern agree; default 1 
-        means return only cyclic paths, 0 means return all matching paths 
 
     See patternmatch_unittests2.py for examples of function calls.
 
@@ -87,9 +75,10 @@ def matchPattern(pattern,walldomains,outedges,varsaffectedatwall,suppresscyclein
     S=sanityCheck(pattern)
     if S != "sane":
         return S
-    # give information about the type of pattern received
-    if not suppresscycleinfo:
-        print cycleInfo(pattern,cycliconly)
+    # alter pattern to cyclic if needed
+    if pattern[0] != pattern[-1]:
+        pattern+=pattern[0]
+        print 'Input pattern is assumed to cycle in a loop.'
     # find all possible starting nodes for a matching path
     firstwalls=mwl.getFirstwalls(pattern[0],outedges,walldomains,varsaffectedatwall)
     # return trivial length one patterns

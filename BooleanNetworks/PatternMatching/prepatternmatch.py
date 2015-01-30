@@ -35,10 +35,10 @@ def varsAtWalls(threshnames,walldomains,wallthresh,varnames):
             varsaffectedatwall[j]=varsaffectedatthresh[k][int(w[k]-1)]
     return varsaffectedatwall
 
-def filterBoundaryWallsAndSteadyStates(outedges,walldomains,varsaffectedatwall):
-    # CURRENTLY NOT USED - is possible future optimization
-    # get rid of boundary walls and steady states, because we shall assume that 
+def filterBoundaryWallsSteadyStatesWhiteWalls(outedges,walldomains,varsaffectedatwall):
+    # get rid of boundary walls, steady states and white walls, because we shall assume that 
     # searchable patterns have only extrema
+    # recall we assume no black walls
     inedges=[tuple([j for j,o in enumerate(outedges) if i in o ]) for i in range(len(outedges))]
     interiorinds=[]
     interioroutedges=[]
