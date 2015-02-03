@@ -1,4 +1,17 @@
 import walllabels as WL
+from scipy.sparse.csgraph import connected_components
+import numpy as np
+
+def preprocess(basedir):
+    # read input files
+    outedges,(walldomains,wallthresh),varnames,threshnames,(patternnames,patternmaxmin)=fp.parseAll(basedir+'outEdges.txt',basedir+'walls.txt',basedir+'variables.txt',basedir+'equations.txt',basedir+'patterns.txt')
+    # put max/min patterns in terms of the alphabet u,m,M,d
+    patterns=ppm.constructCyclicPatterns(varnames,patternnames,patternmaxmin)
+    # record which variable is affected at each wall
+    varsaffectedatwall=ppm.varsAtWalls(threshnames,walldomains,wallthresh,varnames)
+    # filter out walls not involved in cycles and create wall labels for the filtered walls
+    inds,outedges,walldomains,varsaffectedatwall,allwalllabels = ppm.filterAll(outedges,walldomains,varsaffectedatwall)
+    return patterns,inds,outedges,walldomains,varsaffectedatwall,allwalllabels
 
 def constructCyclicPatterns(varnames,patternnames,patternmaxmin):
     numvars=len(varnames)
@@ -30,19 +43,22 @@ def varsAtWalls(threshnames,walldomains,wallthresh,varnames):
             varsaffectedatwall[j]=varsaffectedatthresh[k][int(w[k]-1)]
     return varsaffectedatwall
 
-def filterWalls(outedges):
-    # get rid of boundary walls, steady states, white walls and other non-cyclic walls 
-    # (assuming that black walls do not exist in the system) to reduce the number of
-    # searchable walls
-    # NOTE: This may not be needed if we can get the Morse set directly. Will have to see 
-    # if there are empty wall labels.
-    inedges=WL.getInEdges(outedges)
-    interiorinds=[]
-    for q,(o,i) in enumerate(zip(outedges,inedges)):
-        if i and w and (o!=(q,)): 
-            interiorinds.append(q)
-    interioroutedges=filterOutEdges(interiorinds,outedges)
-    return interiorinds, interioroutedges
+def strongConnect(outedges):
+    adjacencymatrix=np.zeros((len(outedges),len(outedges)))
+    for i,o in enumerate(outedges):
+        for j in o:
+            adjacencymatrix[i,j]=1
+    N,components=connected_components(adjacencymatrix,connection="strong")
+    return N,components
+
+def strongConnectWallNumbers(outedges):
+    N,components=strongConnect(outedges)
+    wallinds=[]
+    for k in range(N):
+        inds=[i for i,c in enumerate(components) if c == k]
+        if len(inds) > 1:
+            wallinds.extend(inds)
+    return sorted(wallinds)
 
 def filterOutEdges(interiorinds,outedges):
     return [tuple([interiorinds.index(j) for j in outedges[k] if j in interiorinds]) for k in interiorinds]
@@ -55,13 +71,14 @@ def filterWallProperties(interiorinds,wallproperties):
     return [[p for i,p in enumerate(wp) if i in interiorinds] for wp in wallproperties]
 
 def filterAll(outedges,walldomains,varsaffectedatwall):
-    interiorinds,outedges=filterWalls(outedges)
-    (walldomains,varsaffectedatwall)=filterWallProperties(interiorinds,(walldomains,varsaffectedatwall))
+    # get indices of walls that participate in a strongly connected component of the wall graph
+    wallinds=strongConnectWallNumbers(outedges)
+    # renumber the remaining walls and filter the wall properties
+    outedges=filterOutEdges(wallinds,outedges)
+    (walldomains,varsaffectedatwall)=filterWallProperties(wallinds,(walldomains,varsaffectedatwall))
+    # create all possible wall labels for the remaining walls
     allwalllabels=WL.makeAllWallLabels(outedges,walldomains,varsaffectedatwall)
-    secondtierinds=filterWallLabels(allwalllabels)
-    outedges=filterOutEdges(secondtierinds,outedges)
-    (interiorinds,walldomains,varsaffectedatwall,allwalllabels)=filterWallProperties(secondtierinds,(interiorinds,walldomains,varsaffectedatwall,allwalllabels))
-    return interiorinds,outedges,walldomains,varsaffectedatwall,allwalllabels
+    return wallinds,outedges,walldomains,varsaffectedatwall,allwalllabels
 
 
 if __name__=='__main__':

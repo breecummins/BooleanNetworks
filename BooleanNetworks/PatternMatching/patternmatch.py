@@ -114,17 +114,6 @@ def matchCyclicPattern(pattern,origwallinds,outedges,walldomains,varsaffectedatw
     results = [tuple([origwallinds[r] for r in l]) for l in list(set(results)) if l[0]==l[-1]]
     return results or "None. No results found."
 
-def preprocess(basedir):
-    # read input files
-    outedges,(walldomains,wallthresh),varnames,threshnames,(patternnames,patternmaxmin)=fp.parseAll(basedir+'outEdges.txt',basedir+'walls.txt',basedir+'variables.txt',basedir+'equations.txt',basedir+'patterns.txt')
-    # put max/min patterns in terms of the alphabet u,m,M,d
-    patterns=ppm.constructCyclicPatterns(varnames,patternnames,patternmaxmin)
-    # record which variable is affected at each wall
-    varsaffectedatwall=ppm.varsAtWalls(threshnames,walldomains,wallthresh,varnames)
-    # filter out walls not involved in cycles and create wall labels for the filtered walls
-    inds,outedges,walldomains,varsaffectedatwall,allwalllabels = ppm.filterAll(outedges,walldomains,varsaffectedatwall)
-    return patterns,inds,outedges,walldomains,varsaffectedatwall,allwalllabels
-
 def callPatternMatch(basedir='',message=''):
     # basedir must contain the files outEdges.txt, walls.txt, patterns.txt, variables.txt, and 
     # equations.txt.
