@@ -45,9 +45,16 @@ def test3():
     # X : ~Z : Y
     # Y : ~X : Z
     # Z : ~Y : X
-    # EXAMPLE 3, NEGATIVE FEEDBACK, NO STEADY STATES, SEE NOTES FOR FLOW ACROSS WALLS
+    # EXAMPLE 3, NEGATIVE FEEDBACK, NO STEADY STATES (ONLY SADDLES), SEE NOTES FOR FLOW ACROSS WALLS
     # IGNORING BOUNDARY WALLS
-    pass
+    walldomains=[(1.5,1,0.5),(1,0.5,0.5),(0.5,1,0.5),(1,1.5,0.5),(1.5,0.5,1),(0.5,0.5,1),(0.5,1.5,1),(1.5,1.5,1),(1.5,1,1.5),(1,0.5,1.5),(0.5,1,1.5),(1,1.5,1.5)]
+    outedges=[(4,),(4,),(3,),(0,),(9,),(10,),(3,),(0,),(9,),(10,),(6,),(6,)]
+    varsaffectedatwall=[2,1,2,1,0,0,0,0,2,1,2,1]
+    f=open('patterns.txt','w')
+    f.write('Z min, X max, Y min, Z max, X min, Y max')
+    f.close()
+    varnames=['X','Y','Z']
+    return walldomains,outedges,varsaffectedatwall
 
 if __name__=='__main__':
     test3()

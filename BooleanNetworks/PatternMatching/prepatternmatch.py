@@ -1,13 +1,8 @@
-import fileparsers as fp
+import walllabels as WL
 
-def makeAll(oname='outEdges.txt',wname='walls.txt',vname="variables.txt",ename="equations.txt",pname="patterns.txt"):
-    outedges,(walldomains,wallthresh),varnames,threshnames,(patternnames,patternmaxmin)=fp.parseAll(oname,wname,vname,ename,pname)
+def constructCyclicPatterns(varnames,patternnames,patternmaxmin):
+    numvars=len(varnames)
     varinds=[[varnames.index(q) for q in p] for p in patternnames]
-    patterns=constructCyclicPatterns(len(varnames),varinds,patternmaxmin)
-    varsaffectedatwall=varsAtWalls(threshnames,walldomains,wallthresh,varnames)
-    return patterns,walldomains,outedges,varsaffectedatwall
-
-def constructCyclicPatterns(numvars,varinds,patternmaxmin):
     patterns=[]
     for v,p in zip(varinds,patternmaxmin):
         P=len(p)
@@ -35,23 +30,23 @@ def varsAtWalls(threshnames,walldomains,wallthresh,varnames):
             varsaffectedatwall[j]=varsaffectedatthresh[k][int(w[k]-1)]
     return varsaffectedatwall
 
-def filterBoundaryWallsSteadyStatesWhiteWalls(outedges,walldomains,varsaffectedatwall):
-    # get rid of boundary walls, steady states and white walls, because we shall assume that 
-    # searchable patterns have only extrema
-    # recall we assume no black walls
-    inedges=[tuple([j for j,o in enumerate(outedges) if i in o ]) for i in range(len(outedges))]
+def filterBoundaryWallsSteadyStatesWhiteWalls(outedges):
+    # get rid of boundary walls, steady states, white walls and other non-cyclic walls 
+    # (assuming that black walls do not exist in the system) to reduce the number of
+    # searchable walls
+    # NOTE: This may not be needed if we can get the Morse set directly.
+    inedges=WL.getInEdges(outedges)
     interiorinds=[]
-    interioroutedges=[]
-    interiorwalls=[]
-    interioraffectedvars=[]
-    for q,(o,i,w,v) in enumerate(zip(outedges,inedges,walldomains,varsaffectedatwall)):
+    for q,(o,i) in enumerate(zip(outedges,inedges)):
         if i and (o!=(q,)): 
             interiorinds.append(q)
-            interiorwalls.append(w)
-            interioraffectedvars.append(v)
+    interioroutedges=[]
     for k in interiorinds:
         interioroutedges.append(tuple([interiorinds.index(j) for j in outedges[k] if j in interiorinds]))
-    return interiorinds,interioroutedges,interiorwalls,interioraffectedvars
+    return interiorinds,interioroutedges
+
+def filterWallProperty(interiorinds,wallproperty):
+    return [p for i,p in enumerate(wallproperty) if i in interiorinds]
 
 if __name__=='__main__':
     for p in constructCyclicPatterns("/Users/bcummins/ProjectData/DatabaseSimulations/5D_cycle_1/MGCC_14419/variables.txt"):

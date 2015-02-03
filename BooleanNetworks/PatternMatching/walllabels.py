@@ -29,6 +29,8 @@ def isVarGTorLT(nodeval,nodelist,walldomains,varind):
     return gt*nz,lt*nz
 
 def helper2(q,w,n,nextwall,outedges,walldomains):
+    # is the next wall less than or greater than all of its previous adjacent walls?
+    # is the current wall <= or >= (or neither) all of its next adjacent walls?
     nn=getPreviousNodes(nextwall,outedges)
     ngtw,nltw=isVarGTorLT(n,nn,walldomains,q)
     qn=getNextNodes(q,outedges)
@@ -36,6 +38,8 @@ def helper2(q,w,n,nextwall,outedges,walldomains):
     return wgtn,wltn,ngtw,nltw
 
 def helper1(q,p,w,previouswall,outedges,walldomains):
+    # is the previous wall less than or greater than all of its next adjacent walls?
+    # is the current wall <= or >= (or neither) all of its previous adjacent walls?
     pp=getNextNodes(previouswall,outedges)
     pgtw,pltw=isVarGTorLT(p,pp,walldomains,q)
     qp=getPreviousNodes(q,outedges)
@@ -49,7 +53,9 @@ def getChars(Z,previouswall,nextwall,outedges,walldomains,varatwall):
     # we find all possible behaviors of the variable at the current wall given the
     # trajectory defined by the previous and next walls.
     #
-    # this algorithm works but is heinous to read; making it shorter means it runs slower
+    # this algorithm works but is heinous to read; the only way I saw to make it shorter
+    # is to do unnecessary calculations. This is important to avoid since the function
+    # is inside a recursive call.
     #
     q,p,w,n=Z
     if p<w<n:
@@ -119,7 +125,7 @@ def getChars(Z,previouswall,nextwall,outedges,walldomains,varatwall):
                     chars=['d']
                 else:
                     chars=['d','m']
-        else: #p==w==n
+        else: #p==w==n and q==varatwall
             wgtp,wltp,pgtw,pltw = helper1(q,p,w,previouswall,outedges,walldomains)
             wgtn,wltn,ngtw,nltw = helper2(q,w,n,nextwall,outedges,walldomains)
             if pgtw or wltp:
@@ -159,16 +165,21 @@ def pathDependentStringConstruction(previouswall,wall,nextwall,walldomains,outed
             return []
     return walllabels
 
-def getFirstwalls(firstpattern,outedges,walldomains,varsaffectedatwall):
+def getInEdges(outedges):
+    return [tuple([j for j,o in enumerate(outedges) if i in o]) for i in range(len(outedges))]
+
+def getFirstwalls(firstpattern,allwalllabels):
     # Given the first word in the pattern, find the nodes in the graph that have 
     # this pattern for some path. Our searches will start at each of these nodes.
-    inedges=[tuple([j for j,o in enumerate(outedges) if i in o]) for i in range(len(outedges))]
-    firstwalls=[]
+    return [k for k,wl in enumerate(allwalllabels) if firstpattern in wl]
+
+def makeAllWallLabels(outedges,walldomains,varsaffectedatwall):
+    inedges=getInEdges(outedges)
+    allwalllabels=[]
     for k,(ie,oe) in enumerate(zip(inedges,outedges)):
         wl=[]
         for i,o in itertools.product(ie,oe):
             wl.extend(pathDependentStringConstruction(i,k,o,walldomains,outedges,varsaffectedatwall[k]))
-        if firstpattern in wl:
-            firstwalls.append(k)
-    return firstwalls
+        allwalllabels.append(list(set(wl)))
+    return allwalllabels
 
