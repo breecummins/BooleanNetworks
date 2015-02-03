@@ -29,7 +29,7 @@ def isVarGTorLT(nodeval,nodelist,walldomains,varind):
     return gt*nz,lt*nz
 
 def helper2(q,w,n,nextwall,outedges,walldomains):
-    # is the next wall less than or greater than all of its previous adjacent walls?
+    # is the next wall <= or >= (or neither) all of its previous adjacent walls?
     # is the current wall <= or >= (or neither) all of its next adjacent walls?
     nn=getPreviousNodes(nextwall,outedges)
     ngtw,nltw=isVarGTorLT(n,nn,walldomains,q)
@@ -38,7 +38,7 @@ def helper2(q,w,n,nextwall,outedges,walldomains):
     return wgtn,wltn,ngtw,nltw
 
 def helper1(q,p,w,previouswall,outedges,walldomains):
-    # is the previous wall less than or greater than all of its next adjacent walls?
+    # is the previous wall <= or >= (or neither) all of its next adjacent walls?
     # is the current wall <= or >= (or neither) all of its previous adjacent walls?
     pp=getNextNodes(previouswall,outedges)
     pgtw,pltw=isVarGTorLT(p,pp,walldomains,q)
@@ -165,16 +165,13 @@ def pathDependentStringConstruction(previouswall,wall,nextwall,walldomains,outed
             return []
     return walllabels
 
-def getInEdges(outedges):
-    return [tuple([j for j,o in enumerate(outedges) if i in o]) for i in range(len(outedges))]
-
 def getFirstwalls(firstpattern,allwalllabels):
     # Given the first word in the pattern, find the nodes in the graph that have 
     # this pattern for some path. Our searches will start at each of these nodes.
     return [k for k,wl in enumerate(allwalllabels) if firstpattern in wl]
 
 def makeAllWallLabels(outedges,walldomains,varsaffectedatwall):
-    inedges=getInEdges(outedges)
+    inedges=[tuple([j for j,o in enumerate(outedges) if i in o]) for i in range(len(outedges))]
     allwalllabels=[]
     for k,(ie,oe) in enumerate(zip(inedges,outedges)):
         wl=[]

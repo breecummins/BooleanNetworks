@@ -29,7 +29,8 @@ def constructCyclicPatterns(varnames,patternnames,patternmaxmin):
                     while wordlist[K][n] == '0':
                         K=(K-1)%P #the mod P means I'm assuming cyclicity
                     wordlist[k][n] = 'd' if wordlist[K][n] in ['M','d'] else 'u'
-        wordlist+=[wordlist[0]]
+        if wordlist[0] != wordlist[-1]:
+            wordlist+=[wordlist[0]] # make sure pattern is cyclic
         patterns.append([''.join(w) for w in wordlist])
     return patterns
 
@@ -38,7 +39,7 @@ def varsAtWalls(threshnames,walldomains,wallthresh,varnames):
     for t in threshnames:
         varsaffectedatthresh[varnames.index(t[0])]=tuple([varnames.index(u) for u in t[1]])
     varsaffectedatwall=[-1]*len(walldomains)
-    for k,(j,w) in zip(wallthresh,enumerate(walldomains)): #CHECKME: Must handle boundaries
+    for k,(j,w) in zip(wallthresh,enumerate(walldomains)):
         if k>-1 and w[k]-int(w[k])<0.25 and 0<w[k]<len(varsaffectedatthresh[k])+1:
             varsaffectedatwall[j]=varsaffectedatthresh[k][int(w[k]-1)]
     return varsaffectedatwall
@@ -48,7 +49,7 @@ def strongConnect(outedges):
     for i,o in enumerate(outedges):
         for j in o:
             adjacencymatrix[i,j]=1
-    N,components=connected_components(adjacencymatrix,connection="strong")
+    N,components=connected_components(adjacencymatrix,directed=True,connection="strong")
     return N,components
 
 def strongConnectWallNumbers(outedges):
@@ -60,11 +61,8 @@ def strongConnectWallNumbers(outedges):
             wallinds.extend(inds)
     return sorted(wallinds)
 
-def filterOutEdges(interiorinds,outedges):
-    return [tuple([interiorinds.index(j) for j in outedges[k] if j in interiorinds]) for k in interiorinds]
-
-def filterWallLabels(walllabels):
-    return [k for k,w in enumerate(walllabels) if w]
+def filterOutEdges(wallinds,outedges):
+    return [tuple([wallinds.index(j) for j in outedges[k] if j in wallinds]) for k in wallinds]
 
 def filterWallProperties(interiorinds,wallproperties):
     # strip filtered walls from associated wall properties

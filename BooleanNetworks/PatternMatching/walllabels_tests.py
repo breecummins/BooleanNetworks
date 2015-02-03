@@ -1,5 +1,5 @@
 import walllabels as WL
-import prepatternmatch as ppm
+import preprocess as PP
 import testcases as tc
 
 def testme():
@@ -9,10 +9,8 @@ def testme():
     test3()
 
 def preprocess((walldomains,outedges,varsaffectedatwall)):
-    allwalllabels=WL.makeAllWallLabels(outedges,walldomains,varsaffectedatwall)
-    inds=ppm.filterWalls(outedges,allwalllabels)
-    outedges=ppm.filterOutEdges(inds,outedges)
-    (walldomains,varsaffectedatwall,allwalllabels)=ppm.filterWallProperties(inds,(walldomains,varsaffectedatwall,allwalllabels))
+    # filter out walls not involved in cycles and create wall labels for the filtered walls
+    inds,outedges,walldomains,varsaffectedatwall,allwalllabels = PP.filterAll(outedges,walldomains,varsaffectedatwall)
     return inds,outedges,walldomains,varsaffectedatwall,allwalllabels
 
 
@@ -64,4 +62,5 @@ def test3():
 if __name__=='__main__':
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels=preprocess(tc.test3())
     print inds 
+    print [tuple([inds[j] for j in o]) for o in outedges]
     print allwalllabels
