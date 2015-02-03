@@ -30,23 +30,39 @@ def varsAtWalls(threshnames,walldomains,wallthresh,varnames):
             varsaffectedatwall[j]=varsaffectedatthresh[k][int(w[k]-1)]
     return varsaffectedatwall
 
-def filterBoundaryWallsSteadyStatesWhiteWalls(outedges):
+def filterWalls(outedges):
     # get rid of boundary walls, steady states, white walls and other non-cyclic walls 
     # (assuming that black walls do not exist in the system) to reduce the number of
     # searchable walls
-    # NOTE: This may not be needed if we can get the Morse set directly.
+    # NOTE: This may not be needed if we can get the Morse set directly. Will have to see 
+    # if there are empty wall labels.
     inedges=WL.getInEdges(outedges)
     interiorinds=[]
     for q,(o,i) in enumerate(zip(outedges,inedges)):
-        if i and (o!=(q,)): 
+        if i and w and (o!=(q,)): 
             interiorinds.append(q)
-    interioroutedges=[]
-    for k in interiorinds:
-        interioroutedges.append(tuple([interiorinds.index(j) for j in outedges[k] if j in interiorinds]))
-    return interiorinds,interioroutedges
+    interioroutedges=filterOutEdges(interiorinds,outedges)
+    return interiorinds, interioroutedges
 
-def filterWallProperty(interiorinds,wallproperty):
-    return [p for i,p in enumerate(wallproperty) if i in interiorinds]
+def filterOutEdges(interiorinds,outedges):
+    return [tuple([interiorinds.index(j) for j in outedges[k] if j in interiorinds]) for k in interiorinds]
+
+def filterWallLabels(walllabels):
+    return [k for k,w in enumerate(walllabels) if w]
+
+def filterWallProperties(interiorinds,wallproperties):
+    # strip filtered walls from associated wall properties
+    return [[p for i,p in enumerate(wp) if i in interiorinds] for wp in wallproperties]
+
+def filterAll(outedges,walldomains,varsaffectedatwall):
+    interiorinds,outedges=filterWalls(outedges)
+    (walldomains,varsaffectedatwall)=filterWallProperties(interiorinds,(walldomains,varsaffectedatwall))
+    allwalllabels=WL.makeAllWallLabels(outedges,walldomains,varsaffectedatwall)
+    secondtierinds=filterWallLabels(allwalllabels)
+    outedges=filterOutEdges(secondtierinds,outedges)
+    (interiorinds,walldomains,varsaffectedatwall,allwalllabels)=filterWallProperties(secondtierinds,(interiorinds,walldomains,varsaffectedatwall,allwalllabels))
+    return interiorinds,outedges,walldomains,varsaffectedatwall,allwalllabels
+
 
 if __name__=='__main__':
     for p in constructCyclicPatterns("/Users/bcummins/ProjectData/DatabaseSimulations/5D_cycle_1/MGCC_14419/variables.txt"):

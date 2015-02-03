@@ -95,7 +95,7 @@ def matchCyclicPattern(pattern,origwallinds,outedges,walldomains,varsaffectedatw
     firstwalls=WL.getFirstwalls(pattern[0],allwalllabels)
     # return trivial length one patterns
     if len(pattern)==1:
-        return [ (origwallinds.index(w),) for w in firstwalls ]
+        return [ (origwallinds.index(w),) for w in firstwalls ] or "None. No results found."
     # pre-cache intermediate nodes that may exist in the wall graph (saves time in recursive call)
     patternoptions=[labelOptions(p) for p in pattern[1:]]
     patternParams = zip(pattern[1:],patternoptions)
@@ -112,7 +112,7 @@ def matchCyclicPattern(pattern,origwallinds,outedges,walldomains,varsaffectedatw
         results.extend([tuple(l) for l in R if l]) # pull out nonempty paths
     # now translate cyclic paths into original wall numbers; not guaranteed unique because not checking for identical paths that start at different nodes
     results = [tuple([origwallinds[r] for r in l]) for l in list(set(results)) if l[0]==l[-1]]
-    return results if results else "None. No results found."
+    return results or "None. No results found."
 
 def preprocess(basedir):
     # read input files
@@ -121,14 +121,8 @@ def preprocess(basedir):
     patterns=ppm.constructCyclicPatterns(varnames,patternnames,patternmaxmin)
     # record which variable is affected at each wall
     varsaffectedatwall=ppm.varsAtWalls(threshnames,walldomains,wallthresh,varnames)
-    # make all possible wall labels
-    # DEPENDS ON HAVING ENTIRE WALL GRAPH!! At least, the wall graph has the most information
-    allwalllabels=WL.makeAllWallLabels(outedges,walldomains,varsaffectedatwall)
-    # filter out steady states and walls not involved in cycles
-    inds,outedges=ppm.filterBoundaryWallsSteadyStatesWhiteWalls(outedges)
-    walldomains=ppm.filterWallProperty(inds,walldomains)
-    varsaffectedatwall=ppm.filterWallProperty(inds,varsaffectedatwall)
-    allwalllabels=ppm.filterWallProperty(inds,allwalllabels)
+    # filter out walls not involved in cycles and create wall labels for the filtered walls
+    inds,outedges,walldomains,varsaffectedatwall,allwalllabels = ppm.filterAll(outedges,walldomains,varsaffectedatwall)
     return patterns,inds,outedges,walldomains,varsaffectedatwall,allwalllabels
 
 def callPatternMatch(basedir='',message=''):

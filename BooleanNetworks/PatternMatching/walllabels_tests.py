@@ -10,10 +10,9 @@ def testme():
 
 def preprocess((walldomains,outedges,varsaffectedatwall)):
     allwalllabels=WL.makeAllWallLabels(outedges,walldomains,varsaffectedatwall)
-    inds,outedges=ppm.filterBoundaryWallsSteadyStatesWhiteWalls(outedges)
-    walldomains=ppm.filterWallProperty(inds,walldomains)
-    varsaffectedatwall=ppm.filterWallProperty(inds,varsaffectedatwall)
-    allwalllabels=ppm.filterWallProperty(inds,allwalllabels)
+    inds=ppm.filterWalls(outedges,allwalllabels)
+    outedges=ppm.filterOutEdges(inds,outedges)
+    (walldomains,varsaffectedatwall,allwalllabels)=ppm.filterWallProperties(inds,(walldomains,varsaffectedatwall,allwalllabels))
     return inds,outedges,walldomains,varsaffectedatwall,allwalllabels
 
 
@@ -66,4 +65,3 @@ if __name__=='__main__':
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels=preprocess(tc.test3())
     print inds 
     print allwalllabels
-    print [inds[j] for j in WL.getFirstwalls('uM',allwalllabels)]#==[5]
