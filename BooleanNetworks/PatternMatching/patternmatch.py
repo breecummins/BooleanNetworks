@@ -1,7 +1,6 @@
 import sys
 import walllabels as WL
-import prepatternmatch as ppm
-import fileparsers as fp
+from preprocess import preprocess
 
 def repeatingLoop(match):
     # see if the match has a repeating loop inside it
