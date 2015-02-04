@@ -10,7 +10,7 @@ def test0():
         varsaffectedatwall[k]=0
     for k in [10,11]:
         varsaffectedatwall[k]=1
-    return walldomains,outedges,varsaffectedatwall
+    return outedges,walldomains,varsaffectedatwall
 
 def test1():
     # PATTERN CONTAINS ALL EXTREMA (INTERMEDIATE EXTREMA NOT ALLOWED IN PATH MATCH), UNIQUENESS NOT REQUIRED
@@ -24,7 +24,7 @@ def test1():
         varsaffectedatwall[k]=0
     for k in [10,11]:
         varsaffectedatwall[k]=1
-    return walldomains,outedges,varsaffectedatwall
+    return outedges,walldomains,varsaffectedatwall
 
 def test2():
     # PATTERN CONTAINS ALL EXTREMA (INTERMEDIATE EXTREMA NOT ALLOWED IN PATH MATCH), UNIQUENESS NOT REQUIRED
@@ -38,7 +38,7 @@ def test2():
         varsaffectedatwall[k]=0
     for k in [5,6]:
         varsaffectedatwall[k]=1
-    return walldomains,outedges,varsaffectedatwall
+    return outedges,walldomains,varsaffectedatwall
 
 def test3():
     # PATTERN CONTAINS ALL EXTREMA (INTERMEDIATE EXTREMA NOT ALLOWED IN PATH MATCH), UNIQUENESS NOT REQUIRED
@@ -54,7 +54,7 @@ def test3():
     f.write('Z min, X max, Y min, Z max, X min, Y max')
     f.close()
     varnames=['X','Y','Z']
-    return walldomains,outedges,varsaffectedatwall
+    return outedges,walldomains,varsaffectedatwall
 
 if __name__=='__main__':
     test3()

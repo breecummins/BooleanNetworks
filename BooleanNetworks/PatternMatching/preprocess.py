@@ -78,7 +78,6 @@ def filterAll(outedges,walldomains,varsaffectedatwall):
     allwalllabels=WL.makeAllWallLabels(outedges,walldomains,varsaffectedatwall)
     return wallinds,outedges,walldomains,varsaffectedatwall,allwalllabels
 
-
 if __name__=='__main__':
     for p in constructCyclicPatterns("/Users/bcummins/ProjectData/DatabaseSimulations/5D_cycle_1/MGCC_14419/variables.txt"):
         print p 

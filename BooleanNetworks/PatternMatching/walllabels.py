@@ -33,18 +33,30 @@ def helper2(q,w,n,nextwall,outedges,walldomains):
     # is the next wall <= or >= (or neither) all of its previous adjacent walls?
     # is the current wall <= or >= (or neither) all of its next adjacent walls?
     nn=getPreviousNodes(nextwall,outedges)
-    ngtw,nltw=isVarGTorLT(n,nn,walldomains,q)
+    if len(nn)>1:
+        ngtw,nltw=isVarGTorLT(n,nn,walldomains,q)
+    else:
+        ngtw,nltw=False,False
     qn=getNextNodes(q,outedges)
-    wgtn,wltn=isVarGTorLT(w,qn,walldomains,q)
+    if len(qn)>1:
+        wgtn,wltn=isVarGTorLT(w,qn,walldomains,q)
+    else:
+        wgtn,wltn=False,False
     return wgtn,wltn,ngtw,nltw
 
 def helper1(q,p,w,previouswall,outedges,walldomains):
     # is the previous wall <= or >= (or neither) all of its next adjacent walls?
     # is the current wall <= or >= (or neither) all of its previous adjacent walls?
     pp=getNextNodes(previouswall,outedges)
-    pgtw,pltw=isVarGTorLT(p,pp,walldomains,q)
+    if len(pp)>1:
+        pgtw,pltw=isVarGTorLT(p,pp,walldomains,q)
+    else:
+        pgtw,pltw=False,False
     qp=getPreviousNodes(q,outedges)
-    wgtp,wltp=isVarGTorLT(w,qp,walldomains,q)
+    if len(qp)>1:
+        wgtp,wltp=isVarGTorLT(w,qp,walldomains,q)
+    else:
+        wgtp,wltp=False,False
     return wgtp,wltp,pgtw,pltw
 
 
