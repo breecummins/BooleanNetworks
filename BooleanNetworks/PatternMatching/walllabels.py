@@ -1,4 +1,5 @@
 import itertools
+import sys
 
 def getNextNodes(node,outedges):
     return [o for o in outedges[node]]
@@ -180,42 +181,5 @@ def makeAllWallLabels(outedges,walldomains,varsaffectedatwall):
         allwalllabels.append(list(set(wl)))
     return allwalllabels
 
-def makeAllWallLabels2(outedges,walldomains,varsaffectedatwall):
-    inedges=[tuple([j for j,o in enumerate(outedges) if i in o]) for i in range(len(outedges))]
-    allwalllabels=[]
-    for k,(ie,oe) in enumerate(zip(inedges,outedges)):
-        wl=[]
-        for i,o in itertools.product(ie,oe):
-            wl.extend(pathDependentStringConstruction(i,k,o,walldomains,outedges,varsaffectedatwall[k]))
-        allwalllabels.append(list(set(wl)))
-    newwalllabels=[]
-    for wl,ie,oe,vw in zip(allwalllabels,inedges,outedges,varsaffectedatwall):
-        if len(wl)>1:
-            newwl=['']
-            zl=zip(*wl)
-            vl=zip(range(len(wl[0])),[len(set(z))>1 for z in zl])
-            for k,v in vl:
-                if v:
-                    ichars=set([allwalllabels[i][k] for i in ie])
-                    ochars=set([allwalllabels[o][k] for o in oe])
-                    if k != vw:  
-                        if ichars <= set(['d','M']) or ochars <= set(['d','m']):
-                            newwl=[l+'d' for l in newwl]
-                        elif ichars <= set(['u','m']) or ochars <= set(['u','M']):
-                            newwl=[l+'u' for l in newwl]
-                        else:
-                            newwl=[l+c for l in newwl for c in zl[k]]
-                    else:
-                        if ichars <= set([])
 
-                else:
-                    newwl+=zl[k][0]
-
-
-        else:
-            newwalllabels.append(wl)
-
-
-
-    return allwalllabels
 
