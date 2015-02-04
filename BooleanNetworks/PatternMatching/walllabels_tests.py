@@ -60,7 +60,12 @@ def test3():
 
 
 if __name__=='__main__':
-    inds,outedges,walldomains,varsaffectedatwall,allwalllabels=preprocess(tc.test3())
-    print inds 
-    print [tuple([inds[j] for j in o]) for o in outedges]
+    walldomains,outedges,varsaffectedatwall = tc.test3()
+    walldomains,outedges,varsaffectedatwall = walldomains[:12],outedges[:12],varsaffectedatwall[:12]
+    allwalllabels=WL.makeAllWallLabels(outedges,walldomains,varsaffectedatwall)
     print allwalllabels
+    print WL.pathDependentStringConstruction(7,0,4,walldomains, outedges,varsaffectedatwall[0])
+    # inds,outedges,walldomains,varsaffectedatwall,allwalllabels=preprocess(tc.test3())
+    # print inds 
+    # print [tuple([inds[j] for j in o]) for o in outedges]
+    # print allwalllabels
