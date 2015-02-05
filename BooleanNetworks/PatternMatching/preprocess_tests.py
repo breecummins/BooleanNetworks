@@ -1,6 +1,8 @@
 import preprocess as PP
 import testcases as tc
 
+#FIXME -- add tests for strongly connected components and for varsAtWalls.
+
 def testme():
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels = PP.filterAll(*tc.test0())
     print inds==[3, 5, 6, 8, 10, 11, 13]

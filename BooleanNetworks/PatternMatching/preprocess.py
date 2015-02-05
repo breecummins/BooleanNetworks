@@ -69,7 +69,7 @@ def filterWallProperties(interiorinds,wallproperties):
     return [[p for i,p in enumerate(wp) if i in interiorinds] for wp in wallproperties]
 
 def filterAll(outedges,walldomains,varsaffectedatwall):
-    # get indices of walls that participate in a strongly connected component of the wall graph
+    # get indices of walls in nontrivial strongly connected components of the wall graph
     wallinds=strongConnectWallNumbers(outedges)
     # renumber the remaining walls and filter the wall properties
     outedges=filterOutEdges(wallinds,outedges)
