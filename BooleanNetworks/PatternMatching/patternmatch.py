@@ -25,7 +25,7 @@ def recursePattern(startnode,match,matches,patterns,previouspattern,pDict):
                     if p in nextwalllabels: # if we hit the next pattern element, reduce pattern by one
                         # WE MAY GET FALSE POSITIVES WITHOUT THE CONSISTENCY CHECK ABOVE (this is because we have to pick the right q in the next step)
                         matches=recursePattern(n,match+[n],matches,patterns[1:],p,pDict)
-                    elif P and P in nextwalllabels and not repeatingLoop(match+[n]): # if we hit an intermediate node, call pattern without reduction provided there isn't a repeating loop 
+                    if P and P in nextwalllabels and not repeatingLoop(match+[n]): # if we hit an intermediate node, call pattern without reduction provided there isn't a repeating loop 
                         matches=recursePattern(n,match+[n],matches,patterns,P,pDict)
         return matches
 
