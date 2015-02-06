@@ -51,9 +51,14 @@ def test3():
     outedges=[(4,),(4,),(3,),(0,),(9,),(10,),(3,),(0,),(9,),(10,),(6,),(6,)]+[(4,)]*3+[(9,)]*3+[(10,)]*3+[(1,2,5)]*3+[(0,)]*3+[(7,8,11)]*3+[(6,)]*3+[(3,)]*3
     varsaffectedatwall=[2,1,2,1,0,0,0,0,2,1,2,1]+[-1]*24
     f=open('patterns.txt','w')
-    f.write('Z min, X max, Y min, Z max, X min, Y max')
+    f.write('Z min, X max, Y min, Z max, X min, Y max\n Z min, X min, Y max, Y min, Z max, X max')
     f.close()
-    varnames=['X','Y','Z']
+    f=open('variables.txt','w')
+    f.write('0 X\n 1 Y\n 2 Z')
+    f.close()
+    f=open('equations.txt','w')
+    f.write('X : ~Z : Y\n Y : ~X : Z\n Z : ~Y : X')
+    f.close()
     return outedges,walldomains,varsaffectedatwall
 
 if __name__=='__main__':

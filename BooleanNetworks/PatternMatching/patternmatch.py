@@ -13,8 +13,8 @@ def repeatingLoop(match):
                 return True
         return False
 
-def recursePattern(startnode,match,matches,patterns,previouspattern,walllabels,pDict):
-    if len(match) >= pDict['lenpattern'] and pDict['stop'] in walllabels: # the first condition requires all walls to be present in the pattern. A way to ensure this is to have only extrema in the pattern - i.e. every p in pattern has exactly one 'm' or 'M'. This is why this condition exists in the input sanity check.
+def recursePattern(startnode,match,matches,patterns,previouspattern,pDict):
+    if len(match) >= pDict['lenpattern'] and pDict['stop'] in pDict['allwalllabels'][match[-1]]: # the first condition requires all walls to be present in the pattern. A way to ensure this is to have only extrema in the pattern - i.e. every p in pattern has exactly one 'm' or 'M'. This is why this condition exists in the input sanity check.
         matches.append(match)
         return matches
     else:
@@ -24,9 +24,9 @@ def recursePattern(startnode,match,matches,patterns,previouspattern,walllabels,p
                     nextwalllabels=pDict['allwalllabels'][n]
                     if p in nextwalllabels: # if we hit the next pattern element, reduce pattern by one
                         # WE MAY GET FALSE POSITIVES WITHOUT THE CONSISTENCY CHECK ABOVE (this is because we have to pick the right q in the next step)
-                        matches=recursePattern(n,match+[n],matches,patterns[1:],p,walllabels,pDict)
-                    if P and P in nextwalllabels and not repeatingLoop(match+[n]): # if we hit an intermediate node, call pattern without reduction provided there isn't a repeating loop 
-                        matches=recursePattern(n,match+[n],matches,patterns,P,walllabels,pDict)
+                        matches=recursePattern(n,match+[n],matches,patterns[1:],p,pDict)
+                    elif P and P in nextwalllabels and not repeatingLoop(match+[n]): # if we hit an intermediate node, call pattern without reduction provided there isn't a repeating loop 
+                        matches=recursePattern(n,match+[n],matches,patterns,P,pDict)
         return matches
 
 def labelOptions(p):
@@ -102,12 +102,12 @@ def matchCyclicPattern(pattern,origwallinds,outedges,walldomains,varsaffectedatw
     # find matches
     results=[]
     if showfirstwall:
-        print "All first walls {}".format([origwallinds.index(w) for w in firstwalls])
+        print "All first walls {}".format([origwallinds[w] for w in firstwalls])
     for w in firstwalls:
         if showfirstwall:
             print "First wall {}".format(w)
         sys.stdout.flush() # force print messages thus far
-        R = recursePattern(w,[w],[],patternParams,[],[],paramDict) # seek match starting at w
+        R = recursePattern(w,[w],[],patternParams,[],paramDict) # seek match starting at w
         results.extend([tuple(l) for l in R if l]) # pull out nonempty paths
     # now translate cyclic paths into original wall numbers; not guaranteed unique because not checking for identical paths that start at different nodes
     results = [tuple([origwallinds[r] for r in l]) for l in list(set(results)) if l[0]==l[-1]]

@@ -1,7 +1,7 @@
 import preprocess as PP
 import testcases as tc
-
-#FIXME -- add tests for strongly connected components and for varsAtWalls.
+import fileparsers as fp
+import numpy as np
 
 def testme():
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels = PP.filterAll(*tc.test0())
@@ -42,6 +42,20 @@ def testme():
     patternmaxmin=[['min','max','min','max','max','min'],['max','min','min','max','max','min']]
     patterns=PP.constructCyclicPatterns(varnames,patternnames,patternmaxmin)
     print patterns==[['mdu','udM','umd','Mud','dMd','ddm','mdu'],['ddM','mdd','umd','uMd','Mdd','ddm','ddM']]
+
+    outedges=[(1,2),(5,8),(3,),(4,),(2,),(6,7),(7,),(6,),(0,)]
+    N,components=PP.strongConnect(outedges)
+    print N==4 and all(components==np.array([3,3,0,0,0,2,1,1,3]))
+    print PP.strongConnectWallNumbers(outedges) == [0,1,2,3,4,6,7,8]
+
+    outedges,walldomains,varsaffectedatwall=tc.test3()
+    print PP.strongConnectWallNumbers(outedges) == [0,3,4,6,9,10]
+    varnames=fp.parseVars()
+    patternnames,patternmaxmin=fp.parsePatterns()
+    print PP.constructCyclicPatterns(varnames,patternnames,patternmaxmin)==[['udm','Mdu','dmu','duM','mud','uMd','udm'],['dum','muu','uMu','umu','uuM','Mud','dum']]
+    wallthresh=[1,0,1,0,2,2,2,2,1,0,1,0]+[1,0,2]*8
+    threshnames=fp.parseEqns()
+    print PP.varsAtWalls(threshnames,walldomains,wallthresh,varnames)==varsaffectedatwall
 
 
 
