@@ -43,6 +43,17 @@ def testme():
     patterns=PP.constructCyclicPatterns(varnames,patternnames,patternmaxmin)
     print patterns==[['mdu','udM','umd','Mud','dMd','ddm','mdu'],['ddM','mdd','umd','uMd','Mdd','ddm','ddM']]
 
+    inds,outedges,walldomains,varsaffectedatwall,allwalllabels = PP.filterAll(*tc.test4())
+    print inds==range(5,12)
+    print outedges==[(2,),(0,3),(5,),(6,),(1,),(6,),(4,)]
+    print walldomains==[(1.5,1),(1.5,2),(2,0.5),(2,1.5),(2,2.5),(2.5,1),(2.5,2)]
+    print varsaffectedatwall==[1,0,1,1,1,1,0]
+    varnames=['X1','X2']
+    patternnames=[['X1','X2','X1','X2'],['X1','X1','X2','X2']]
+    patternmaxmin=[['min','min','max','max'],['max','min','min','max']]
+    patterns=PP.constructCyclicPatterns(varnames,patternnames,patternmaxmin)
+    print patterns==[['md','um','Mu','dM','md'],['Md','md','um','uM','Md']]
+
     outedges=[(1,2),(5,8),(3,),(4,),(2,),(6,7),(7,),(6,),(0,)]
     N,components=PP.strongConnect(outedges)
     print N==4 and all(components==np.array([3,3,0,0,0,2,1,1,3]))

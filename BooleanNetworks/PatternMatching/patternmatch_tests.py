@@ -64,5 +64,19 @@ def testme():
     match = matchCyclicPattern(patterns[1],inds,outedges,walldomains,varsaffectedatwall,allwalllabels,showfirstwall=0,cyclewarn=0)
     print 'None' in match
 
+    #################################
+
+    inds,outedges,walldomains,varsaffectedatwall,allwalllabels = PP.filterAll(*tc.test4())
+    patternnames,patternmaxmin=fp.parsePatterns()
+
+    pattern=['md','um','Mu','dM','md']
+    match = matchCyclicPattern(pattern,inds,outedges,walldomains,varsaffectedatwall,allwalllabels,showfirstwall=0,cyclewarn=0)
+    print match==[(6,5,7,10,11,9,6),(6,8,11,9,6)]
+
+    pattern=['mdu','umu','Muu','dMu','mdu']
+    match = matchCyclicPattern(pattern,inds,outedges,walldomains,varsaffectedatwall,allwalllabels,showfirstwall=0,cyclewarn=0)
+    print 'None' in match
+
+
 if __name__=='__main__':
 	testme()

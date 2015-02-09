@@ -54,12 +54,21 @@ def matchCyclicPattern(pattern,origwallinds,outedges,walldomains,varsaffectedatw
     This function finds paths in a directed graph that are consistent with a target pattern. The nodes
     of the directed graph are called walls, and each node is associated with a wall label (in walldomains)
     and a wall number (the index of the label in walldomains). The outgoing edges of a node with wall
-    number w are stored in outedges at index w. Each element of outedges is a collection of wall numbers.
-    The pattern is a sequence of words from the alphabet ('u','d','m','M'). The labels in walldomains
-    will be transformed in a path-dependent manner into words of the same type. The paths in the graph 
-    that have word labels that match the pattern will be returned as sequences of wall numbers. The graph
-    will be reduced in size by the removal of boundary walls, steady states, and white walls, since these
-    will not participate in cycles.
+    number w are stored in outedges at index w. Each element of outedges is a collection of wall numbers. 
+    The graph is assumed to consist of a collection of nontrivial strongly connected components, since only 
+    these nodes participate in cycles. (This reduction should have been performed in the preprocessing step.)
+
+    The pattern is a sequence of words from the alphabet ('u','d','m','M'), with each word containing EXACTLY
+    one 'm' or 'M'. The variable locations in walldomains will be transformed in a path-dependent manner into 
+    words of the same type that have AT MOST one 'm' or 'M'. There can be at most one 'm' 
+    or 'M' at each wall because we assume that the input graph arises from a switching network where each 
+    regulation event occurs at a unique threshold. The paths in the graph that have word labels that 
+    match the pattern will be returned as sequences of wall numbers. Intermediate wall labels may be inserted 
+    into the pattern as long as they do not have an 'm' or 'M' in the label, and are consistent with the next 
+    word in the pattern. Example: 'uMdd' in a four dimensional system means that the first variable is 
+    increasing (up), the second variable is at a maximum (Max), and the third and fourth variables are 
+    decreasing (down). The character 'm' means a variable is at a minimum (min). If the words 'uMdd' then 'udmd'
+    appear in a pattern, the intermediate node 'uddd' may be inserted between these two in a match.
 
     The following variables are produced by the function preprocess in this module. See the code for more information.
 
@@ -73,12 +82,6 @@ def matchCyclicPattern(pattern,origwallinds,outedges,walldomains,varsaffectedatw
     showfirstwall and cyclewarn print informative messages for the user. By default, showfirstwall is turned off, since it exists only for tracking the progress of the code.
 
     See patternmatch_tests.py for examples of function calls.
-
-    See notes for the meaning of alphabet. Briefly, 'uMdd' means that the first variable is increasing 
-    (up), the second variable is at a maximum (Max), and the third and fourth variables are decreasing 
-    (down). The character 'm' means a variable is at a minimum (min). There can be at most one 'm' or 
-    'M' at each wall, because we assume that the input graph arises from a switching network where each
-    regulation event occurs at a unique threshold.
 
     '''
     # sanity check the input, abort if insane 

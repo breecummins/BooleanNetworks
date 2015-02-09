@@ -1,8 +1,7 @@
 def test0():
-    # PATTERN CONTAINS ALL EXTREMA (INTERMEDIATE EXTREMA NOT ALLOWED IN PATH MATCH), UNIQUENESS NOT REQUIRED
     # X : X(~Z) : X Z
     # Z : X : X
-    # EXAMPLE 0, NO STEADY STATES, SEE NOTES FOR FLOW ACROSS WALLS
+    # NO STEADY STATES, SEE NOTES FOR FLOW ACROSS WALLS, BOUNDARY WALLS INCLUDED
     walldomains=[(0,0.5),(0,1.5),(0.5,0),(0.5,1),(0.5,2),(1,0.5),(1,1.5),(1.5,0),(1.5,1),(1.5,2),(2,0.5),(2,1.5),(2.5,0),(2.5,1),(2.5,2),(3,0.5),(3,1.5)]
     outedges=[(5,),(3,),(5,),(5,),(3,),(10,),(3,),(10,),(10,),(6,),(13,),(6,8),(13,),(11,),(11,),(13,),(11,)]
     varsaffectedatwall=[-1]*len(outedges)
@@ -13,10 +12,9 @@ def test0():
     return outedges,walldomains,varsaffectedatwall
 
 def test1():
-    # PATTERN CONTAINS ALL EXTREMA (INTERMEDIATE EXTREMA NOT ALLOWED IN PATH MATCH), UNIQUENESS NOT REQUIRED
     # X : X(~Z) : X Z
     # Z : X : X
-    # EXAMPLE 1, HAS STEADY STATE (WALL 17) AND WHITE WALL (WALL 5), SEE NOTES FOR FLOW ACROSS WALLS
+    # HAS STEADY STATE (WALL 17) AND WHITE WALL (WALL 5), SEE NOTES FOR FLOW ACROSS WALLS, BOUNDARY WALLS INCLUDED
     walldomains=[(0,0.5),(0,1.5),(0.5,0),(0.5,1),(0.5,2),(1,0.5),(1,1.5),(1.5,0),(1.5,1),(1.5,2),(2,0.5),(2,1.5),(2.5,0),(2.5,1),(2.5,2),(3,0.5),(3,1.5),(0.5,0.5)]
     outedges=[(17,),(3,),(17,),(17,),(3,),(10,17),(3,),(10,),(10,),(6,),(13,),(6,8),(13,),(11,),(11,),(13,),(11,),(17,)]
     varsaffectedatwall=[-1]*len(outedges)
@@ -27,10 +25,9 @@ def test1():
     return outedges,walldomains,varsaffectedatwall
 
 def test2():
-    # PATTERN CONTAINS ALL EXTREMA (INTERMEDIATE EXTREMA NOT ALLOWED IN PATH MATCH), UNIQUENESS NOT REQUIRED
     # X : X(~Z) : Z X
     # Z : X : X
-    # EXAMPLE 2, NO STEADY STATES, SEE NOTES FOR FLOW ACROSS WALLS
+    # NO STEADY STATES, SEE NOTES FOR FLOW ACROSS WALLS, BOUNDARY WALLS INCLUDED
     walldomains=[(0,0.5),(0,1.5),(0.5,0),(0.5,1),(0.5,2),(1,0.5),(1,1.5),(1.5,0),(1.5,1),(1.5,2),(2,0.5),(2,1.5),(2.5,0),(2.5,1),(2.5,2),(3,0.5),(3,1.5)]
     outedges=[(5,),(3,),(5,),(5,),(3,),(8,10),(3,),(10,),(6,),(6,),(13,),(6,),(13,),(11,),(11,),(13,),(11,)]
     varsaffectedatwall=[-1]*len(outedges)
@@ -41,12 +38,10 @@ def test2():
     return outedges,walldomains,varsaffectedatwall
 
 def test3():
-    # PATTERN CONTAINS ALL EXTREMA (INTERMEDIATE EXTREMA NOT ALLOWED IN PATH MATCH), UNIQUENESS NOT REQUIRED
     # X : ~Z : Y
     # Y : ~X : Z
     # Z : ~Y : X
-    # EXAMPLE 3, NEGATIVE FEEDBACK, NO STEADY STATES (ONLY SADDLES), SEE NOTES FOR FLOW ACROSS WALLS
-    # INCLUDING BOUNDARY WALLS
+    # 3D EXAMPLE, NEGATIVE FEEDBACK, NO STEADY STATES (ONLY SADDLES), BOUNDARY WALLS INCLUDED
     walldomains=[(1.5,1,0.5),(1,0.5,0.5),(0.5,1,0.5),(1,1.5,0.5),(1.5,0.5,1),(0.5,0.5,1),(0.5,1.5,1),(1.5,1.5,1),(1.5,1,1.5),(1,0.5,1.5),(0.5,1,1.5),(1,1.5,1.5)]+[(1.5,0,0.5),(2,0.5,0.5),(1.5,0.5,0)]+[(1.5,0,1.5),(2,0.5,1.5),(1.5,0.5,2)]+[(0.5,0,1.5),(0,0.5,1.5),(0.5,0.5,2)]+[(0.5,0,0.5),(0,0.5,0.5),(0.5,0.5,0)]+[(1.5,2,0.5),(2,1.5,0.5),(1.5,1.5,0)]+[(1.5,2,1.5),(2,1.5,1.5),(1.5,1.5,2)]+[(0.5,2,1.5),(0,1.5,1.5),(0.5,1.5,2)]+[(0.5,2,0.5),(0,1.5,0.5),(0.5,1.5,0)]
     outedges=[(4,),(4,),(3,),(0,),(9,),(10,),(3,),(0,),(9,),(10,),(6,),(6,)]+[(4,)]*3+[(9,)]*3+[(10,)]*3+[(1,2,5)]*3+[(0,)]*3+[(7,8,11)]*3+[(6,)]*3+[(3,)]*3
     varsaffectedatwall=[2,1,2,1,0,0,0,0,2,1,2,1]+[-1]*24
@@ -60,6 +55,16 @@ def test3():
     f.write('X : ~Z : Y\n Y : ~X : Z\n Z : ~Y : X')
     f.close()
     return outedges,walldomains,varsaffectedatwall
+
+def test4():
+    # X1 : (X1)(~X2) : X1 X2
+    # X2 : (X2)(X1) : X2 X1
+    # 2D EXAMPLE WITH TWO THRESHOLDS EACH, HAS CYCLES AND 1 OFF FIXED POINT, BOUNDARY WALLS NOT INCLUDED
+    walldomains=[(0.5,1),(0.5,2),(1,0.5),(1,1.5),(1,2.5),(1.5,1),(1.5,2),(2,0.5),(2,1.5),(2,2.5),(2.5,1),(2.5,2)]
+    outedges=[(),(0,),(7,),(0,),(1,),(7,),(5,8),(10,),(11,),(4,6),(11,),(9,)]
+    varsaffectedatwall=[1,0,0,0,0,1,0,1,1,1,1,0]
+    return outedges,walldomains,varsaffectedatwall
+
 
 if __name__=='__main__':
     test3()

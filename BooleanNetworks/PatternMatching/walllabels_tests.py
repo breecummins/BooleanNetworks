@@ -7,6 +7,7 @@ def testme():
     test1()
     test2()
     test3()
+    test4()
 
 def test0():
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels = PP.filterAll(*tc.test0())
@@ -39,6 +40,7 @@ def test2():
 
 def test3():
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels = PP.filterAll(*tc.test3())
+    print allwalllabels==[['udm','udu'],['uMd','udd'],['ddu','Mdu'],['uud','mud'],['duu','dmu'],['dud','duM']]
     print [inds[j] for j in WL.getFirstwalls('Muu',allwalllabels)]==[] 
     print [inds[j] for j in WL.getFirstwalls('ddm',allwalllabels)]==[] 
     print [inds[j] for j in WL.getFirstwalls('uMd',allwalllabels)]==[3] 
@@ -47,8 +49,16 @@ def test3():
     print WL.pathDependentStringConstruction(inds.index(6),inds.index(3),inds.index(0),walldomains, outedges,varsaffectedatwall[inds.index(3)])==['udd','uMd']
     print WL.pathDependentStringConstruction(inds.index(9),inds.index(10),inds.index(6),walldomains,outedges,varsaffectedatwall[inds.index(10)])==['dud','duM']    
     print WL.pathDependentStringConstruction(inds.index(4),inds.index(9),inds.index(10),walldomains,outedges,varsaffectedatwall[inds.index(9)])==['duu','dmu']    
-    # print WL.isVarGTorLT(walldomains[inds.index(0)][1],[inds.index(3)],walldomains,1)==(False,True)
+    print WL.isVarGTorLT(walldomains[inds.index(0)][1],[inds.index(3)],walldomains,1)==(False,True)
 
+def test4():
+    inds,outedges,walldomains,varsaffectedatwall,allwalllabels = PP.filterAll(*tc.test4())
+    print allwalllabels==[['ud'],['md','dd'],['um'],['um'],['dM'],['uu'],['Mu','du']]
+    print [inds[j] for j in WL.getFirstwalls('um',allwalllabels)]==[7,8]
+    print [inds[j] for j in WL.getFirstwalls('dd',allwalllabels)]==[6] 
+    print WL.pathDependentStringConstruction(inds.index(9),inds.index(6),inds.index(8),walldomains, outedges,varsaffectedatwall[inds.index(6)])==['md']
+    print WL.pathDependentStringConstruction(inds.index(9),inds.index(6),inds.index(5),walldomains, outedges,varsaffectedatwall[inds.index(6)])==['dd','md']
+ 
 
 if __name__=='__main__':
     testme()
