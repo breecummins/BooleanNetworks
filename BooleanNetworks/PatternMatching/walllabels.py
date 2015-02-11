@@ -250,18 +250,10 @@ def makeAllWallLabels(outedges,walldomains,varsaffectedatwall):
     inedges=[tuple([j for j,o in enumerate(outedges) if i in o]) for i in range(len(outedges))]
     allwalllabels=[]
     for k,(ie,oe) in enumerate(zip(inedges,outedges)):
-        # if k==7:
-        #     print ie
-        #     print oe
         wl=[]
         for i,o in itertools.product(ie,oe):
-            # if k==7:
-            #     print i,o
             wl.extend(pathDependentStringConstruction(i,k,o,walldomains,outedges,varsaffectedatwall[k]))
         allwalllabels.append(list(set(wl)))
-        # if k==7:
-        #     print allwalllabels[-1]
-        #     sys.exit()
     return allwalllabels
 
 
