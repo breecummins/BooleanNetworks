@@ -65,6 +65,25 @@ def test4():
     varsaffectedatwall=[1,0,0,0,0,1,0,1,1,1,1,0]
     return outedges,walldomains,varsaffectedatwall
 
+def test5():
+    # X1 : (X2)(~X3) : X2
+    # X2 : X1 : X1 X3
+    # X3 : X2 : X1
+    # 3D EXAMPLE WHERE ONE VAR HAS 2 THRESHOLDS, NO FIXED POINT, BOUNDARY WALLS NOT INCLUDED
+    walldomains=[(0.5,1,1.5),(0.5,2,1.5),(1,0.5,1.5),(1,1.5,1.5),(1,2.5,1.5),(1.5,1,1.5),(1.5,2,1.5),(0.5,0.5,1),(0.5,1.5,1),(0.5,2.5,1),(1.5,0.5,1),(1.5,1.5,1),(1.5,2.5,1),(0.5,1,0.5),(0.5,2,0.5),(1,0.5,0.5),(1,1.5,0.5),(1,2.5,0.5),(1.5,1,0.5),(1.5,2,0.5)]
+    outedges=[(7,),(0,8),(7,),(0,8),(1,),(3,6,11),(4,),(15,),(13,16),(1,),(18,),(19,),(4,),(15,),(13,16),(18,),(19,),(12,),(19,),(12,)]
+    varsaffectedatwall=[0,2,1,1,1,0,2,0,0,0,0,0,0,0,2,1,1,1,0,2]
+    f=open('patterns.txt','w')
+    f.write('X1 min, X2 min, X3 min, X1 max, X2 max, X3 max\n X1 min, X2 min, X1 max, X3 min, X2 max, X3 max')
+    f.close()
+    f=open('variables.txt','w')
+    f.write('0 X1\n 1 X2\n 2 X3')
+    f.close()
+    f=open('equations.txt','w')
+    f.write('X1 : (X2)(~X3) : X2\n X2 : X1 : X1 X3\n X3 : X2 : X1')
+    f.close()
+    return outedges,walldomains,varsaffectedatwall
+
 
 if __name__=='__main__':
     test3()

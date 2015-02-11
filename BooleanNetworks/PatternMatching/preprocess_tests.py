@@ -4,6 +4,18 @@ import fileparsers as fp
 import numpy as np
 
 def testme():
+    test0()
+    test1()
+    test2()
+    test3()
+    test4()
+    test5()
+    outedges=[(1,2),(5,8),(3,),(4,),(2,),(6,7),(7,),(6,),(0,)]
+    N,components=PP.strongConnect(outedges)
+    print N==4 and all(components==np.array([3,3,0,0,0,2,1,1,3]))
+    print PP.strongConnectWallNumbers(outedges) == [0,1,2,3,4,6,7,8]
+
+def test0():
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels = PP.filterAll(*tc.test0())
     print inds==[3, 5, 6, 8, 10, 11, 13]
     print outedges==[(1,), (4,), (0,), (4,), (6,), (2, 3), (5,)]
@@ -15,6 +27,7 @@ def testme():
     patterns=PP.constructCyclicPatterns(varnames,patternnames,patternmaxmin)
     print patterns==[['Mu','dM','md','um','Mu']]
 
+def test1():
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels = PP.filterAll(*tc.test1())
     print inds==[8, 10, 11, 13]
     print outedges==[(1,), (3,), (0,), (2,)]
@@ -26,12 +39,14 @@ def testme():
     patterns=PP.constructCyclicPatterns(varnames,patternnames,patternmaxmin)
     print patterns==[['Mu','mu','uM','um','Mu']]
 
+def test2():
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels = PP.filterAll(*tc.test2())
     print inds==[3, 5, 6, 8, 10, 11, 13]
     print outedges==[(1,), (3,4), (0,), (2,), (6,), (2,), (5,)]
     print walldomains==[(0.5, 1), (1, 0.5), (1, 1.5), (1.5, 1), (2, 0.5), (2, 1.5), (2.5, 1)]
     print varsaffectedatwall==[0, 1, 1, 0, 0, 0, 0]
 
+def test3():
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels = PP.filterAll(*tc.test3())
     print inds==[0,3,4,6,9,10]
     print outedges==[(2,),(0,),(4,),(1,),(5,),(3,)]
@@ -43,6 +58,17 @@ def testme():
     patterns=PP.constructCyclicPatterns(varnames,patternnames,patternmaxmin)
     print patterns==[['mdu','udM','umd','Mud','dMd','ddm','mdu'],['ddM','mdd','umd','uMd','Mdd','ddm','ddM']]
 
+    outedges,walldomains,varsaffectedatwall=tc.test3()
+    print PP.strongConnectWallNumbers(outedges) == [0,3,4,6,9,10]
+    varnames=fp.parseVars()
+    patternnames,patternmaxmin=fp.parsePatterns()
+    print PP.constructCyclicPatterns(varnames,patternnames,patternmaxmin)==[['udm','Mdu','dmu','duM','mud','uMd','udm'],['dum','muu','uMu','umu','uuM','Mud','dum']]
+    wallthresh=[1,0,1,0,2,2,2,2,1,0,1,0]+[1,0,2]*8
+    threshnames=fp.parseEqns()
+    print PP.varsAtWalls(threshnames,walldomains,wallthresh,varnames)==varsaffectedatwall
+
+
+def test4():
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels = PP.filterAll(*tc.test4())
     print inds==range(5,12)
     print outedges==[(2,),(0,3),(5,),(6,),(1,),(6,),(4,)]
@@ -54,21 +80,16 @@ def testme():
     patterns=PP.constructCyclicPatterns(varnames,patternnames,patternmaxmin)
     print patterns==[['md','um','Mu','dM','md'],['Md','md','um','uM','Md']]
 
-    outedges=[(1,2),(5,8),(3,),(4,),(2,),(6,7),(7,),(6,),(0,)]
-    N,components=PP.strongConnect(outedges)
-    print N==4 and all(components==np.array([3,3,0,0,0,2,1,1,3]))
-    print PP.strongConnectWallNumbers(outedges) == [0,1,2,3,4,6,7,8]
-
-    outedges,walldomains,varsaffectedatwall=tc.test3()
-    print PP.strongConnectWallNumbers(outedges) == [0,3,4,6,9,10]
-    varnames=fp.parseVars()
+def test5():
+    inds,outedges,walldomains,varsaffectedatwall,allwalllabels = PP.filterAll(*tc.test5())
+    print inds==[0,1,4,7,8,12,13,15,16,18,19]
+    print outedges==[(3,),(0,4),(1,),(7,),(6,8),(2,),(7,),(9,),(10,),(10,),(5,)]
+    print walldomains==[(0.5,1,1.5),(0.5,2,1.5),(1,2.5,1.5),(0.5,0.5,1),(0.5,1.5,1),(1.5,2.5,1),(0.5,1,0.5),(1,0.5,0.5),(1,1.5,0.5),(1.5,1,0.5),(1.5,2,0.5)]
+    print varsaffectedatwall==[0,2,1,0,0,0,0,1,1,0,2]
     patternnames,patternmaxmin=fp.parsePatterns()
-    print PP.constructCyclicPatterns(varnames,patternnames,patternmaxmin)==[['udm','Mdu','dmu','duM','mud','uMd','udm'],['dum','muu','uMu','umu','uuM','Mud','dum']]
-    wallthresh=[1,0,1,0,2,2,2,2,1,0,1,0]+[1,0,2]*8
-    threshnames=fp.parseEqns()
-    print PP.varsAtWalls(threshnames,walldomains,wallthresh,varnames)==varsaffectedatwall
-
-
+    varnames=fp.parseVars()
+    patterns=PP.constructCyclicPatterns(varnames,patternnames,patternmaxmin)
+    print patterns==[['mdd','umd','uum','Muu','dMu','ddM','mdd'],['mdd','umd','Mud','dum','dMu','ddM','mdd']]
 
 if __name__=='__main__':
 	testme()

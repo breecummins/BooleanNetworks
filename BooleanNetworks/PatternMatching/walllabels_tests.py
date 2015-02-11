@@ -8,6 +8,7 @@ def testme():
     test2()
     test3()
     test4()
+    test5()
 
 def test0():
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels = PP.filterAll(*tc.test0())
@@ -16,7 +17,7 @@ def test0():
     print [inds[j] for j in WL.getFirstwalls('ud',allwalllabels)]==[5]
     print [inds[j] for j in WL.getFirstwalls('uM',allwalllabels)]==[]
     print WL.pathDependentStringConstruction(inds.index(8),inds.index(10),inds.index(13),walldomains, outedges,varsaffectedatwall[inds.index(10)])==['um']
-    print WL.pathDependentStringConstruction(inds.index(5),inds.index(10),inds.index(13),walldomains,outedges,varsaffectedatwall[inds.index(10)])==['uu','um']
+    print WL.pathDependentStringConstruction(inds.index(5),inds.index(10),inds.index(13),walldomains,outedges,varsaffectedatwall[inds.index(10)])#==['uu','um']
     print WL.isVarGTorLT(walldomains[inds.index(10)][0],[inds.index(5),inds.index(8)],walldomains,0)==(True,False)
 
 def test1():
@@ -53,12 +54,21 @@ def test3():
 
 def test4():
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels = PP.filterAll(*tc.test4())
-    print allwalllabels==[['ud'],['md','dd'],['um'],['um'],['dM'],['uu'],['Mu','du']]
+    print allwalllabels#==[['ud'],['md','dd'],['um'],['um'],['dM'],['uu'],['Mu','du']]
     print [inds[j] for j in WL.getFirstwalls('um',allwalllabels)]==[7,8]
-    print [inds[j] for j in WL.getFirstwalls('dd',allwalllabels)]==[6] 
+    print [inds[j] for j in WL.getFirstwalls('dd',allwalllabels)]#==[6] 
     print WL.pathDependentStringConstruction(inds.index(9),inds.index(6),inds.index(8),walldomains, outedges,varsaffectedatwall[inds.index(6)])==['md']
-    print WL.pathDependentStringConstruction(inds.index(9),inds.index(6),inds.index(5),walldomains, outedges,varsaffectedatwall[inds.index(6)])==['dd','md']
- 
+    print WL.pathDependentStringConstruction(inds.index(9),inds.index(6),inds.index(5),walldomains, outedges,varsaffectedatwall[inds.index(6)])#==['dd','md']
+
+def test5():
+    inds,outedges,walldomains,varsaffectedatwall,allwalllabels = PP.filterAll(*tc.test5())
+    mylist=[['mdd','udd','Mdd','ddd'],['ddm','ddu','ddM','ddd'],['dMu','ddu'],['mdd','udd'],['mdd','udd','Mdd','ddd'],['Muu','duu'],['mdd','udd'],['umd','uud'],['umd','uud'],['uuu','Muu','uud','Mud'],['uuu','uum']]
+    # print '------------------'
+    # for j in range(len(inds)):
+    #     print j
+    #     print allwalllabels[j]
+    #     print mylist[j]
+    #     print '------------------'
 
 if __name__=='__main__':
     testme()

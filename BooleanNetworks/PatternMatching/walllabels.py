@@ -29,7 +29,7 @@ def isVarGTorLT(nodeval,nodelist,walldomains,varind):
             gt=False
     return gt*nz,lt*nz
 
-def helper2(q,w,n,nextwall,outedges,walldomains):
+def helper2(q,w,n,nextwall,currentwall,outedges,walldomains):
     # is the next wall <= or >= (or neither) all of its previous adjacent walls?
     # is the current wall <= or >= (or neither) all of its next adjacent walls?
     nn=getPreviousNodes(nextwall,outedges)
@@ -37,14 +37,14 @@ def helper2(q,w,n,nextwall,outedges,walldomains):
         ngtw,nltw=isVarGTorLT(n,nn,walldomains,q)
     else:
         ngtw,nltw=False,False
-    qn=getNextNodes(q,outedges)
+    qn=getNextNodes(currentwall,outedges)
     if len(qn)>1:
         wgtn,wltn=isVarGTorLT(w,qn,walldomains,q)
     else:
         wgtn,wltn=False,False
     return wgtn,wltn,ngtw,nltw
 
-def helper1(q,p,w,previouswall,outedges,walldomains):
+def helper1(q,p,w,previouswall,currentwall,outedges,walldomains):
     # is the previous wall <= or >= (or neither) all of its next adjacent walls?
     # is the current wall <= or >= (or neither) all of its previous adjacent walls?
     pp=getNextNodes(previouswall,outedges)
@@ -52,7 +52,7 @@ def helper1(q,p,w,previouswall,outedges,walldomains):
         pgtw,pltw=isVarGTorLT(p,pp,walldomains,q)
     else:
         pgtw,pltw=False,False
-    qp=getPreviousNodes(q,outedges)
+    qp=getPreviousNodes(currentwall,outedges)
     if len(qp)>1:
         wgtp,wltp=isVarGTorLT(w,qp,walldomains,q)
     else:
@@ -60,7 +60,7 @@ def helper1(q,p,w,previouswall,outedges,walldomains):
     return wgtp,wltp,pgtw,pltw
 
 
-def getChars(Z,previouswall,nextwall,outedges,walldomains,varatwall):
+def getChars(Z,previouswall,currentwall,nextwall,outedges,walldomains,varatwall):
     # Z contains the variable index and the values of variable at the previous, 
     # current, and next walls respectively. Given the graph labeled with walldomains, 
     # we find all possible behaviors of the variable at the current wall given the
@@ -83,9 +83,11 @@ def getChars(Z,previouswall,nextwall,outedges,walldomains,varatwall):
         elif p>w==n or p==w>n:
             chars = ['d']
         else: #p==w==n
-            wgtp,wltp,pgtw,pltw = helper1(q,p,w,previouswall,outedges,walldomains)
-            wgtn,wltn,ngtw,nltw = helper2(q,w,n,nextwall,outedges,walldomains)
+            wgtp,wltp,pgtw,pltw = helper1(q,p,w,previouswall,currentwall,outedges,walldomains)
+            wgtn,wltn,ngtw,nltw = helper2(q,w,n,nextwall,currentwall,outedges,walldomains)
+            # print wltp
             if pgtw or wltp:
+                # print ngtw,wltn
                 if ngtw or wltn:
                     chars=[] 
                 else:
@@ -107,7 +109,7 @@ def getChars(Z,previouswall,nextwall,outedges,walldomains,varatwall):
         elif p>w<n:
             chars=['m']
         elif p==w and w!=n:
-            wgtp,wltp,pgtw,pltw = helper1(q,p,w,previouswall,outedges,walldomains)
+            wgtp,wltp,pgtw,pltw = helper1(q,p,w,previouswall,currentwall,outedges,walldomains)
             if w>n:
                 if wgtp or pltw:
                     chars=['M']
@@ -123,7 +125,7 @@ def getChars(Z,previouswall,nextwall,outedges,walldomains,varatwall):
                 else:
                     chars=['u','m']
         elif w==n and w!=p:
-            wgtn,wltn,ngtw,nltw = helper2(q,w,n,nextwall,outedges,walldomains)
+            wgtn,wltn,ngtw,nltw = helper2(q,w,n,nextwall,currentwall,outedges,walldomains)
             if p<w:
                 if ngtw or wltn:
                     chars=['u']
@@ -139,8 +141,8 @@ def getChars(Z,previouswall,nextwall,outedges,walldomains,varatwall):
                 else:
                     chars=['d','m']
         else: #p==w==n and q==varatwall
-            wgtp,wltp,pgtw,pltw = helper1(q,p,w,previouswall,outedges,walldomains)
-            wgtn,wltn,ngtw,nltw = helper2(q,w,n,nextwall,outedges,walldomains)
+            wgtp,wltp,pgtw,pltw = helper1(q,p,w,previouswall,currentwall,outedges,walldomains)
+            wgtn,wltn,ngtw,nltw = helper2(q,w,n,nextwall,currentwall,outedges,walldomains)
             if pgtw or wltp:
                 if ngtw or wltn:
                     chars=['m']
@@ -163,6 +165,40 @@ def getChars(Z,previouswall,nextwall,outedges,walldomains,varatwall):
                 chars=['d','M','u','m']
     return chars
 
+def getChars2(Z,previouswall,currentwall,nextwall,outedges,walldomains,varatwall):
+    # No extra info assumed
+    #
+    q,p,w,n=Z
+    if p<w<n:
+        chars = ['u']
+    elif p>w>n:
+        chars = ['d']
+    elif q != varatwall:
+        if p<w>n or p>w<n:
+            chars=[]
+        elif p<w==n or p==w<n:
+            chars = ['u']
+        elif p>w==n or p==w>n:
+            chars = ['d']
+        else: #p==w==n
+            chars=['d','u']
+    else: #q==varatwall
+        if p<w>n:
+            chars=['M']
+        elif p>w<n:
+            chars=['m']
+        elif p==w>n:
+            chars=['d','M']
+        elif p==w<n:
+            chars=['u','m']
+        elif p<w==n:
+            chars=['u','M']
+        elif p>w==n:
+            chars=['d','m']
+        else: #p==w==n and q==varatwall
+            chars=['d','M','u','m']
+    return chars
+
 def pathDependentStringConstruction(previouswall,wall,nextwall,walldomains,outedges,varatwall):
     # make a label for 'wall' that depends on where the path came from and where it's going
     if wall==nextwall: #if at steady state, do not label
@@ -170,7 +206,7 @@ def pathDependentStringConstruction(previouswall,wall,nextwall,walldomains,outed
     walllabels=['']
     Z=zip(range(len(walldomains[0])),walldomains[previouswall],walldomains[wall],walldomains[nextwall])
     while Z:
-        chars=getChars(Z[0],previouswall,nextwall,outedges,walldomains,varatwall)
+        chars=getChars(Z[0],previouswall,wall,nextwall,outedges,walldomains,varatwall)
         if chars:
             walllabels=[l+c for l in walllabels for c in chars]
             Z.pop(0)
@@ -187,10 +223,18 @@ def makeAllWallLabels(outedges,walldomains,varsaffectedatwall):
     inedges=[tuple([j for j,o in enumerate(outedges) if i in o]) for i in range(len(outedges))]
     allwalllabels=[]
     for k,(ie,oe) in enumerate(zip(inedges,outedges)):
+        # if k==7:
+        #     print ie
+        #     print oe
         wl=[]
         for i,o in itertools.product(ie,oe):
+            # if k==7:
+            #     print i,o
             wl.extend(pathDependentStringConstruction(i,k,o,walldomains,outedges,varsaffectedatwall[k]))
         allwalllabels.append(list(set(wl)))
+        # if k==7:
+        #     print allwalllabels[-1]
+        #     sys.exit()
     return allwalllabels
 
 
