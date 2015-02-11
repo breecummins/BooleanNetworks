@@ -2,10 +2,16 @@ import itertools
 import sys
 
 def getNextNodes(node,outedges):
-    return [o for o in outedges[node]]
+    return outedges[node]
 
 def getPreviousNodes(node,outedges):
     return [j for j,o in enumerate(outedges) if node in o]
+
+def getNumExitWalls(node,outedges):
+    return len(getNextNodes(node,outedges))
+
+def getNumEntranceWalls(node,outedges):
+    return len(getPreviousNodes(node,outedges))
 
 def isVarGTorLT(nodeval,nodelist,walldomains,varind):
     # Find out whether nodeval (associated to varind) is 
@@ -166,7 +172,7 @@ def getChars(Z,previouswall,currentwall,nextwall,outedges,walldomains,varatwall)
     return chars
 
 def getChars2(Z,previouswall,currentwall,nextwall,outedges,walldomains,varatwall):
-    # No extra info assumed
+    # No extra info assumed, most conservative algorithm
     #
     q,p,w,n=Z
     if p<w<n:
@@ -199,6 +205,169 @@ def getChars2(Z,previouswall,currentwall,nextwall,outedges,walldomains,varatwall
             chars=['d','M','u','m']
     return chars
 
+def getChars3(Z,previouswall,currentwall,nextwall,outedges,walldomains,varatwall):
+    # Z contains the variable index and the values of variable at the previous, 
+    # current, and next walls respectively. Given the graph labeled with walldomains, 
+    # we find all possible behaviors of the variable at the current wall given the
+    # trajectory defined by the previous and next walls.
+    #
+    # this algorithm works but is heinous to read; the only way I saw to make it shorter
+    # is to do unnecessary calculations. This is important to avoid since the function
+    # is inside a recursive call.
+    #
+    q,p,w,n=Z
+    if p<w<n:
+        chars = ['u']
+    elif p>w>n:
+        chars = ['d']
+    elif q != varatwall:
+        if p<w>n or p>w<n:
+            chars=[]
+        elif p<w==n or p==w<n:
+            chars = ['u']
+        elif p>w==n or p==w>n:
+            chars = ['d']
+        elif p==w==n:
+            Npp=getNumExitWalls(previouswall,outedges)
+            Npw=getNumEntranceWalls(currentwall,outedges)
+            Nnw=getNumExitWalls(currentwall,outedges)
+            Nnn=getNumEntranceWalls(nextwall,outedges)
+            wgtp,wltp,pgtw,pltw = helper1(q,p,w,previouswall,currentwall,outedges,walldomains)
+            wgtn,wltn,ngtw,nltw = helper2(q,w,n,nextwall,currentwall,outedges,walldomains)
+            if (Npp>1 or Npw>1) and (Nnw>1 or Nnn>1):
+                if pgtw or wltp:
+                    # print ngtw,wltn
+                    if ngtw or wltn:
+                        chars=[] 
+                    else:
+                        chars=['d']
+                elif pltw or wgtp:
+                    if nltw or wgtn:
+                        chars=[]
+                    else:
+                        chars=['u']
+                elif ngtw or wltn:
+                    chars=['u']
+                elif nltw or wgtn:
+                    chars=['d']
+                else:
+                    chars=['d','u']
+            elif Npp==1 and Npw==1 and Nnw==1 and Nnn==1:
+                chars=['d','u']
+            elif Npp==1 and Npw==1:
+                if ngtw or wltn:
+                    chars=['u']
+                elif nltw or wgtn:
+                    chars=['d']
+                else:
+                    chars=['d','u']
+            elif Nnw==1 and Nnn==1:
+                # print wgtp
+                if pgtw or wltp:
+                    chars=['d']
+                elif pltw or wgtp:
+                    chars=['u']
+                else:
+                    chars=['d','u']
+    elif q==varatwall:
+        if p<w>n:
+            chars=['M']
+        elif p>w<n:
+            chars=['m']
+        elif p==w and w!=n:
+            Npp=getNumExitWalls(previouswall,outedges)
+            Npw=getNumEntranceWalls(currentwall,outedges)
+            wgtp,wltp,pgtw,pltw = helper1(q,p,w,previouswall,currentwall,outedges,walldomains)
+            if Npp >1 or Npw>1:
+                if w>n:
+                    if wgtp or pltw:
+                        chars=['M']
+                    elif wltp or pgtw:
+                        chars=['d']
+                    else:
+                        chars=['d','M']
+                elif w<n:
+                    if wgtp or pltw:
+                        chars=['u']
+                    elif wltp or pgtw:
+                        chars=['m']
+                    else:
+                        chars=['u','m']
+            elif Npp==1 and Npw==1:
+                if w>n:
+                    chars=['d','M']
+                elif w<n:
+                    chars=['u','m']
+        elif w==n and w!=p:
+            Nnw=getNumExitWalls(currentwall,outedges)
+            Nnn=getNumEntranceWalls(nextwall,outedges)
+            wgtn,wltn,ngtw,nltw = helper2(q,w,n,nextwall,currentwall,outedges,walldomains)
+            if Nnw>1 or Nnn>1:
+                if p<w:
+                    if ngtw or wltn:
+                        chars=['u']
+                    elif nltw or wgtn:
+                        chars=['M']
+                    else:
+                        chars=['u','M']
+                elif p>w:
+                    if ngtw or wltn:
+                        chars=['m']
+                    elif nltw or wgtn:
+                        chars=['d']
+                    else:
+                        chars=['d','m']
+            elif Nnw==1 and Nnn==1:
+                if p<w:
+                    chars=['u','M']
+                elif p>w:
+                    chars=['d','m']
+        elif p==w==n:
+            Npp=getNumExitWalls(previouswall,outedges)
+            Npw=getNumEntranceWalls(currentwall,outedges)
+            Nnw=getNumExitWalls(currentwall,outedges)
+            Nnn=getNumEntranceWalls(nextwall,outedges)
+            wgtp,wltp,pgtw,pltw = helper1(q,p,w,previouswall,currentwall,outedges,walldomains)
+            wgtn,wltn,ngtw,nltw = helper2(q,w,n,nextwall,currentwall,outedges,walldomains)
+            if (Npp>1 or Npw>1) and (Nnw>1 or Nnn>1):
+                if pgtw or wltp:
+                    if ngtw or wltn:
+                        chars=['m']
+                    elif nltw or wgtn:
+                        chars=['d']
+                    else:
+                        chars=['m','d']
+                elif pltw or wgtp:
+                    if ngtw or wltn:
+                        chars=['u']
+                    elif nltw or wgtn:
+                        chars=['M']
+                    else:
+                        chars=['M','u']
+                elif ngtw or wltn:
+                    chars=['u','m']
+                elif nltw or wgtn:
+                    chars=['d','M']
+                else:
+                    chars=['d','M','u','m']
+            elif Npp==1 and Npw==1 and Nnw==1 and Nnn==1:
+                chars=['d','M','u','m']
+            elif Npp==1 and Npw==1:
+                if ngtw or wltn:
+                    chars=['u','m']
+                elif nltw or wgtn:
+                    chars=['d','M']
+                else:
+                    chars=['d','M','u','m']
+            elif Nnw==1 and Nnn==1:
+                if pgtw or wltp:
+                    chars=['d','m']
+                elif pltw or wgtp:
+                    chars=['u','M']
+                else:
+                    chars=['d','M','u','m']
+    return chars
+
 def pathDependentStringConstruction(previouswall,wall,nextwall,walldomains,outedges,varatwall):
     # make a label for 'wall' that depends on where the path came from and where it's going
     if wall==nextwall: #if at steady state, do not label
@@ -206,7 +375,7 @@ def pathDependentStringConstruction(previouswall,wall,nextwall,walldomains,outed
     walllabels=['']
     Z=zip(range(len(walldomains[0])),walldomains[previouswall],walldomains[wall],walldomains[nextwall])
     while Z:
-        chars=getChars(Z[0],previouswall,wall,nextwall,outedges,walldomains,varatwall)
+        chars=getChars3(Z[0],previouswall,wall,nextwall,outedges,walldomains,varatwall)
         if chars:
             walllabels=[l+c for l in walllabels for c in chars]
             Z.pop(0)
