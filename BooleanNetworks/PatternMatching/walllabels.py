@@ -65,147 +65,7 @@ def helper1(q,p,w,previouswall,currentwall,outedges,walldomains):
         wgtp,wltp=False,False
     return wgtp,wltp,pgtw,pltw
 
-
 def getChars(Z,previouswall,currentwall,nextwall,outedges,walldomains,varatwall):
-    # Z contains the variable index and the values of variable at the previous, 
-    # current, and next walls respectively. Given the graph labeled with walldomains, 
-    # we find all possible behaviors of the variable at the current wall given the
-    # trajectory defined by the previous and next walls.
-    #
-    # this algorithm works but is heinous to read; the only way I saw to make it shorter
-    # is to do unnecessary calculations. This is important to avoid since the function
-    # is inside a recursive call.
-    #
-    q,p,w,n=Z
-    if p<w<n:
-        chars = ['u']
-    elif p>w>n:
-        chars = ['d']
-    elif q != varatwall:
-        if p<w>n or p>w<n:
-            chars=[]
-        elif p<w==n or p==w<n:
-            chars = ['u']
-        elif p>w==n or p==w>n:
-            chars = ['d']
-        else: #p==w==n
-            wgtp,wltp,pgtw,pltw = helper1(q,p,w,previouswall,currentwall,outedges,walldomains)
-            wgtn,wltn,ngtw,nltw = helper2(q,w,n,nextwall,currentwall,outedges,walldomains)
-            # print wltp
-            if pgtw or wltp:
-                # print ngtw,wltn
-                if ngtw or wltn:
-                    chars=[] 
-                else:
-                    chars=['d']
-            elif pltw or wgtp:
-                if nltw or wgtn:
-                    chars=[]
-                else:
-                    chars=['u']
-            elif ngtw or wltn:
-                chars=['u']
-            elif nltw or wgtn:
-                chars=['d']
-            else:
-                chars=['d','u']
-    else: #q==varatwall
-        if p<w>n:
-            chars=['M']
-        elif p>w<n:
-            chars=['m']
-        elif p==w and w!=n:
-            wgtp,wltp,pgtw,pltw = helper1(q,p,w,previouswall,currentwall,outedges,walldomains)
-            if w>n:
-                if wgtp or pltw:
-                    chars=['M']
-                elif wltp or pgtw:
-                    chars=['d']
-                else:
-                    chars=['d','M']
-            elif w<n:
-                if wgtp or pltw:
-                    chars=['u']
-                elif wltp or pgtw:
-                    chars=['m']
-                else:
-                    chars=['u','m']
-        elif w==n and w!=p:
-            wgtn,wltn,ngtw,nltw = helper2(q,w,n,nextwall,currentwall,outedges,walldomains)
-            if p<w:
-                if ngtw or wltn:
-                    chars=['u']
-                elif nltw or wgtn:
-                    chars=['M']
-                else:
-                    chars=['u','M']
-            elif p>w:
-                if ngtw or wltn:
-                    chars=['m']
-                elif nltw or wgtn:
-                    chars=['d']
-                else:
-                    chars=['d','m']
-        else: #p==w==n and q==varatwall
-            wgtp,wltp,pgtw,pltw = helper1(q,p,w,previouswall,currentwall,outedges,walldomains)
-            wgtn,wltn,ngtw,nltw = helper2(q,w,n,nextwall,currentwall,outedges,walldomains)
-            if pgtw or wltp:
-                if ngtw or wltn:
-                    chars=['m']
-                elif nltw or wgtn:
-                    chars=['d']
-                else:
-                    chars=['m','d']
-            elif pltw or wgtp:
-                if ngtw or wltn:
-                    chars=['u']
-                elif nltw or wgtn:
-                    chars=['M']
-                else:
-                    chars=['M','u']
-            elif ngtw or wltn:
-                chars=['u','m']
-            elif nltw or wgtn:
-                chars=['d','M']
-            else:
-                chars=['d','M','u','m']
-    return chars
-
-def getChars2(Z,previouswall,currentwall,nextwall,outedges,walldomains,varatwall):
-    # No extra info assumed, most conservative algorithm
-    #
-    q,p,w,n=Z
-    if p<w<n:
-        chars = ['u']
-    elif p>w>n:
-        chars = ['d']
-    elif q != varatwall:
-        if p<w>n or p>w<n:
-            chars=[]
-        elif p<w==n or p==w<n:
-            chars = ['u']
-        elif p>w==n or p==w>n:
-            chars = ['d']
-        else: #p==w==n
-            chars=['d','u']
-    else: #q==varatwall
-        if p<w>n:
-            chars=['M']
-        elif p>w<n:
-            chars=['m']
-        elif p==w>n:
-            chars=['d','M']
-        elif p==w<n:
-            chars=['u','m']
-        elif p<w==n:
-            chars=['u','M']
-        elif p>w==n:
-            chars=['d','m']
-        else: #p==w==n and q==varatwall
-            chars=['d','M','u','m']
-    return chars
-
-def getChars3(Z,previouswall,currentwall,nextwall,outedges,walldomains,varatwall):
     # Z contains the variable index and the values of variable at the previous, 
     # current, and next walls respectively. Given the graph labeled with walldomains, 
     # we find all possible behaviors of the variable at the current wall given the
@@ -236,7 +96,6 @@ def getChars3(Z,previouswall,currentwall,nextwall,outedges,walldomains,varatwall
             wgtn,wltn,ngtw,nltw = helper2(q,w,n,nextwall,currentwall,outedges,walldomains)
             if (Npp>1 or Npw>1) and (Nnw>1 or Nnn>1):
                 if pgtw or wltp:
-                    # print ngtw,wltn
                     if ngtw or wltn:
                         chars=[] 
                     else:
@@ -262,7 +121,6 @@ def getChars3(Z,previouswall,currentwall,nextwall,outedges,walldomains,varatwall
                 else:
                     chars=['d','u']
             elif Nnw==1 and Nnn==1:
-                # print wgtp
                 if pgtw or wltp:
                     chars=['d']
                 elif pltw or wgtp:
@@ -375,7 +233,7 @@ def pathDependentStringConstruction(previouswall,wall,nextwall,walldomains,outed
     walllabels=['']
     Z=zip(range(len(walldomains[0])),walldomains[previouswall],walldomains[wall],walldomains[nextwall])
     while Z:
-        chars=getChars3(Z[0],previouswall,wall,nextwall,outedges,walldomains,varatwall)
+        chars=getChars(Z[0],previouswall,wall,nextwall,outedges,walldomains,varatwall)
         if chars:
             walllabels=[l+c for l in walllabels for c in chars]
             Z.pop(0)
