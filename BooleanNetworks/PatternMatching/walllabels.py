@@ -7,12 +7,6 @@ def getNextNodes(node,outedges):
 def getPreviousNodes(node,outedges):
     return [j for j,o in enumerate(outedges) if node in o]
 
-def getNumExitWalls(node,outedges):
-    return len(getNextNodes(node,outedges))
-
-def getNumEntranceWalls(node,outedges):
-    return len(getPreviousNodes(node,outedges))
-
 def isVarGTorLT(nodeval,nodelist,walldomains,varind):
     # Find out whether nodeval (associated to varind) is 
     # >= or <= all the values in the corresponding element 
@@ -35,35 +29,25 @@ def isVarGTorLT(nodeval,nodelist,walldomains,varind):
             gt=False
     return gt*nz,lt*nz
 
-def helper2(q,w,n,nextwall,currentwall,outedges,walldomains):
-    # is the next wall <= or >= (or neither) all of its previous adjacent walls?
-    # is the current wall <= or >= (or neither) all of its next adjacent walls?
-    nn=getPreviousNodes(nextwall,outedges)
-    if len(nn)>1:
-        ngtw,nltw=isVarGTorLT(n,nn,walldomains,q)
+def infoFromEntranceWalls(q,wallval,wallind,outedges,walldomains):
+    # is the wall <= or >= (or neither) all of its entrance walls?
+    entrancewalls=getPreviousNodes(wallind,outedges)
+    num_entrancewalls=len(entrancewalls)
+    if num_entrancewalls>1:
+        GT,LT=isVarGTorLT(wallval,entrancewalls,walldomains,q)
     else:
-        ngtw,nltw=False,False
-    qn=getNextNodes(currentwall,outedges)
-    if len(qn)>1:
-        wgtn,wltn=isVarGTorLT(w,qn,walldomains,q)
-    else:
-        wgtn,wltn=False,False
-    return wgtn,wltn,ngtw,nltw
+        GT,LT=False,False
+    return GT,LT,num_entrancewalls
 
-def helper1(q,p,w,previouswall,currentwall,outedges,walldomains):
-    # is the previous wall <= or >= (or neither) all of its next adjacent walls?
-    # is the current wall <= or >= (or neither) all of its previous adjacent walls?
-    pp=getNextNodes(previouswall,outedges)
-    if len(pp)>1:
-        pgtw,pltw=isVarGTorLT(p,pp,walldomains,q)
+def infoFromExitWalls(q,wallval,wallind,outedges,walldomains):
+    # is the wall <= or >= (or neither) all of its exit walls?
+    exitwalls=getNextNodes(wallind,outedges)
+    num_exitwalls=len(exitwalls)
+    if num_exitwalls>1:
+        GT,LT=isVarGTorLT(wallval,exitwalls,walldomains,q)
     else:
-        pgtw,pltw=False,False
-    qp=getPreviousNodes(currentwall,outedges)
-    if len(qp)>1:
-        wgtp,wltp=isVarGTorLT(w,qp,walldomains,q)
-    else:
-        wgtp,wltp=False,False
-    return wgtp,wltp,pgtw,pltw
+        GT,LT=False,False
+    return GT,LT,num_exitwalls
 
 def getChars(Z,previouswall,currentwall,nextwall,outedges,walldomains,varatwall):
     # Z contains the variable index and the values of variable at the previous, 
@@ -82,145 +66,141 @@ def getChars(Z,previouswall,currentwall,nextwall,outedges,walldomains,varatwall)
         chars = ['d']
     elif q != varatwall:
         if p<w>n or p>w<n:
-            chars=[]
+            chars=[] # no extrema allowed
         elif p<w==n or p==w<n:
             chars = ['u']
         elif p>w==n or p==w>n:
             chars = ['d']
         elif p==w==n:
-            Npp=getNumExitWalls(previouswall,outedges)
-            Npw=getNumEntranceWalls(currentwall,outedges)
-            Nnw=getNumExitWalls(currentwall,outedges)
-            Nnn=getNumEntranceWalls(nextwall,outedges)
-            wgtp,wltp,pgtw,pltw = helper1(q,p,w,previouswall,currentwall,outedges,walldomains)
-            wgtn,wltn,ngtw,nltw = helper2(q,w,n,nextwall,currentwall,outedges,walldomains)
-            if (Npp>1 or Npw>1) and (Nnw>1 or Nnn>1):
-                if pgtw or wltp:
-                    if ngtw or wltn:
-                        chars=[] 
+            prev_gt_out,prev_lt_out,num_out_prev=infoFromExitWalls(q,p,previouswall,outedges,walldomains)
+            current_gt_in,current_lt_in,num_in_current=infoFromEntranceWalls(q,w,currentwall,outedges,walldomains)
+            current_gt_out,current_lt_out,num_out_current=infoFromExitWalls(q,w,currentwall,outedges,walldomains)
+            next_gt_in,next_lt_in,num_in_next=infoFromEntranceWalls(q,n,nextwall,outedges,walldomains)
+            # note that there is extra information only if there are additional in- or out-edges
+            # hence the checking of num_* > 1
+            if num_out_prev==1 and num_in_current==1 and num_out_current==1 and num_in_next==1:
+                chars=['d','u']
+            elif (num_out_prev>1 or num_in_current>1) and (num_out_current>1 or num_in_next>1):
+                if prev_gt_out or current_lt_in:
+                    if next_gt_in or current_lt_out:
+                        chars=[] # no extrema allowed
                     else:
                         chars=['d']
-                elif pltw or wgtp:
-                    if nltw or wgtn:
-                        chars=[]
+                elif prev_lt_out or current_gt_in:
+                    if next_lt_in or current_gt_out:
+                        chars=[] # no extrema
                     else:
                         chars=['u']
-                elif ngtw or wltn:
+                elif next_gt_in or current_lt_out:
                     chars=['u']
-                elif nltw or wgtn:
+                elif next_lt_in or current_gt_out:
                     chars=['d']
                 else:
                     chars=['d','u']
-            elif Npp==1 and Npw==1 and Nnw==1 and Nnn==1:
-                chars=['d','u']
-            elif Npp==1 and Npw==1:
-                if ngtw or wltn:
+            elif num_out_prev==1 and num_in_current==1:
+                if next_gt_in or current_lt_out:
                     chars=['u']
-                elif nltw or wgtn:
+                elif next_lt_in or current_gt_out:
                     chars=['d']
                 else:
                     chars=['d','u']
-            elif Nnw==1 and Nnn==1:
-                if pgtw or wltp:
+            elif num_out_current==1 and num_in_next==1:
+                if prev_gt_out or current_lt_in:
                     chars=['d']
-                elif pltw or wgtp:
+                elif prev_lt_out or current_gt_in:
                     chars=['u']
                 else:
                     chars=['d','u']
     elif q==varatwall:
         if p<w>n:
-            chars=['M']
+            chars=['M'] # extrema allowed
         elif p>w<n:
             chars=['m']
         elif p==w and w!=n:
-            Npp=getNumExitWalls(previouswall,outedges)
-            Npw=getNumEntranceWalls(currentwall,outedges)
-            wgtp,wltp,pgtw,pltw = helper1(q,p,w,previouswall,currentwall,outedges,walldomains)
-            if Npp >1 or Npw>1:
+            prev_gt_out,prev_lt_out,num_out_prev=infoFromExitWalls(q,p,previouswall,outedges,walldomains)
+            current_gt_in,current_lt_in,num_in_current=infoFromEntranceWalls(q,w,currentwall,outedges,walldomains)
+            if num_out_prev >1 or num_in_current>1:
                 if w>n:
-                    if wgtp or pltw:
+                    if current_gt_in or prev_lt_out:
                         chars=['M']
-                    elif wltp or pgtw:
+                    elif current_lt_in or prev_gt_out:
                         chars=['d']
                     else:
                         chars=['d','M']
                 elif w<n:
-                    if wgtp or pltw:
+                    if current_gt_in or prev_lt_out:
                         chars=['u']
-                    elif wltp or pgtw:
+                    elif current_lt_in or prev_gt_out:
                         chars=['m']
                     else:
                         chars=['u','m']
-            elif Npp==1 and Npw==1:
+            elif num_out_prev==1 and num_in_current==1:
                 if w>n:
                     chars=['d','M']
                 elif w<n:
                     chars=['u','m']
         elif w==n and w!=p:
-            Nnw=getNumExitWalls(currentwall,outedges)
-            Nnn=getNumEntranceWalls(nextwall,outedges)
-            wgtn,wltn,ngtw,nltw = helper2(q,w,n,nextwall,currentwall,outedges,walldomains)
-            if Nnw>1 or Nnn>1:
+            current_gt_out,current_lt_out,num_out_current=infoFromExitWalls(q,w,currentwall,outedges,walldomains)
+            next_gt_in,next_lt_in,num_in_next=infoFromEntranceWalls(q,n,nextwall,outedges,walldomains)
+            if num_out_current>1 or num_in_next>1:
                 if p<w:
-                    if ngtw or wltn:
+                    if next_gt_in or current_lt_out:
                         chars=['u']
-                    elif nltw or wgtn:
+                    elif next_lt_in or current_gt_out:
                         chars=['M']
                     else:
                         chars=['u','M']
                 elif p>w:
-                    if ngtw or wltn:
+                    if next_gt_in or current_lt_out:
                         chars=['m']
-                    elif nltw or wgtn:
+                    elif next_lt_in or current_gt_out:
                         chars=['d']
                     else:
                         chars=['d','m']
-            elif Nnw==1 and Nnn==1:
+            elif num_out_current==1 and num_in_next==1:
                 if p<w:
                     chars=['u','M']
                 elif p>w:
                     chars=['d','m']
         elif p==w==n:
-            Npp=getNumExitWalls(previouswall,outedges)
-            Npw=getNumEntranceWalls(currentwall,outedges)
-            Nnw=getNumExitWalls(currentwall,outedges)
-            Nnn=getNumEntranceWalls(nextwall,outedges)
-            wgtp,wltp,pgtw,pltw = helper1(q,p,w,previouswall,currentwall,outedges,walldomains)
-            wgtn,wltn,ngtw,nltw = helper2(q,w,n,nextwall,currentwall,outedges,walldomains)
-            if (Npp>1 or Npw>1) and (Nnw>1 or Nnn>1):
-                if pgtw or wltp:
-                    if ngtw or wltn:
+            prev_gt_out,prev_lt_out,num_out_prev=infoFromExitWalls(q,p,previouswall,outedges,walldomains)
+            current_gt_in,current_lt_in,num_in_current=infoFromEntranceWalls(q,w,currentwall,outedges,walldomains)
+            current_gt_out,current_lt_out,num_out_current=infoFromExitWalls(q,w,currentwall,outedges,walldomains)
+            next_gt_in,next_lt_in,num_in_next=infoFromEntranceWalls(q,n,nextwall,outedges,walldomains)
+            if num_out_prev==1 and num_in_current==1 and num_out_current==1 and num_in_next==1:
+                chars=['d','M','u','m']
+            elif (num_out_prev>1 or num_in_current>1) and (num_out_current>1 or num_in_next>1):
+                if prev_gt_out or current_lt_in:
+                    if next_gt_in or current_lt_out:
                         chars=['m']
-                    elif nltw or wgtn:
+                    elif next_lt_in or current_gt_out:
                         chars=['d']
                     else:
                         chars=['m','d']
-                elif pltw or wgtp:
-                    if ngtw or wltn:
+                elif prev_lt_out or current_gt_in:
+                    if next_gt_in or current_lt_out:
                         chars=['u']
-                    elif nltw or wgtn:
+                    elif next_lt_in or current_gt_out:
                         chars=['M']
                     else:
                         chars=['M','u']
-                elif ngtw or wltn:
+                elif next_gt_in or current_lt_out:
                     chars=['u','m']
-                elif nltw or wgtn:
+                elif next_lt_in or current_gt_out:
                     chars=['d','M']
                 else:
                     chars=['d','M','u','m']
-            elif Npp==1 and Npw==1 and Nnw==1 and Nnn==1:
-                chars=['d','M','u','m']
-            elif Npp==1 and Npw==1:
-                if ngtw or wltn:
+            elif num_out_prev==1 and num_in_current==1:
+                if next_gt_in or current_lt_out:
                     chars=['u','m']
-                elif nltw or wgtn:
+                elif next_lt_in or current_gt_out:
                     chars=['d','M']
                 else:
                     chars=['d','M','u','m']
-            elif Nnw==1 and Nnn==1:
-                if pgtw or wltp:
+            elif num_out_current==1 and num_in_next==1:
+                if prev_gt_out or current_lt_in:
                     chars=['d','m']
-                elif pltw or wgtp:
+                elif prev_lt_out or current_gt_in:
                     chars=['u','M']
                 else:
                     chars=['d','M','u','m']
@@ -247,6 +227,8 @@ def getFirstwalls(firstpattern,allwalllabels):
     return [k for k,wl in enumerate(allwalllabels) if firstpattern in wl]
 
 def makeAllWallLabels(outedges,walldomains,varsaffectedatwall):
+    # step through every wall in the list 
+    # construct the wall label for every permissible triple (in-edge, wall, out-edge)
     inedges=[tuple([j for j,o in enumerate(outedges) if i in o]) for i in range(len(outedges))]
     allwalllabels=[]
     for k,(ie,oe) in enumerate(zip(inedges,outedges)):
