@@ -83,7 +83,3 @@ def test5():
     f.write('X1 : (X2)(~X3) : X2\n X2 : X1 : X1 X3\n X3 : X2 : X1')
     f.close()
     return outedges,walldomains,varsaffectedatwall
-
-
-if __name__=='__main__':
-    test3()

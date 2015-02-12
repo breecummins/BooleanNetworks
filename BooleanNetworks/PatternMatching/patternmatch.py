@@ -108,7 +108,7 @@ def matchCyclicPattern(pattern,origwallinds,outedges,walldomains,varsaffectedatw
         print "All first walls {}".format([origwallinds[w] for w in firstwalls])
     for w in firstwalls:
         if showfirstwall:
-            print "First wall {}".format(w)
+            print "First wall {}".format(origwallinds[w])
         sys.stdout.flush() # force print messages thus far
         R = recursePattern(w,[w],[],patternParams,[],paramDict) # seek match starting at w
         results.extend([tuple(l) for l in R if l]) # pull out nonempty paths
@@ -123,71 +123,10 @@ def callPatternMatch(basedir='',message=''):
         print "-"*len(message)
         print message
         print "-"*len(message)
+    print "Preprocessing..."
     Patterns,origwallinds,outedges,walldomains,varsaffectedatwall,allwalllabels=preprocess(basedir) 
+    print "Finished preprocessing."
     for pattern in Patterns:
         print pattern
-        print matchCyclicPattern(pattern, origwallinds,outedges,walldomains,varsaffectedatwall,allwalllabels,showfirstwall=1)
-
-if __name__=='__main__':
-    # walldomains=[(0,0.5),(0,1.5),(0.5,0),(0.5,1),(0.5,2),(1,0.5),(1,1.5),(1.5,0),(1.5,1),(1.5,2),(2,0.5),(2,1.5),(2.5,0),(2.5,1),(2.5,2),(3,0.5),(3,1.5)]
-    # outedges=[(5,),(3,),(5,),(5,),(3,),(10,),(3,),(10,),(10,),(6,),(13,),(6,8),(13,),(11,),(11,),(13,),(11,)]
-    # testStringConstruction(walldomains,outedges)
-
-    # walldomains=[(0,0.5),(0,1.5),(0.5,0),(0.5,1),(0.5,2),(1,0.5),(1,1.5),(1.5,0),(1.5,1),(1.5,2),(2,0.5),(2,1.5),(2.5,0),(2.5,1),(2.5,2),(3,0.5),(3,1.5),(0.5,0.5)]
-    # outedges=[(17,),(3,),(17,),(17,),(3,),(10,17),(3,),(10,),(10,),(6,),(13,),(6,8),(13,),(11,),(11,),(13,),(11,),(17,)]
-    # testStringConstruction(walldomains,outedges)
-
-    # Arnaud's simulation data
-    import os
-
-
-    basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/5D_cycle_1/MGCC_14419/')  
-    callPatternMatch(basedir,'5D Cycle 1, MGCC 14419')
-
-    # # pattern=['Mud','dum','dMu','mdu','udM','umd','Mud'] # x max, y min, z max, x min, y max, z min; explicitly calculated, should be there; NOTE THAT Y AND Z are swapped.
-
-    basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/3D_Example/MGCC_5/')    
-    callPatternMatch(basedir,'3D Example, MGCC 5')
-
-    # pattern=['uum','Muu','dMu','ddM','mdd','umd','uum'] # all maxes in order X1 X2 X3, then all mins in same order
-
-    # The variables.txt file for 3D Cycle 1 may be wrong. I MADE IT UP as a placeholder until
-    # I hear from Arnaud
-    basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/3D_Cycle_1_Data/MGCC_30/')    
-    callPatternMatch(basedir,'3D Cycle 1, MGCC 30')
-
-    basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/3D_Cycle_1_Data/MGCC_45/')    
-    callPatternMatch(basedir,'3D Cycle 1, MGCC 45')
-
-    # pattern=['Muuuu','dMuuu','ddMuu','dddMu','ddddM','mdddd','umddd','uumdd','uuumd','uuuum','Muuuu'] # maxes in order X Y1 Y2 Y3 Z, then mins in same order
-    # pattern=['Muuuu','dMuuu','ddMuu','ddduM','dddMd','mdddd','umddd','uumdd','uuudm','uuumu','Muuuu'] # maxes in order X Y1 Y2 Z Y3, then mins in same order
-    # pattern=['uuuum','uuuMu','uMudu','Mdudu','ddMdu','ddddM','dddmd','mddud','umdud','uumud','uuuum']  
-    # pattern=['uuuum','uuuMu','uMudu','Mdudu','ddMdu','ddddM','dddmd','dmdud','mudud','uumud','uuuum']  
-    # pattern=['uuuMu','uuudm','uMudu','Mdudu','ddMdu','dddmu','ddduM','dmdud','mudud','uumud','uuuum'] 
-    # pattern=['uuumu','uMuuu','Mduuu','dduuM','ddMud','dddMd','mdddd','umddd','uuddm','uumdu','uuumu'] 
-    # pattern=['Muuuu','duuMu','duudM']
-
-    # print "-------------------"
-    # print "5D Model B1, MGCC 1"
-    # print "-------------------"
-    # basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/5D_ModelB1_Data/MGCC_1/')
-    # walldomains=fp.parseWalls(basedir+'walls.txt')
-    # outedges=fp.parseOutEdges(basedir+'outEdges.txt')
-    # print matchPattern(pattern, walldomains,outedges)
-   
-    # print "--------------------"
-    # print "5D Model B1, MGCC 188"
-    # print "--------------------"
-    # basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/5D_ModelB1_Data/MGCC_188/')
-    # walldomains=fp.parseWalls(basedir+'walls.txt')
-    # outedges=fp.parseOutEdges(basedir+'outEdges.txt')
-    # print matchPattern(pattern, walldomains,outedges)
-
-    # print "---------------------"
-    # print "5D Model B1, MGCC 522"
-    # print "---------------------"
-    # basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/5D_ModelB1_Data/MGCC_522/')
-    # walldomains=fp.parseWalls(basedir+'walls.txt')
-    # outedges=fp.parseOutEdges(basedir+'outEdges.txt')
-    # print matchPattern(pattern, walldomains,outedges)
+        print matchCyclicPattern(pattern,origwallinds,outedges,walldomains,varsaffectedatwall,allwalllabels,showfirstwall=1)
 

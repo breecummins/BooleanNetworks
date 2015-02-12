@@ -1,4 +1,5 @@
 import walllabels as WL
+import fileparsers as fp
 from scipy.sparse.csgraph import connected_components
 import numpy as np
 
@@ -53,7 +54,9 @@ def strongConnect(outedges):
     return N,components
 
 def strongConnectWallNumbers(outedges):
+    print "Searching for strongly connected components."
     N,components=strongConnect(outedges)
+    print "Finshed searching for SCCs."
     wallinds=[]
     for k in range(N):
         inds=[i for i,c in enumerate(components) if c == k]
@@ -77,7 +80,3 @@ def filterAll(outedges,walldomains,varsaffectedatwall):
     # create all possible wall labels for the remaining walls
     allwalllabels=WL.makeAllWallLabels(outedges,walldomains,varsaffectedatwall)
     return wallinds,outedges,walldomains,varsaffectedatwall,allwalllabels
-
-if __name__=='__main__':
-    for p in constructCyclicPatterns("/Users/bcummins/ProjectData/DatabaseSimulations/5D_cycle_1/MGCC_14419/variables.txt"):
-        print p 
