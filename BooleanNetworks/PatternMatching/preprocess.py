@@ -2,6 +2,7 @@ import walllabels as WL
 import fileparsers as fp
 from scipy.sparse.csgraph import connected_components
 import numpy as np
+import itertools
 
 def preprocess(basedir):
     # read input files
@@ -51,18 +52,11 @@ def strongConnect(outedges):
         for j in o:
             adjacencymatrix[i,j]=1
     N,components=connected_components(adjacencymatrix,directed=True,connection="strong")
-    return N,components
+    return N,list(components)
 
 def strongConnectWallNumbers(outedges):
-    print "Searching for strongly connected components."
     N,components=strongConnect(outedges)
-    print "Finshed searching for SCCs."
-    wallinds=[]
-    for k in range(N):
-        inds=[i for i,c in enumerate(components) if c == k]
-        if len(inds) > 1:
-            wallinds.extend(inds)
-    return sorted(wallinds)
+    return [k for k,c in enumerate(components) if components.count(c)>1]
 
 def filterOutEdges(wallinds,outedges):
     return [tuple([wallinds.index(j) for j in outedges[k] if j in wallinds]) for k in wallinds]
