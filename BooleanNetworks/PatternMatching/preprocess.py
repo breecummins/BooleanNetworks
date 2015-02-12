@@ -52,10 +52,10 @@ def strongConnect(outedges):
         for j in o:
             adjacencymatrix[i,j]=1
     N,components=connected_components(adjacencymatrix,directed=True,connection="strong")
-    return N,list(components)
+    return list(components)
 
 def strongConnectWallNumbers(outedges):
-    N,components=strongConnect(outedges)
+    components=strongConnect(outedges)
     return [k for k,c in enumerate(components) if components.count(c)>1]
 
 def filterOutEdges(wallinds,outedges):
