@@ -40,6 +40,13 @@ def labelOptions(p):
     else:
         return None
 
+def wallLabelCheck(pattern,allwalllabels):
+    awl = [a for l in allwalllabels for a in l]
+    if not set(pattern).issubset(awl):
+        return "None. No results found. Pattern contains element that is not a wall label."
+    else:
+        return None
+
 def sanityCheck(pattern):
     # Make sure the input pattern meets the requirements of the algorithm.
     if not pattern:
@@ -88,6 +95,11 @@ def matchCyclicPattern(pattern,origwallinds,outedges,walldomains,varsaffectedatw
     S=sanityCheck(pattern)
     if S != "sane":
         return S
+    # check if any word in pattern is not a wall label
+    # if so, there's no need to search
+    W=wallLabelCheck(pattern,allwalllabels)
+    if W:
+        return W
     # alter pattern to cyclic if needed
     if pattern[0] != pattern[-1]:
         pattern.append(pattern[0])
@@ -120,13 +132,18 @@ def callPatternMatch(basedir='',message=''):
     # basedir must contain the files outEdges.txt, walls.txt, patterns.txt, variables.txt, and 
     # equations.txt.
     if message:
+        print "\n"
         print "-"*len(message)
         print message
         print "-"*len(message)
+        print "\n"
     print "Preprocessing..."
     Patterns,origwallinds,outedges,walldomains,varsaffectedatwall,allwalllabels=preprocess(basedir) 
-    print "Finished preprocessing."
     for pattern in Patterns:
-        print pattern
-        print matchCyclicPattern(pattern,origwallinds,outedges,walldomains,varsaffectedatwall,allwalllabels,showfirstwall=1)
+        print "\n"
+        print '-'*25
+        print "Pattern: {}".format(pattern)
+        match=matchCyclicPattern(pattern,origwallinds,outedges,walldomains,varsaffectedatwall, allwalllabels,showfirstwall=1)
+        print "Results: {}".format(match)
+        print '-'*25
 

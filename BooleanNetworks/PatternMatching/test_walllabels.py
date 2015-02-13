@@ -9,6 +9,7 @@ def testme():
     test3()
     test4()
     test5()
+    test6()
 
 def test0():
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels = PP.filterAll(*tc.test0())
@@ -70,6 +71,11 @@ def test5():
     print allwalllabels==mylist
     print WL.getFirstwalls('mdd',allwalllabels)==[0,3,4]
     print WL.getFirstwalls('umd',allwalllabels)==[7,8]
+
+def test6():
+    inds,outedges,walldomains,varsaffectedatwall,allwalllabels = PP.filterAll(*tc.test6())
+    mylist=[['umu'],['umd'],['dMd','dud'],['uuu'],['uum'],['duu'],['duM'],['udd','udm'],['uuM'],['duM'],['uuu'],['duu'],['mdd'],['Muu'],['mud'],['Muu'],['Muu']]
+    print allwalllabels==mylist
 
 if __name__=='__main__':
     testme()

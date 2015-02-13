@@ -10,9 +10,10 @@ def testme():
     test3()
     test4()
     test5()
+    test6()
     outedges=[(1,2),(5,8),(3,),(4,),(2,),(6,7),(7,),(6,),(0,)]
-    N,components=PP.strongConnect(outedges)
-    print N==4 and all(components==np.array([3,3,0,0,0,2,1,1,3]))
+    components=PP.strongConnect(outedges)
+    print all(components==np.array([3,3,0,0,0,2,1,1,3]))
     print PP.strongConnectWallNumbers(outedges) == [0,1,2,3,4,6,7,8]
 
 def test0():
@@ -90,6 +91,15 @@ def test5():
     varnames=fp.parseVars()
     patterns=PP.constructCyclicPatterns(varnames,patternnames,patternmaxmin)
     print patterns==[['mdd','umd','uum','Muu','dMu','ddM','mdd'],['mdd','umd','Mud','dum','dMu','ddM','mdd']]
+
+def test6():
+    inds,outedges,walldomains,varsaffectedatwall,allwalllabels = PP.filterAll(*tc.test6())
+    print inds==[4,5,7,8,9,10,11,14,16,17,18,19,23,24,25,26,27]
+    print outedges==[(3,8,13),(4,),(12,),(10,15),(16,),(9,),(2,14),(0,),(4,),(2,14),(16,),(6,),(1,7),(9,),(4,),(5,11),(6,)]
+    patternnames,patternmaxmin=fp.parsePatterns()
+    varnames=fp.parseVars()
+    patterns=PP.constructCyclicPatterns(varnames,patternnames,patternmaxmin)
+    print patterns==[['umu','Muu','duM','dMd','mdd','udm','umu'],['uuM','uum','Muu','duM','dMd','mdd','udm','umu','uuM'],['mud','uum','Muu','duM','mud'],['mdd','udm','Mdu','ddM','mdd'],['umd','uum','Muu','duM','dMd','mdd','umd'],['dmd','dum','muu','uuM','uMd','Mdd','dmd']]
 
 if __name__=='__main__':
 	testme()

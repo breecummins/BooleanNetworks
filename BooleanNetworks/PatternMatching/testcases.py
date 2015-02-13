@@ -83,3 +83,22 @@ def test5():
     f.write('X1 : (X2)(~X3) : X2\n X2 : X1 : X1 X3\n X3 : X2 : X1')
     f.close()
     return outedges,walldomains,varsaffectedatwall
+
+def test6():
+    # X1 : (X1)(~X3) : X1 X2 X3
+    # X2 : X1 : X3
+    # X3 : X1(~X2) : X1
+    # 3D EXAMPLE WHERE ONE VAR HAS 3 THRESHOLDS, CHOSE PARAM SET WITH FIXED POINT, 2 WHITE WALLS, BOUNDARY WALLS NOT INCLUDED
+    walldomains=[(1,0.5,0.5),(1,1.5,0.5),(1,0.5,1.5),(1,1.5,1.5),(2,0.5,0.5),(2,1.5,0.5),(2,0.5,1.5),(2,1.5,1.5),(3,0.5,0.5),(3,1.5,0.5),(3,0.5,1.5),(3,1.5,1.5),(0.5,1,0.5),(0.5,1,1.5),(1.5,1,0.5),(1.5,1,1.5),(2.5,1,0.5),(2.5,1,1.5),(3.5,1,0.5),(3.5,1,1.5),   (0.5,0.5,1),(0.5,1.5,1),(1.5,0.5,1),(1.5,1.5,1),(2.5,0.5,1),(2.5,1.5,1),(3.5,0.5,1),(3.5,1.5,1)]
+    outedges=[(4,20,22),(5,12,14),(),(13,21),(8,16,24),(9,),(2,),(3,15,23),(18,26),(27,),(6,17),(7,25),(20,),(),(4,22),(2,),(9,),(7,25),(27,),(11,),(),(12,),(2,),(5,14),(6,17),(9,),(10,19),(11,)]
+    varsaffectedatwall=[0]*4 + [1]*4 + [2]*12 + [0]*8
+    f=open('patterns.txt','w')
+    f.write('X2 min, X1 max, X3 max, X2 max, X1 min, X3 min, X2 min\n X3 max, X3 min, X1 max, X3 max, X2 max, X1 min, X3 min, X2 min\n X1 min, X3 min, X1 max, X3 max\n X2 min, X3 min, X1 max, X3 max, X2 max, X1 min\n X2 min, X3 min, X1 min, X3 max, X2 max, X1 max')
+    f.close()
+    f=open('variables.txt','w')
+    f.write('0 X1\n 1 X2\n 2 X3')
+    f.close()
+    f=open('equations.txt','w')
+    f.write('X1 : (X1)(~X3) : X1 X2 X3\n X2 : X1 : X3\n X3 : (X1)(~X2) : X1')
+    f.close()
+    return outedges,walldomains,varsaffectedatwall

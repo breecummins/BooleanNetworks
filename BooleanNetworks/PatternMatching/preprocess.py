@@ -21,19 +21,28 @@ def constructCyclicPatterns(varnames,patternnames,patternmaxmin):
     patterns=[]
     for v,p in zip(varinds,patternmaxmin):
         P=len(p)
-        wordlist=[['0' for _ in range(numvars)] for _ in range(P)]
-        for i,(k,q) in zip(v,enumerate(p)):
-            wordlist[k][i] = 'M' if q=='max' else 'm' 
-        for k in range(P):
-            for n in range(numvars):
-                if wordlist[k][n]=='0':
-                    K=k
-                    while wordlist[K][n] == '0':
-                        K=(K-1)%P #the mod P means I'm assuming cyclicity
-                    wordlist[k][n] = 'd' if wordlist[K][n] in ['M','d'] else 'u'
-        if wordlist[0] != wordlist[-1]:
-            wordlist+=[wordlist[0]] # make sure pattern is cyclic
-        patterns.append([''.join(w) for w in wordlist])
+        missingvars=sorted(list(set(range(numvars)).difference(set(v))))
+        if not missingvars:
+            wordlist=[['0' for _ in range(numvars)] for _ in range(P)]
+        else:
+            wordlist=[]
+            for c in itertools.combinations_with_replacement(['u','d'],len(missingvars)):
+                wl = [[c[missingvars.index(k)] if k in missingvars else '0' for k in range(numvars)] for _ in range(P)]
+                wordlist.extend(wl)
+        for j in range(len(wordlist)/P):
+            wl=wordlist[j*P:(j+1)*P]
+            for i,(k,q) in zip(v,enumerate(p)):
+                wl[k][i] = 'M' if q=='max' else 'm' 
+            for k in range(len(wl)):
+                for n in range(numvars):
+                    if wl[k][n]=='0':
+                        K=k
+                        while wl[K][n] == '0':
+                            K=(K-1)%P #the mod P means I'm assuming cyclicity
+                        wl[k][n] = 'd' if wl[K][n] in ['M','d'] else 'u'
+            if wl[0] != wl[-1]:
+                wl+=[wl[0]]
+            patterns.append([''.join(w)  for w in wl])
     return patterns
 
 def varsAtWalls(threshnames,walldomains,wallthresh,varnames):
