@@ -1,3 +1,5 @@
+import json
+
 def parseOutEdges(fname='outEdges.txt'):
     f=open(fname,'r')
     outedges=[]
@@ -46,7 +48,47 @@ def parsePatterns(fname="patterns.txt"):
 def parseAll(oname='outEdges.txt',wname='walls.txt',vname="variables.txt",ename="equations.txt",pname="patterns.txt"):
     return parseOutEdges(oname), parseWalls(wname), parseVars(vname), parseEqns(ename), parsePatterns(pname)
 
+def parseJSON(fname='output.json'):
+    json_data = open(fname)
+    data = json.load(json_data,strict=False)
+    # variables
+    varnames=[str(v) for v in data["variables"]["info"]]
+    # unsorted outedges
+    wallindslist=[[int(k) for k in item[0].keys()] for item in data['outedges']['data']]
+    outedgeslist=[ [L for L in item[0].values()] for item in data['outedges']['data']]
+    # sorted outedges
+    sortedinds=[ sorted(zip(w,range(len(w)))) for w in wallindslist ]
+    wallindslist=[ [x for (x,y) in s] for s in sortedinds ]
+    outedgeslist=[ [tuple(o[y]) for (x,y) in s] for o,s in zip(outedgeslist,sortedinds)] 
+    # unsorted unsplit walls
+    wallnameslist=[int(item) for item in data['walls']['info'].keys()]
+    wallinfolist=data['walls']['info'].values()
+    # sorted unsplit walls
+    sortedinds=sorted(zip(wallnameslist,range(len(wallnameslist))))
+    wallnameslist,inds=zip(*sortedinds)
+    walldomainslist1=[]
+    varatthreshlist1=[]
+    for i in inds:
+        w=wallinfolist[i]
+        L = filter(None,w.replace('[',' ').replace('x',' ').replace(']',' ').replace(',',' ').split(' '))
+        varatthreshlist1.append(int(L[0]))
+        L = [float(n) for n in L[1:]]
+        T = []
+        for k in range(0,len(L)-1,2):
+            T.append(sum(L[k:k+2])/2) # thresholds are integers, regular domains end in .5
+        walldomainslist1.append(tuple(T))
+    # sorted split walls
+    walldomainslist=[[] for _ in range(len(wallindslist))]
+    varatthreshlist=[[] for _ in range(len(wallindslist))]
+    for j,wn in enumerate(wallnameslist):
+        for k,w in enumerate(wallindslist):
+            if wn in w:
+                walldomainslist[k].append(walldomainslist1[j])
+                varatthreshlist[k].append(varatthreshlist1[j])
+    return varnames,wallindslist,outedgeslist,walldomainslist,varatthreshlist
+
 if __name__=='__main__':
     # print parseVars("/Users/bcummins/ProjectData/DatabaseSimulations/5D_cycle_1/MGCC_14419/variables.txt")
     # print parsePatterns()
-    print parseEqns("/Users/bcummins/ProjectData/DatabaseSimulations/5D_cycle_1/MGCC_14419/equations.txt")
+    # print parseEqns("/Users/bcummins/ProjectData/DatabaseSimulations/5D_cycle_1/MGCC_14419/equations.txt")
+    parseJSON()

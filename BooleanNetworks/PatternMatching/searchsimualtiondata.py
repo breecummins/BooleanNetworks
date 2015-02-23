@@ -1,5 +1,5 @@
 import os
-from patternmatch import callPatternMatch
+from patternmatch import callPatternMatch, callPatternMatchJSON
 
 def simdata_5D_Cycle1():
     basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/5D_cycle_1/MGCC_14419/')  
@@ -25,11 +25,15 @@ def simdata_3D_Cycle1():
     # basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/3D_Cycle_1_Data/MGCC_45/')    
     # callPatternMatch(basedir,'3D Cycle 1, MGCC 45')
 
-    basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/3D_Cycle_1_Data/MGCC_50/')    
-    callPatternMatch(basedir,'3D Cycle 1, MGCC 50')
+    # basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/3D_Cycle_1_Data/MGCC_50/')    
+    # callPatternMatch(basedir,'3D Cycle 1, MGCC 50')
 
-    basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/3D_Cycle_1_Data/MGCC_54/')    
-    callPatternMatch(basedir,'3D Cycle 1, MGCC 54')
+    # basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/3D_Cycle_1_Data/MGCC_54/')    
+    # callPatternMatch(basedir,'3D Cycle 1, MGCC 54')
+
+    basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/3D_Cycle_1_Data/MGCC_50/INCC_12/')    
+    callPatternMatchJSON(basedir,'3D Cycle 1, MGCC 50, INCC 12')
+
 
 if __name__=='__main__':
     # simdata_3D_Example()

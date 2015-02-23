@@ -1,6 +1,6 @@
 import sys
 import walllabels as WL
-from preprocess import preprocess
+from preprocess import preprocess, preprocessJSON
 
 def repeatingLoop(match):
     # see if the match has a repeating loop inside it
@@ -146,4 +146,29 @@ def callPatternMatch(basedir='',message=''):
         match=matchCyclicPattern(pattern,origwallinds,outedges,walldomains,varsaffectedatwall, allwalllabels,showfirstwall=1)
         print "Results: {}".format(match)
         print '-'*25
+
+def callPatternMatchJSON(basedir='',message=''):
+    # basedir must contain the files output.json, patterns.txt, and equations.txt.
+    if message:
+        print "\n"
+        print "-"*len(message)
+        print message
+        print "-"*len(message)
+        print "\n"
+    print "Preprocessing..."
+    Patterns,origwallindslist,outedgeslist,walldomainslist,varsaffectedatwalllist,allwalllabelslist=preprocessJSON(basedir)
+    param=1
+    for (origwallinds,outedges,walldomains,varsaffectedatwall,allwalllabels) in zip(origwallindslist,outedgeslist,walldomainslist,varsaffectedatwalllist,allwalllabelslist): 
+        print "\n"
+        print '-'*50
+        print "Parameter set {} of {}".format(param,len(origwallindslist))
+        print '-'*50
+        param+=1
+        for pattern in Patterns:
+            print "\n"
+            print '-'*25
+            print "Pattern: {}".format(pattern)
+            match=matchCyclicPattern(pattern,origwallinds,outedges,walldomains,varsaffectedatwall, allwalllabels,showfirstwall=1)
+            print "Results: {}".format(match)
+            print '-'*25
 

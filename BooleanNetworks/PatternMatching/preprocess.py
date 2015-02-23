@@ -15,6 +15,28 @@ def preprocess(basedir):
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels = filterAll(outedges,walldomains,varsaffectedatwall)
     return patterns,inds,outedges,walldomains,varsaffectedatwall,allwalllabels
 
+def preprocessJSON(basedir):
+    # read input files
+    varnames,wallindslist,outedgeslist,walldomainslist,wallthreshlist=fp.parseJSON(basedir+'output.json')
+    threshnames=fp.parseEqns(basedir+'equations.txt')
+    patternnames, patternmaxmin=fp.parsePatterns(basedir+'patterns.txt')
+    # relabel wall numbers in outedges
+    newoutedgeslist=[]
+    for (wallinds,outedges) in zip(wallindslist,outedgeslist):
+        newoutedgeslist.append(filterOutEdgesJSON(wallinds,outedges))
+    outedgeslist=newoutedgeslist
+    # put max/min patterns in terms of the alphabet u,m,M,d
+    patterns=constructCyclicPatterns(varnames,patternnames,patternmaxmin)
+    # record which variable is affected at each wall
+    varsaffectedatwalllist=[]
+    for (wd,wt) in zip(walldomainslist,wallthreshlist):
+        varsaffectedatwalllist.append(varsAtWalls(threshnames,wd,wt,varnames))
+    # create wall labels
+    allwalllabelslist=[]
+    for (oe,wd,vw) in zip(outedgeslist,walldomainslist,varsaffectedatwalllist):
+        allwalllabelslist.append(WL.makeAllWallLabels(oe,wd,vw))
+    return patterns,wallindslist,outedgeslist,walldomainslist,varsaffectedatwalllist,allwalllabelslist
+
 def constructCyclicPatterns(varnames,patternnames,patternmaxmin):
     numvars=len(varnames)
     varinds=[[varnames.index(q) for q in p] for p in patternnames]
@@ -70,6 +92,9 @@ def strongConnectWallNumbers(outedges):
 def filterOutEdges(wallinds,outedges):
     return [tuple([wallinds.index(j) for j in outedges[k] if j in wallinds]) for k in wallinds]
 
+def filterOutEdgesJSON(wallinds,outedges):
+    return [tuple([wallinds.index(j) for j in o]) for o in outedges]
+
 def filterWallProperties(interiorinds,wallproperties):
     # strip filtered walls from associated wall properties
     return [[p for i,p in enumerate(wp) if i in interiorinds] for wp in wallproperties]
@@ -83,3 +108,8 @@ def filterAll(outedges,walldomains,varsaffectedatwall):
     # create all possible wall labels for the remaining walls
     allwalllabels=WL.makeAllWallLabels(outedges,walldomains,varsaffectedatwall)
     return wallinds,outedges,walldomains,varsaffectedatwall,allwalllabels
+
+if __name__=='__main__':
+    out=preprocessJSON('')
+    for o in out:
+        print o
