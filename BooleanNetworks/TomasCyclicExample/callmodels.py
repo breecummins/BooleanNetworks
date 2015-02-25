@@ -13,5 +13,6 @@ def searchForPatterns(model):
         # sys.stdout.flush()
 
 if __name__=='__main__':
-    model=dcm.oneintermediatenode()
+    # model=dcm.oneintermediatenode()
+    model=dcm.symmetric5D()
     searchForPatterns(model)

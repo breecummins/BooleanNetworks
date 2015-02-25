@@ -16,81 +16,79 @@ class doublecyclemodels(object):
         self.patterns=pp.constructCyclicPatterns(varnames,patternnames,patternmaxmin)
         domains=self.makeDomains()
         domainoutedges=self.makeDomainGraph(domains)
-        print len(domains)
         walldomains,walloutedges=self.makeWallGraph(domains,domainoutedges)
-        print len(walldomains)
-        self.varsaffectedatwall=self.makeVarsAffected(walldomains)
+        varsaffectedatwall=self.makeVarsAffected(walldomains)
         self.wallinds,self.walloutedges,self.walldomains,self.varsaffectedatwall,self.allwalllabels = pp.filterAll(walloutedges,walldomains,varsaffectedatwall)
 
-        def writeVars(self):
-            '''
-            Stub for subclass.
+    def writeVars(self):
+        '''
+        Stub for subclass.
 
-            '''
-            return None
+        '''
+        return None
 
-        def writePatterns(self):
-            '''
-            Stub for subclass.
+    def writePatterns(self):
+        '''
+        Stub for subclass.
 
-            '''
-            return None
+        '''
+        return None
 
-        def makeDomains(self):
-            '''
-            Stub for subclass.
+    def makeDomains(self):
+        '''
+        Stub for subclass.
 
-            '''
-            return None
+        '''
+        return None
 
-        def makeDomainGraph(self,domains):
-            '''
-            Stub for subclass.
+    def makeDomainGraph(self,domains):
+        '''
+        Stub for subclass.
 
-            '''
-            return None
+        '''
+        return None
 
-        def makeVarsAffected(self,walldomains):
-            '''
-            Stub for subclass.
+    def makeVarsAffected(self,walldomains):
+        '''
+        Stub for subclass.
 
-            '''
-            return None
+        '''
+        return None
 
-        def makeWallGraph(self,domains,domainoutedges):
-            # make list of walls and wall graph.
-            walls=[]
-            outdom=[]
-            indom=[]
-            for o,(n,d) in zip(outedges,enumerate(domains)):
-                for i in o:
-                    c=domains[i]
-                    k=[abs(int(v-w)) for v,w in zip(d,c)].index(1)
-                    w=list(d)
-                    w[k]=w[k]-0.5 if d[k]>c[k] else w[k]+0.5
-                    walls.append(tuple(w))
-                    outdom.append(i)
-                    indom.append(n)
-            walloutedges=[]
-            for od in outdom:
-                woe=[]
-                nextdoms=outedges[od]
-                for j in range(len(walls)):
-                    if indom[j]==od and outdom[j] in nextdoms:
-                        woe.append(j)
-                walloutedges.append(tuple(woe))
-            return walls, walloutedges
+    def makeWallGraph(self,domains,domainoutedges):
+        # make list of walls and wall graph.
+        walls=[]
+        outdom=[]
+        indom=[]
+        for o,(n,d) in zip(domainoutedges,enumerate(domains)):
+            for i in o:
+                c=domains[i]
+                k=[abs(int(v-w)) for v,w in zip(d,c)].index(1)
+                w=list(d)
+                w[k]=w[k]-0.5 if d[k]>c[k] else w[k]+0.5
+                walls.append(tuple(w))
+                outdom.append(i)
+                indom.append(n)
+        walloutedges=[]
+        for od in outdom:
+            woe=[]
+            nextdoms=domainoutedges[od]
+            for j in range(len(walls)):
+                if indom[j]==od and outdom[j] in nextdoms:
+                    woe.append(j)
+            walloutedges.append(tuple(woe))
+        return walls, walloutedges
 
-        def checkDomainOutedges(self,domains,domainoutedges):
-            Domains=np.array(domains)
-            noedges=[]
-            for k,d in enumerate(Domains):
-                diffs=np.abs(Domains-d)
-                for j,r in enumerate(diffs):
-                    if np.abs(np.sum(r) -1.0)<0.1:
-                        if k not in outedges[j] and j not in outedges[k] and (k,j) not in noedges:
-                            noedges.append((j,k))
-            return noedges
+    def checkDomainOutedges(self,domains,domainoutedges):
+        Domains=np.array(domains)
+        noedges=[]
+        for k,d in enumerate(Domains):
+            diffs=np.abs(Domains-d)
+            for j,r in enumerate(diffs):
+                if np.abs(np.sum(r) -1.0)<0.1:
+                    if k not in outedges[j] and j not in outedges[k] and (k,j) not in noedges:
+                        noedges.append((j,k))
+        return noedges
 
 
 class symmetric5D(doublecyclemodels):
@@ -165,7 +163,7 @@ class symmetric5D(doublecyclemodels):
         # (0,1,2,3,4)
         affects=[(1,),(2,),(0,3),(4,),(2,)]
         varsaffectedatwalls=[]
-        for w in self.walls:
+        for w in walldomains:
             for k,v in enumerate(w):
                 if abs(v-int(v)) < 0.25:
                     a=affects[k]
