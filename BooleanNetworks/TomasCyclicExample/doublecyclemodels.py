@@ -106,7 +106,7 @@ class symmetric5D(doublecyclemodels):
 
     def writePatterns(self):
         f=open('patterns.txt','w')
-        f.write('x1 max, x2 min, x3 min, x1 min, x2 max, x3 max\nx4 max, x5 min, x3 min, x4 min, x5 max, x3 max\nx3 min, x1 min, x4 min, x2 max, x5 max, x3 max, x1 max, x4 max, x2 min, x5 min')
+        f.write('x1 max, x2 min, x3 min, x1 min, x2 max, x3 max\nx4 max, x5 min, x3 min, x4 min, x5 max, x3 max\nx3 min, x1 min, x4 min, x2 max, x5 max, x3 max, x1 max, x4 max, x2 min, x5 min\nx3 min, x1 min, x2 max, x4 min, x5 max, x3 max, x1 max, x2 min, x4 max, x5 min')
         f.close()
 
     def writeVars(self):
