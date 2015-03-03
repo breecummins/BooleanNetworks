@@ -172,3 +172,29 @@ def callPatternMatchJSON(basedir='',message=''):
             print "Results: {}".format(match)
             print '-'*25
 
+def callPatternMatchJSONWriteFile(basedir='',message=''):
+    # basedir must contain the files output.json, patterns.txt, and equations.txt.
+    if message:
+        print "\n"
+        print "-"*len(message)
+        print message
+        print "-"*len(message)
+        print "\n"
+    print "Preprocessing..."
+    Patterns,origwallindslist,outedgeslist,walldomainslist,varsaffectedatwalllist,allwalllabelslist=preprocessJSON(basedir)
+    param=1
+    f=open(basedir+'results.txt','w')
+    for (origwallinds,outedges,walldomains,varsaffectedatwall,allwalllabels) in zip(origwallindslist,outedgeslist,walldomainslist,varsaffectedatwalllist,allwalllabelslist): 
+        print "\n"
+        print "Parameter set {} of {}".format(param,len(origwallindslist))
+        param+=1
+        nummatches=0
+        for pattern in Patterns:
+            match=matchCyclicPattern(pattern,origwallinds,outedges,walldomains,varsaffectedatwall, allwalllabels,showfirstwall=0)
+            if 'None' not in match:
+                if nummatches==0:
+                    f.write('\n'+"Parameter set {} of {}".format(param,len(origwallindslist))+'\n')
+                f.write("Pattern: {}".format(pattern)+'\n')
+                f.write("Results: {}".format(match)+'\n')
+    f.close()
+
