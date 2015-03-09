@@ -17,9 +17,28 @@ def preprocess(basedir):
 
 def preprocessJSON(basedir):
     # read input files
-    varnames,wallindslist,outedgeslist,walldomainslist,wallthreshlist=fp.parseJSON(basedir+'output.json')
+    varnames,wallindslist,outedgeslist,walldomainslist,wallthreshlist,parameterinds=fp.parseJSON(basedir+'output.json')
     threshnames=fp.parseEqns(basedir+'equations.txt')
     patternnames, patternmaxmin=fp.parsePatterns(basedir+'patterns.txt')
+    # split according to Morse sets
+    Morseoutedges=[]
+    Morsewallinds=[]
+    Morsedomains=[]
+    Morsethresh=[]
+    splitparameterinds=[]
+    for oe,wi,wd,wt,pi in zip(outedgeslist,wallindslist,walldomainslist,wallthreshlist,parameterinds):
+        if oe not in Morseoutedges:
+            Morseoutedges.append(oe)
+            Morsewallinds.append(wi)
+            Morsedomains.append(wd)
+            Morsethresh.append(wt)
+            splitparameterinds.append([pi])
+        else:
+            splitparameterinds[Morseoutedges.index(oe)].append(pi)
+    outedgeslist=Morseoutedges
+    wallindslist=Morsewallinds
+    walldomainslist=Morsedomains
+    wallthreshlist=Morsethresh
     # relabel wall numbers in outedges
     newoutedgeslist=[]
     for (wallinds,outedges) in zip(wallindslist,outedgeslist):
@@ -35,7 +54,7 @@ def preprocessJSON(basedir):
     allwalllabelslist=[]
     for (oe,wd,vw) in zip(outedgeslist,walldomainslist,varsaffectedatwalllist):
         allwalllabelslist.append(WL.makeAllWallLabels(oe,wd,vw))
-    return patterns,wallindslist,outedgeslist,walldomainslist,varsaffectedatwalllist,allwalllabelslist
+    return patterns,wallindslist,outedgeslist,walldomainslist,varsaffectedatwalllist,allwalllabelslist,splitparameterinds
 
 def constructCyclicPatterns(varnames,patternnames,patternmaxmin):
     numvars=len(varnames)

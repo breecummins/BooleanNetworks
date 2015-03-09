@@ -51,6 +51,8 @@ def parseAll(oname='outEdges.txt',wname='walls.txt',vname="variables.txt",ename=
 def parseJSON(fname='output.json'):
     json_data = open(fname)
     data = json.load(json_data,strict=False)
+    # parameters
+    parameterinds=data['parameters']['index']
     # variables
     varnames=[str(v) for v in data["variables"]["info"]]
     # unsorted outedges
@@ -85,7 +87,7 @@ def parseJSON(fname='output.json'):
             if wn in w:
                 walldomainslist[k].append(walldomainslist1[j])
                 varatthreshlist[k].append(varatthreshlist1[j])
-    return varnames,wallindslist,outedgeslist,walldomainslist,varatthreshlist
+    return varnames,wallindslist,outedgeslist,walldomainslist,varatthreshlist,parameterinds
 
 if __name__=='__main__':
     # print parseVars("/Users/bcummins/ProjectData/DatabaseSimulations/5D_cycle_1/MGCC_14419/variables.txt")

@@ -11,8 +11,8 @@ class doublecyclemodels(object):
     def __init__(self):
         self.writeVars()
         self.writePatterns()
-        varnames=fp.parseVars()
         patternnames,patternmaxmin=fp.parsePatterns()
+        varnames=fp.parseVars()
         self.patterns=pp.constructCyclicPatterns(varnames,patternnames,patternmaxmin)
         domains=self.makeDomains()
         domainoutedges=self.makeDomainGraph(domains)
@@ -105,8 +105,35 @@ class symmetric5D(doublecyclemodels):
         doublecyclemodels.__init__(self)
 
     def writePatterns(self):
-        f=open('patterns.txt','w')
-        f.write('x1 max, x2 min, x3 min, x1 min, x2 max, x3 max\nx4 max, x5 min, x3 min, x4 min, x5 max, x3 max\nx3 min, x1 min, x4 min, x2 max, x5 max, x3 max, x1 max, x4 max, x2 min, x5 min\nx3 min, x1 min, x2 max, x4 min, x5 max, x3 max, x1 max, x2 min, x4 max, x5 min')
+        def writeme(patternstart,remainder):
+            for r in itertools.permutations(remainder):
+                f.write(' '.join(patternstart+list(r))+'\n')
+        def writemevar(patternstart,remainder,var):
+            for r in itertools.permutations(remainder):
+                p=patternstart+list(r)
+                # make sure that var double up is in correct order
+                i=p.index(var+' min')
+                try:
+                    j=p[i+1:].index(var+' max')
+                    k=p[i+1:].index(var+' min')
+                    if j<k:
+                        f.write(' '.join(p)+'\n')
+                except:
+                    pass
+        f=open('patterns.txt','w') 
+        # patternstart=['x1 max']
+        # remainder=['x1 min','x2 min','x3 min','x2 max','x3 max']
+        # writeme(patternstart,remainder)
+        # patternstart=['x3 max']
+        # remainder=['x3 min','x4 min','x5 min','x4 max','x5 max']
+        # writeme(patternstart,remainder)
+        # patternstart=['x1 max']
+        # remainder=['x1 min','x2 min','x3 min','x4 min','x5 min','x2 max','x3 max','x4 max','x5 max']
+        # writeme(patternstart,remainder)
+        patternstart=['x3 max','x1 max']
+        var='x3'
+        remainder=['x1 min','x2 min','x3 min','x4 min','x5 min','x2 max','x4 max','x5 max',var+' min',var+' max']
+        writemevar(patternstart,remainder,var)
         f.close()
 
     def writeVars(self):
@@ -195,8 +222,19 @@ class oneintermediatenode(doublecyclemodels):
         doublecyclemodels.__init__(self)
 
     def writePatterns(self):
-        f=open('patterns.txt','w')
-        f.write('x max, y max, z max, x min, y min, z min\nx min, y max, z min, x max, y min, z max\nu max, v max, w max, u min, v min, w min\nu min, v max, w min, u max, v min, w max\nv max, x max, w min, s max, y min, u max, z max, v min, x min, s min, w max, y max, u min, z min')
+        def writeme(patternstart,remainder):
+            for r in itertools.permutations(remainder):
+                f.write(' '.join(patternstart+list(r))+'\n')
+        f=open('patterns.txt','w') 
+        patternstart=['x max']
+        remainder=['x min','y min','z min','y max','z max']
+        writeme(patternstart,remainder)
+        patternstart=['u max']
+        remainder=['v min','w min','u min','v max','w max']
+        writeme(patternstart,remainder)
+        patternstart=['x max']
+        remainder=['x min','y min','z min','s min','u min','v min','w min','y max','z max','s max','u max','v max','w max']
+        writeme(patternstart,remainder)
         f.close()
 
     def writeVars(self):
@@ -267,10 +305,10 @@ class oneintermediatenode(doublecyclemodels):
                         varsaffectedatwalls.append(a[0])
                         break
                     elif k == 6 and v==1:
-                        varsaffectedatwalls.append(3)
+                        varsaffectedatwalls.append(a[0])
                         break
                     elif k == 6 and v==2:
-                        varsaffectedatwalls.append(4)
+                        varsaffectedatwalls.append(a[1])
                         break
         return varsaffectedatwalls
 

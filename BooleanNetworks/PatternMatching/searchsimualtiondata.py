@@ -97,7 +97,7 @@ def simdata_3D_Example():
 
 def simdata_3D_Cycle1():
     basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/3D_Cycle_1_Data/MGCC_50/INCC_12/')    
-    callPatternMatchJSON(basedir,'3D Cycle 1, MGCC 50, INCC 12')
+    callPatternMatchJSONWriteFile(basedir,'3D Cycle 1, MGCC 50, INCC 12')
 
     # basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/3D_Cycle_1_Data/MGCC_30/')    
     # callPatternMatch(basedir,'3D Cycle 1, MGCC 30')
@@ -123,12 +123,12 @@ def simdata_3D_Cycle1():
 
 if __name__=='__main__':
     # simdata_3D_Example()
-    # simdata_3D_Cycle1()
+    simdata_3D_Cycle1()
     # simdata_4D_Cycle1()
     # simdata_4D_Cycle1_Haase()
     # simdata_5D_Cycle1()
-    nummatches,paramsets,patterns=analyze_4D_Cycle1()
-    print nummatches
-    print len(paramsets)
-    print len(patterns)
+    # nummatches,paramsets,patterns=analyze_4D_Cycle1()
+    # print nummatches
+    # print len(paramsets)
+    # print len(patterns)
 

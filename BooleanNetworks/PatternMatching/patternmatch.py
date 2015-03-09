@@ -156,12 +156,13 @@ def callPatternMatchJSON(basedir='',message=''):
         print "-"*len(message)
         print "\n"
     print "Preprocessing..."
-    Patterns,origwallindslist,outedgeslist,walldomainslist,varsaffectedatwalllist,allwalllabelslist=preprocessJSON(basedir)
+    Patterns,origwallindslist,outedgeslist,walldomainslist,varsaffectedatwalllist,allwalllabelslist,parameterinds=preprocessJSON(basedir)
     param=1
     for (origwallinds,outedges,walldomains,varsaffectedatwall,allwalllabels) in zip(origwallindslist,outedgeslist,walldomainslist,varsaffectedatwalllist,allwalllabelslist): 
         print "\n"
         print '-'*50
-        print "Parameter set {} of {}".format(param,len(origwallindslist))
+        print "Morse set {} of {}".format(param,len(origwallindslist))
+        print "Parameters={}".format(parameterinds[param-1])
         print '-'*50
         param+=1
         for pattern in Patterns:
@@ -181,20 +182,19 @@ def callPatternMatchJSONWriteFile(basedir='',message=''):
         print "-"*len(message)
         print "\n"
     print "Preprocessing..."
-    Patterns,origwallindslist,outedgeslist,walldomainslist,varsaffectedatwalllist,allwalllabelslist=preprocessJSON(basedir)
+    Patterns,origwallindslist,outedgeslist,walldomainslist,varsaffectedatwalllist,allwalllabelslist,parameterinds=preprocessJSON(basedir)
     param=1
     f=open(basedir+'results.txt','w')
     for (origwallinds,outedges,walldomains,varsaffectedatwall,allwalllabels) in zip(origwallindslist,outedgeslist,walldomainslist,varsaffectedatwalllist,allwalllabelslist): 
         print "\n"
-        print "Parameter set {} of {}".format(param,len(origwallindslist))
-        param+=1
-        nummatches=0
+        print "Morse set {} of {}".format(param,len(origwallindslist))
+        print "Parameters={}".format(parameterinds[param-1])
         for pattern in Patterns:
             match=matchCyclicPattern(pattern,origwallinds,outedges,walldomains,varsaffectedatwall, allwalllabels,showfirstwall=0)
             if 'None' not in match:
-                if nummatches==0:
-                    f.write('\n'+"Parameter set {} of {}".format(param,len(origwallindslist))+'\n')
+                f.write('\n'+"Parameters={}".format(parameterinds[param-1])+'\n')
                 f.write("Pattern: {}".format(pattern)+'\n')
                 f.write("Results: {}".format(match)+'\n')
+        param+=1
     f.close()
 
