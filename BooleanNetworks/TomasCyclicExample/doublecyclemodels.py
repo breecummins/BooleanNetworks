@@ -11,14 +11,14 @@ class doublecyclemodels(object):
     def __init__(self):
         self.writeVars()
         self.writePatterns()
-        patternnames,patternmaxmin=fp.parsePatterns()
-        varnames=fp.parseVars()
-        self.patterns=pp.constructCyclicPatterns(varnames,patternnames,patternmaxmin)
-        domains=self.makeDomains()
-        domainoutedges=self.makeDomainGraph(domains)
-        walldomains,walloutedges=self.makeWallGraph(domains,domainoutedges)
+        self.patternstart,self.patternremainder=fp.parsePatternGenerator()
+        self.varnames=fp.parseVars()
+        self.domains=self.makeDomains()
+        self.domainoutedges=self.makeDomainGraph(self.domains)
+        walldomains,walloutedges=self.makeWallGraph(self.domains,self.domainoutedges)
         varsaffectedatwall=self.makeVarsAffected(walldomains)
-        self.wallinds,self.walloutedges,self.walldomains,self.varsaffectedatwall,self.allwalllabels = pp.filterAll(walloutedges,walldomains,varsaffectedatwall)
+        self.origwallinds,self.outedges,self.walldomains,self.varsaffectedatwall,self.allwalllabels = pp.filterAll(walloutedges,walldomains,varsaffectedatwall)
+
 
     def writeVars(self):
         '''
@@ -90,6 +90,30 @@ class doublecyclemodels(object):
                         noedges.append((j,k))
         return noedges
 
+    def checkAllChange(self):
+        # print self.outedges
+        scc=pp.strongConnect(self.outedges)
+        print scc
+        mM=[[0,0] for _ in range(len(self.varnames))]
+        for l in self.allwalllabels:
+            for w in l:
+                for k,c in enumerate(w):
+                    if c == 'm':
+                        mM[k][0]=1
+                    elif c =='M':
+                        mM[k][1]=1
+        print mM
+
+    def writeGraphViz(self,doms,outedges,fname='graph.gv'):
+        f=open(fname,'w')
+        f.write('digraph {\n')
+        for k in range(len(doms)):
+            f.write(str(k)+';\n')
+        for k,o in enumerate(outedges):
+            for e in o:
+                f.write(str(k)+' -> '+str(e)+'\n')
+        f.write('}')
+        f.close()
 
 class symmetric5D(doublecyclemodels):
     '''
@@ -105,35 +129,11 @@ class symmetric5D(doublecyclemodels):
         doublecyclemodels.__init__(self)
 
     def writePatterns(self):
-        def writeme(patternstart,remainder):
-            for r in itertools.permutations(remainder):
-                f.write(' '.join(patternstart+list(r))+'\n')
-        def writemevar(patternstart,remainder,var):
-            for r in itertools.permutations(remainder):
-                p=patternstart+list(r)
-                # make sure that var double up is in correct order
-                i=p.index(var+' min')
-                try:
-                    j=p[i+1:].index(var+' max')
-                    k=p[i+1:].index(var+' min')
-                    if j<k:
-                        f.write(' '.join(p)+'\n')
-                except:
-                    pass
-        f=open('patterns.txt','w') 
-        # patternstart=['x1 max']
-        # remainder=['x1 min','x2 min','x3 min','x2 max','x3 max']
-        # writeme(patternstart,remainder)
-        # patternstart=['x3 max']
-        # remainder=['x3 min','x4 min','x5 min','x4 max','x5 max']
-        # writeme(patternstart,remainder)
-        # patternstart=['x1 max']
-        # remainder=['x1 min','x2 min','x3 min','x4 min','x5 min','x2 max','x3 max','x4 max','x5 max']
-        # writeme(patternstart,remainder)
-        patternstart=['x3 max','x1 max']
-        var='x3'
-        remainder=['x1 min','x2 min','x3 min','x4 min','x5 min','x2 max','x4 max','x5 max',var+' min',var+' max']
-        writemevar(patternstart,remainder,var)
+        f=open('patterngenerator.txt','w') 
+        patternstart='x3 max'
+        remainder='x1 min, x2 min, x3 min, x1 max, x2 max'
+        f.write(patternstart+'\n')
+        f.write(remainder+'\n')
         f.close()
 
     def writeVars(self):
@@ -142,15 +142,10 @@ class symmetric5D(doublecyclemodels):
         f.close()
 
     def makeDomains(self):
-        base=[0.5]*4
         doms=[]
         for k in range(5):
-            inds=itertools.combinations(range(4),k)
-            for i in inds:
-                b=base[:]
-                for j in i:
-                    b[j]=1.5
-                doms.append(b)
+            for i in itertools.combinations(range(4),k):
+                doms.append([1.5 if j in i else 0.5 for j in range(4)])
         domains = [tuple(d[:2]+[n]+d[2:]) for d in doms for n in [0.5,1.5,2.5]]
         return domains
 
@@ -198,10 +193,10 @@ class symmetric5D(doublecyclemodels):
                         varsaffectedatwalls.append(a[0])
                         break
                     elif k == 2 and v==1:
-                        varsaffectedatwalls.append(0)
+                        varsaffectedatwalls.append(a[0])
                         break
                     elif k == 2 and v==2:
-                        varsaffectedatwalls.append(3)
+                        varsaffectedatwalls.append(a[1])
                         break
         return varsaffectedatwalls
 
@@ -214,7 +209,7 @@ class oneintermediatenode(doublecyclemodels):
     s : ~w : y
     u : ~w : v
     v : ~u : w
-    w : ~v : s u
+    w : ~v : u s
 
     '''
 
@@ -222,19 +217,11 @@ class oneintermediatenode(doublecyclemodels):
         doublecyclemodels.__init__(self)
 
     def writePatterns(self):
-        def writeme(patternstart,remainder):
-            for r in itertools.permutations(remainder):
-                f.write(' '.join(patternstart+list(r))+'\n')
-        f=open('patterns.txt','w') 
-        patternstart=['x max']
-        remainder=['x min','y min','z min','y max','z max']
-        writeme(patternstart,remainder)
-        patternstart=['u max']
-        remainder=['v min','w min','u min','v max','w max']
-        writeme(patternstart,remainder)
-        patternstart=['x max']
-        remainder=['x min','y min','z min','s min','u min','v min','w min','y max','z max','s max','u max','v max','w max']
-        writeme(patternstart,remainder)
+        f=open('patterngenerator.txt','w') 
+        patternstart='u max'
+        remainder='u min, v min, w min, v max, w max'
+        f.write(patternstart+'\n')
+        f.write(remainder+'\n')
         f.close()
 
     def writeVars(self):
@@ -243,15 +230,10 @@ class oneintermediatenode(doublecyclemodels):
         f.close()
 
     def makeDomains(self):
-        base=[0.5]*6
         doms=[]
         for k in range(7):
-            inds=itertools.combinations(range(6),k)
-            for i in inds:
-                b=base[:]
-                for j in i:
-                    b[j]=1.5
-                doms.append(b)
+            for i in itertools.combinations(range(6),k):
+                doms.append([1.5 if j in i else 0.5 for j in range(6)])
         domains = [tuple(d+[n]) for d in doms for n in [0.5,1.5,2.5]]
         return domains
 
@@ -277,11 +259,11 @@ class oneintermediatenode(doublecyclemodels):
                     elif ind==2:
                         if (d[2]==0.5 and d[1]==0.5) or (d[2]==1.5 and d[1]==1.5):
                             edges.append(j)
-                    elif ind==4:
-                        if (d[4]==0.5 and d[6]==0.5) or (d[4]==1.5 and d[6]>=1.5):
-                            edges.append(j)
                     elif ind==3:
                         if (d[3]==0.5 and d[6]<=1.5) or (d[3]==1.5 and d[6]==2.5):
+                            edges.append(j)
+                    elif ind==4:
+                        if (d[4]==0.5 and d[6]==0.5) or (d[4]==1.5 and d[6]>=1.5):
                             edges.append(j)
                     elif ind==5:
                         if (d[5]==0.5 and d[4]==0.5) or (d[5]==1.5 and d[4]==1.5):
@@ -305,9 +287,187 @@ class oneintermediatenode(doublecyclemodels):
                         varsaffectedatwalls.append(a[0])
                         break
                     elif k == 6 and v==1:
-                        varsaffectedatwalls.append(a[0])
+                        varsaffectedatwalls.append(a[1])
                         break
                     elif k == 6 and v==2:
+                        varsaffectedatwalls.append(a[0])
+                        break
+        return varsaffectedatwalls
+
+class twointermediatenodesymmetric(doublecyclemodels):
+    '''
+    x1 : x3 : x2
+    x2 : ~x1 : x8 x3
+    x3 : x2+x7 : x1
+    x4 : x6 : x7 x5
+    x5 : x4 : x6
+    x6 : ~x5 : x4
+    x7 : x4 : x3
+    x8 : x2 : x6
+
+    '''
+
+    def __init__(self):
+        doublecyclemodels.__init__(self)
+
+    def writePatterns(self):
+        f=open('patterngenerator.txt','w') 
+        patternstart='x2 max, x3 max, x8 max, x1 max, x6 max'
+        remainder='x1 min, x2 min, x3 min, x4 min, x5 min, x6 min, x7 min, x8 min, x4 max, x5 max, x7 max'
+        f.write(patternstart+'\n')
+        f.write(remainder+'\n')
+        f.close()
+
+    def writeVars(self):
+        f=open('variables.txt','w')
+        f.write('0 x1\n1 x2\n2 x3\n3 x4\n4 x5\n5 x6\n6 x7\n7 x8')
+        f.close()
+
+    def makeDomains(self):
+        doms=[]
+        for k in range(7):
+            for i in itertools.combinations(range(6),k):
+                doms.append([1.5 if j in i else 0.5 for j in range(6)])
+        newdoms = [[d[0],n]+d[1:] for d in doms for n in [0.5,1.5,2.5]]
+        domains = [tuple(d[:3]+[n]+d[3:]) for d in newdoms for n in [0.5,1.5,2.5]]
+        return domains
+
+    def makeDomainGraph(self,domains):
+        # (x1,x2,x3,x4,x5,x6,x7,x8)
+        # (0,1,2,3,4,5,6,7)
+        # affectedby=[(2,),(0,),(1,6),(5,),(3,),(4,7),(3,),(1,)]
+        outedges=[]
+        Domains=np.array(domains)
+        for d in Domains:
+            diffs=np.abs(Domains-d)
+            edges=[]
+            for j,r in enumerate(diffs):
+                if np.abs(np.sum(r) -1.0)<0.1:
+                    ind=np.where(np.abs(r-1.0)<0.1)[0]
+                    if ind == 0:
+                        if (d[0]==0.5 and d[2]==1.5) or (d[0]==1.5 and d[2]==0.5):
+                            edges.append(j)
+                    elif ind==1:
+                        if (d[1]==0.5 and d[0]==0.5) or (d[1]==1.5 and d[0]==1.5):
+                            edges.append(j)
+                    elif ind==2:
+                        if (d[2]==0.5 and (d[1]==2.5 or d[6]==1.5)) or (d[2]==1.5 and d[1]<=1.5 and d[6]==0.5):
+                            edges.append(j)
+                    elif ind==3:
+                        if (d[3]==0.5 and d[5]==1.5) or (d[3]==1.5 and d[5]==0.5):
+                            edges.append(j)
+                    elif ind==4:
+                        if (d[4]==0.5 and d[3]==2.5) or (d[4]==1.5 and d[3]<=1.5):
+                            edges.append(j)
+                    elif ind==5:
+                        if (d[5]==0.5 and d[4]==0.5) or (d[5]==1.5 and d[4]==1.5):
+                            edges.append(j)
+                    elif ind==6:
+                        if (d[6]==0.5 and d[3]>=1.5) or (d[6]==1.5 and d[3]==0.5):
+                            edges.append(j)
+                    elif ind==7:
+                        if (d[7]==0.5 and d[1]>=1.5) or (d[7]==1.5 and d[1]==0.5):
+                            edges.append(j)
+            outedges.append(tuple(edges))
+        return outedges
+
+    def makeVarsAffected(self,walls):
+        # (x1,x2,x3,x4,x5,x6,x7,x8)
+        # (0,1,2,3,4,5,6,7)
+        affects=[(1,),(2,7),(0,),(4,6),(5,),(3,),(2,),(5,)]
+        varsaffectedatwalls=[]
+        for w in walls:
+            for k,v in enumerate(w):
+                if abs(v-int(v)) < 0.25:
+                    a=affects[k]
+                    if k in [0,2]+range(4,8):
+                        varsaffectedatwalls.append(a[0])
+                        break
+                    elif k in [1,3] and v==1:
+                        varsaffectedatwalls.append(a[1])
+                        break
+                    elif k in [1,3] and v==2:
+                        varsaffectedatwalls.append(a[0])
+                        break
+        return varsaffectedatwalls
+
+class fullyconnected(doublecyclemodels):
+    '''
+    x : z+w : y v
+    y : (~x)(~u) : z w
+    z : y+v : x u
+    u : w+z : v y
+    v : (~u)(~x) : w z
+    w : v+y : u x
+
+    '''
+
+    def __init__(self):
+        doublecyclemodels.__init__(self)
+
+    def writePatterns(self):
+        f=open('patterngenerator.txt','w') 
+        patternstart='z max, w max, x max'
+        remainder='x min, y min, z min, u min, v min, w min, y max, u max, v max'
+        f.write(patternstart+'\n')
+        f.write(remainder+'\n')
+        f.close()
+
+    def writeVars(self):
+        f=open('variables.txt','w')
+        f.write('0 x\n1 y\n2 z\n3 u\n4 v\n5 w')
+        f.close()
+
+    def makeDomains(self):
+        return list(itertools.product(*[[0.5,1.5,2.5]]*6))
+
+    def makeDomainGraph(self,domains):
+        # (x,y,z,u,v,w)
+        # (0,1,2,3,4,5)
+        # affectedby=[(2,5),(0,3),(1,4),(2,5),(0,3),(1,4)]
+        # when w==1, u affected; when w==2, s affected
+        outedges=[]
+        Domains=np.array(domains)
+        for d in Domains:
+            diffs=np.abs(Domains-d)
+            edges=[]
+            for j,r in enumerate(diffs):
+                if np.abs(np.sum(r) -1.0)<0.1:
+                    ind=np.where(np.abs(r-1.0)<0.1)[0]
+                    if ind == 0:
+                        if (d[0]==0.5 and (d[2]>=1.5 or d[5]==2.5)) or (d[0]==1.5 and d[2]==0.5 and d[5]<=1.5):
+                            edges.append(j)
+                    elif ind==1:
+                        if (d[1]==0.5 and d[0]==0.5 and d[3]<=1.5) or (d[1]==1.5 and (d[0]>=1.5 or d[3]==2.5)):
+                            edges.append(j)
+                    elif ind == 2:
+                        if (d[2]==0.5 and (d[1]>=1.5 or d[4]==2.5)) or (d[2]==1.5 and d[1]==0.5 and d[4]<=1.5):
+                            edges.append(j)
+                    elif ind == 3:
+                        if (d[3]==0.5 and (d[2]==2.5 or d[5]>=1.5)) or (d[3]==1.5 and d[2]<=1.5 and d[5]==0.5):
+                            edges.append(j)
+                    elif ind==4:
+                        if (d[4]==0.5 and d[0]<=1.5 and d[3]==0.5) or (d[4]==1.5 and (d[0]==2.5 or d[3]>=1.5)):
+                            edges.append(j)
+                    elif ind == 5:
+                        if (d[5]==0.5 and (d[1]==2.5 or d[4]>=1.5)) or (d[5]==1.5 and d[1]<=1.5 and d[4]==0.5):
+                            edges.append(j)
+            outedges.append(tuple(edges))
+        return outedges
+
+    def makeVarsAffected(self,walls):
+        # (x,y,z,s,u,v,w)
+        # (0,1,2,3,4,5,6)
+        affects=[(1,4),(2,5),(0,3),(4,1),(5,2),(3,0)]
+        varsaffectedatwalls=[]
+        for w in walls:
+            for k,v in enumerate(w):
+                if abs(v-int(v)) < 0.25:
+                    a=affects[k]
+                    if v==1:
+                        varsaffectedatwalls.append(a[0])
+                        break
+                    elif v==2:
                         varsaffectedatwalls.append(a[1])
                         break
         return varsaffectedatwalls

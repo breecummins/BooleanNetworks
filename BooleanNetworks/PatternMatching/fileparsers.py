@@ -45,8 +45,17 @@ def parsePatterns(fname="patterns.txt"):
         Maxmin.append(L[1::2])
     return varnames, Maxmin
 
+def parsePatternGenerator(fname="patterngenerator.txt"):
+    f=open(fname,'r')
+    patternstart=[p.strip() for p in f.readline().split(',')]
+    patternremainder=[p.strip() for p in f.readline().split(',')]
+    return patternstart, patternremainder
+
 def parseAll(oname='outEdges.txt',wname='walls.txt',vname="variables.txt",ename="equations.txt",pname="patterns.txt"):
     return parseOutEdges(oname), parseWalls(wname), parseVars(vname), parseEqns(ename), parsePatterns(pname)
+
+def parseAllNoPattern(oname='outEdges.txt',wname='walls.txt',vname="variables.txt",ename="equations.txt"):
+    return parseOutEdges(oname), parseWalls(wname), parseVars(vname), parseEqns(ename)
 
 def parseJSON(fname='output.json'):
     json_data = open(fname)

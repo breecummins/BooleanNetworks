@@ -15,6 +15,15 @@ def preprocess(basedir):
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels = filterAll(outedges,walldomains,varsaffectedatwall)
     return patterns,inds,outedges,walldomains,varsaffectedatwall,allwalllabels
 
+def preprocessPatternGenerator(basedir):
+    # read input files
+    outedges,(walldomains,wallthresh),varnames,threshnames,(patternstart,patternremainder)=fp.parseAllPatternGenerator(basedir+'outEdges.txt',basedir+'walls.txt',basedir+'variables.txt',basedir+'equations.txt',basedir+'patterngenerator.txt')
+    # record which variable is affected at each wall
+    varsaffectedatwall=varsAtWalls(threshnames,walldomains,wallthresh,varnames)
+    # filter out walls not involved in cycles and create wall labels for the filtered walls
+    inds,outedges,walldomains,varsaffectedatwall,allwalllabels = filterAll(outedges,walldomains,varsaffectedatwall)
+    return patternstart,patternremainder,inds,outedges,walldomains,varsaffectedatwall,allwalllabels,varnames
+
 def preprocessJSON(basedir):
     # read input files
     varnames,wallindslist,outedgeslist,walldomainslist,wallthreshlist,parameterinds=fp.parseJSON(basedir+'output.json')

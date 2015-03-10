@@ -1,6 +1,6 @@
-import sys
+import sys,itertools
 import walllabels as WL
-from preprocess import preprocess, preprocessJSON
+import preprocess as pp
 
 def repeatingLoop(match):
     # see if the match has a repeating loop inside it
@@ -138,7 +138,7 @@ def callPatternMatch(basedir='',message=''):
         print "-"*len(message)
         print "\n"
     print "Preprocessing..."
-    Patterns,origwallinds,outedges,walldomains,varsaffectedatwall,allwalllabels=preprocess(basedir) 
+    Patterns,origwallinds,outedges,walldomains,varsaffectedatwall,allwalllabels=pp.preprocess(basedir) 
     for pattern in Patterns:
         print "\n"
         print '-'*25
@@ -156,7 +156,7 @@ def callPatternMatchJSON(basedir='',message=''):
         print "-"*len(message)
         print "\n"
     print "Preprocessing..."
-    Patterns,origwallindslist,outedgeslist,walldomainslist,varsaffectedatwalllist,allwalllabelslist,parameterinds=preprocessJSON(basedir)
+    Patterns,origwallindslist,outedgeslist,walldomainslist,varsaffectedatwalllist,allwalllabelslist,parameterinds=pp.preprocessJSON(basedir)
     param=1
     for (origwallinds,outedges,walldomains,varsaffectedatwall,allwalllabels) in zip(origwallindslist,outedgeslist,walldomainslist,varsaffectedatwalllist,allwalllabelslist): 
         print "\n"
@@ -182,7 +182,7 @@ def callPatternMatchJSONWriteFile(basedir='',message=''):
         print "-"*len(message)
         print "\n"
     print "Preprocessing..."
-    Patterns,origwallindslist,outedgeslist,walldomainslist,varsaffectedatwalllist,allwalllabelslist,parameterinds=preprocessJSON(basedir)
+    Patterns,origwallindslist,outedgeslist,walldomainslist,varsaffectedatwalllist,allwalllabelslist,parameterinds=pp.preprocessJSON(basedir)
     param=1
     f=open(basedir+'results.txt','w')
     for (origwallinds,outedges,walldomains,varsaffectedatwall,allwalllabels) in zip(origwallindslist,outedgeslist,walldomainslist,varsaffectedatwalllist,allwalllabelslist): 
@@ -198,3 +198,59 @@ def callPatternMatchJSONWriteFile(basedir='',message=''):
         param+=1
     f.close()
 
+def constructPatternGenerator(sequence,varnames):
+    # check that there is a max between each max/min pair (at least for 2 pairs)
+    for v in varnames:
+        m=sequence.count(v+' min')
+        if m !=sequence.count(v+' max'):
+            print 'No cyclic pattern possible. Check that number of maxima and minima match for every variable.'
+            sequence=[]
+            break
+        elif sequence.count(v+' min')==2:
+            i=sequence.index(v+' min')
+            k=sequence[i+1:].index(v+' min')
+            try:
+                j=sequence[i+1:].index(v+' max')
+                if j<k:
+                    pass                
+                else:
+                    sequence=[]
+                    break
+            except:
+                sequence=[]
+                break
+        elif sequence.count(v+'min')>2:
+            print 'WARNING: More than 2 max/min pairs for one variable. Spurious patterns may be created.'
+    if sequence:
+        patternnames=[[s.split()[::2][0] for s in sequence]]
+        patternmaxmin=[[s.split()[1::2][0] for s in sequence]]
+        patterns=pp.constructCyclicPatterns(varnames,patternnames,patternmaxmin)
+    else:
+        patterns=[]
+    return patterns
+ 
+
+def callPatternMatchWithPatternGeneratorWriteFile(patternstart,patternremainder,basedir='',message=''):
+    # basedir must contain the files outEdges.txt, walls.txt, variables.txt, patterngenerator.txt,
+    # and equations.txt.
+    if message:
+        print "\n"
+        print "-"*len(message)
+        print message
+        print "-"*len(message)
+        print "\n"
+    print "Preprocessing..."
+    patternstart,patternremainder,origwallinds,outedges,walldomains,varsaffectedatwall,allwalllabels,varnames=pp.preprocessPatternGenerator(basedir) 
+    f=open(basedir+'results.txt','w')
+    for r in itertools.permutations(patternremainder):
+        patterns=constructPatternGenerator(patternstart+list(r),varnames)
+        for pattern in patterns:
+            flag='No match'
+            match=matchCyclicPattern(pattern,origwallinds,outedges,walldomains,varsaffectedatwall, allwalllabels,showfirstwall=0)
+            if 'None' not in match:
+                flag='Match'
+                f.write('\n'+"Parameters={}".format(parameterinds[param-1])+'\n')
+                f.write("Pattern: {}".format(pattern)+'\n')
+                f.write("Results: {}".format(match)+'\n')
+        print flag
+    f.close()
