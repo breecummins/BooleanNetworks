@@ -407,8 +407,8 @@ class fullyconnected(doublecyclemodels):
 
     def writePatterns(self):
         f=open('patterngenerator.txt','w') 
-        patternstart='z max, w max, x max'
-        remainder='x min, y min, z min, u min, v min, w min, y max, u max, v max'
+        patternstart='z max, w max, x max, u max'
+        remainder='x min, y min, z min, u min, v min, w min, y max, v max'
         f.write(patternstart+'\n')
         f.write(remainder+'\n')
         f.close()
