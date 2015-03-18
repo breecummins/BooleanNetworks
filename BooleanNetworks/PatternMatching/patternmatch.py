@@ -20,7 +20,7 @@ def recursePattern(startnode,match,matches,patterns,previouspattern,pDict):
     else:
         for p,P in patterns:
             for n in WL.getNextNodes(startnode,pDict['outedges']):  # every filtered wall has an outgoing edge
-                if len(match)>100*pDict['lenpattern']:
+                if len(match)>50*pDict['lenpattern']:
                     print "Aborting. Match is too long."
                 elif len(match) == 1 or previouspattern in WL.pathDependentStringConstruction(match[-2],match[-1],n,pDict['walldomains'],pDict['outedges'],pDict['varsaffectedatwall'][match[-1]]): # consistency check to catch false positives
                     nextwalllabels=pDict['allwalllabels'][n]
