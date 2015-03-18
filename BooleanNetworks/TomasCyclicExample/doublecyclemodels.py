@@ -314,10 +314,10 @@ class twointermediatenodesymmetric(doublecyclemodels):
 
     def writePatterns(self):
         f=open('patterngenerator.txt','w') 
-        patternstart='x1 max'
-        remainder='x1 min, x2 min, x3 min, x2 max, x3 max'
-        patternstart='x4 max'
-        remainder='x4 min, x5 min, x6 min, x5 max, x6 max'
+        # patternstart='x1 max'
+        # remainder='x1 min, x2 min, x3 min, x2 max, x3 max'
+        # patternstart='x4 max'
+        # remainder='x4 min, x5 min, x6 min, x5 max, x6 max'
         patternstart='x4 max, x2 max, x7 max, x8 max, x5 max, x3 max'
         remainder='x4 min, x2 min, x7 min, x8 min, x5 min, x3 min, x1 max, x1 min, x6 min, x6 max'
         f.write(patternstart+'\n')
@@ -408,12 +408,12 @@ class fullyconnected(doublecyclemodels):
 
     def writePatterns(self):
         f=open('patterngenerator.txt','w') 
-        patternstart='x max'
-        remainder='x min, y min, z min, y max, z max'
-        # patternstart='u max'
-        # remainder='u min, v min, w min, v max, w max'
-        # patternstart='z max, w max, x max, u max'
-        # remainder='x min, y min, z min, u min, v min, w min, y max, v max'
+        patternstart='x max, y min, z min, x min, y max'
+        remainder='z max'
+        # patternstart='u max, v min, w min, u min, v max'
+        # remainder='w max'
+        # patternstart='x max, u max, y min, v min, z min, w min, x min, u min, y max, v max, z max'
+        # remainder='w max'
         f.write(patternstart+'\n')
         f.write(remainder+'\n')
         f.close()
@@ -493,12 +493,12 @@ class partiallyconnected(doublecyclemodels):
 
     def writePatterns(self):
         f=open('patterngenerator.txt','w') 
-        patternstart='x max'
-        remainder='x min, y min, z min, y max, z max'
-        # patternstart='u max'
-        # remainder='u min, v min, w min, v max, w max'
-        # patternstart='z max, w max, x max, u max, y min, v min, z min, w min, x min, u min, y max'
-        # remainder=''
+        patternstart='x max, y min, z min, x min, y max'
+        remainder='z max'
+        # patternstart='u max, v min, w min, u min, v max'
+        # remainder='w max'
+        # patternstart='x max, u max, y min, v min, z min, w min, x min, u min, y max, v max, z max'
+        # remainder='w max'
         f.write(patternstart+'\n')
         f.write(remainder+'\n')
         f.close()
