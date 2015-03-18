@@ -6,7 +6,7 @@ def searchForPatterns(model):
     perms=0
     print 'Searching...'
     sys.stdout.flush()
-    f=open('results.txt','w')
+    f=open('results.txt','w',0)
     for r in itertools.permutations(model.patternremainder):
         patterns=pm.constructPatternGenerator(model.patternstart+list(r),model.varnames)
         for pattern in patterns:

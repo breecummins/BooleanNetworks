@@ -186,7 +186,7 @@ def callPatternMatchJSONWriteFile(basedir='',message=''):
     print "Preprocessing..."
     Patterns,origwallindslist,outedgeslist,walldomainslist,varsaffectedatwalllist,allwalllabelslist,parameterinds=pp.preprocessJSON(basedir)
     param=1
-    f=open(basedir+'results.txt','w')
+    f=open(basedir+'results.txt','w',0)
     for (origwallinds,outedges,walldomains,varsaffectedatwall,allwalllabels) in zip(origwallindslist,outedgeslist,walldomainslist,varsaffectedatwalllist,allwalllabelslist): 
         print "\n"
         print "Morse set {} of {}".format(param,len(origwallindslist))
@@ -243,7 +243,7 @@ def callPatternMatchWithPatternGeneratorWriteFile(patternstart,patternremainder,
         print "\n"
     print "Preprocessing..."
     patternstart,patternremainder,origwallinds,outedges,walldomains,varsaffectedatwall,allwalllabels,varnames=pp.preprocessPatternGenerator(basedir) 
-    f=open(basedir+'results.txt','w')
+    f=open(basedir+'results.txt','w',0)
     for r in itertools.permutations(patternremainder):
         patterns=constructPatternGenerator(patternstart+list(r),varnames)
         for pattern in patterns:
