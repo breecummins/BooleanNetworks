@@ -21,7 +21,7 @@ def searchForPatterns(model):
 if __name__=='__main__':
     print "Preprocessing..."
     # model=dcm.symmetric5D()
-    # model=dcm.oneintermediatenode()
-    model=dcm.fullyconnected()
+    model=dcm.oneintermediatenode()
+    # model=dcm.fullyconnected()
     searchForPatterns(model)
     # model.checkAllChange()

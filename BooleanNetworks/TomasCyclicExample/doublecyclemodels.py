@@ -132,6 +132,10 @@ class symmetric5D(doublecyclemodels):
         f=open('patterngenerator.txt','w') 
         patternstart='x3 max'
         remainder='x1 min, x2 min, x3 min, x1 max, x2 max'
+        patternstart='x3 max'
+        remainder='x3 min, x4 min, x5 min, x4 max, x5 max'
+        patternstart='x3 max'
+        remainder='x1 min, x2 min, x3 min, x1 max, x2 max, x4 min, x5 min, x4 max, x5 max'
         f.write(patternstart+'\n')
         f.write(remainder+'\n')
         f.close()
@@ -142,12 +146,8 @@ class symmetric5D(doublecyclemodels):
         f.close()
 
     def makeDomains(self):
-        doms=[]
-        for k in range(5):
-            for i in itertools.combinations(range(4),k):
-                doms.append([1.5 if j in i else 0.5 for j in range(4)])
-        domains = [tuple(d[:2]+[n]+d[2:]) for d in doms for n in [0.5,1.5,2.5]]
-        return domains
+        L=[[0.5,1.5]]*2+[[0.5,1.5,2.5]]+[[0.5,1.5]]*2        
+        return list(itertools.product(*L))
 
     def makeDomainGraph(self,domains):
         # (x1,x2,x3,x4,x5)
@@ -169,7 +169,7 @@ class symmetric5D(doublecyclemodels):
                         if (d[1]==0.5 and d[0]==0.5) or (d[1]==1.5 and d[0]==1.5):
                             edges.append(j)
                     elif ind==2:
-                        if (d[2]==0.5 and (d[1]==1.5 or d[4]==1.5)) or (d[2]==1.5 and d[1]==0.5 and d[4]==0.5):
+                        if (d[2]<=1.5 and (d[1]==1.5 or d[4]==1.5)) or (d[2]>=1.5 and d[1]==0.5 and d[4]==0.5):
                             edges.append(j)
                     elif ind==3:
                         if (d[3]==0.5 and d[2]==2.5) or (d[3]==1.5 and d[2]<=1.5):
@@ -220,6 +220,10 @@ class oneintermediatenode(doublecyclemodels):
         f=open('patterngenerator.txt','w') 
         patternstart='u max'
         remainder='u min, v min, w min, v max, w max'
+        patternstart='x max'
+        remainder='x min, y min, z min, y max, z max'
+        patternstart='x max, y min'
+        remainder='x min, z min, y max, z max, u min, v min, w min, u max, v max, w max, s min, s max'
         f.write(patternstart+'\n')
         f.write(remainder+'\n')
         f.close()
@@ -230,12 +234,8 @@ class oneintermediatenode(doublecyclemodels):
         f.close()
 
     def makeDomains(self):
-        doms=[]
-        for k in range(7):
-            for i in itertools.combinations(range(6),k):
-                doms.append([1.5 if j in i else 0.5 for j in range(6)])
-        domains = [tuple(d+[n]) for d in doms for n in [0.5,1.5,2.5]]
-        return domains
+        L=[[0.5,1.5]]*6+[[0.5,1.5,2.5]]
+        return list(itertools.product(*L))
 
     def makeDomainGraph(self,domains):
         # (x,y,z,s,u,v,w)
@@ -269,7 +269,7 @@ class oneintermediatenode(doublecyclemodels):
                         if (d[5]==0.5 and d[4]==0.5) or (d[5]==1.5 and d[4]==1.5):
                             edges.append(j)
                     elif ind==6:
-                        if (d[6]==0.5 and d[5]==0.5) or (d[6]==1.5 and d[5]==1.5):
+                        if (d[6]<=1.5 and d[5]==0.5) or (d[6]>=1.5 and d[5]==1.5):
                             edges.append(j)
             outedges.append(tuple(edges))
         return outedges
@@ -324,13 +324,8 @@ class twointermediatenodesymmetric(doublecyclemodels):
         f.close()
 
     def makeDomains(self):
-        doms=[]
-        for k in range(7):
-            for i in itertools.combinations(range(6),k):
-                doms.append([1.5 if j in i else 0.5 for j in range(6)])
-        newdoms = [[d[0],n]+d[1:] for d in doms for n in [0.5,1.5,2.5]]
-        domains = [tuple(d[:3]+[n]+d[3:]) for d in newdoms for n in [0.5,1.5,2.5]]
-        return domains
+        L=[[0.5,1.5]]+[[0.5,1.5,2.5]]+[[0.5,1.5]]+[[0.5,1.5,2.5]]+[[0.5,1.5]]*4
+        return list(itertools.product(*L))
 
     def makeDomainGraph(self,domains):
         # (x1,x2,x3,x4,x5,x6,x7,x8)
@@ -348,13 +343,13 @@ class twointermediatenodesymmetric(doublecyclemodels):
                         if (d[0]==0.5 and d[2]==1.5) or (d[0]==1.5 and d[2]==0.5):
                             edges.append(j)
                     elif ind==1:
-                        if (d[1]==0.5 and d[0]==0.5) or (d[1]==1.5 and d[0]==1.5):
+                        if (d[1]<=1.5 and d[0]==0.5) or (d[1]>=1.5 and d[0]==1.5):
                             edges.append(j)
                     elif ind==2:
                         if (d[2]==0.5 and (d[1]==2.5 or d[6]==1.5)) or (d[2]==1.5 and d[1]<=1.5 and d[6]==0.5):
                             edges.append(j)
                     elif ind==3:
-                        if (d[3]==0.5 and d[5]==1.5) or (d[3]==1.5 and d[5]==0.5):
+                        if (d[3]<=1.5 and d[5]==1.5) or (d[3]>=1.5 and d[5]==0.5):
                             edges.append(j)
                     elif ind==4:
                         if (d[4]==0.5 and d[3]==2.5) or (d[4]==1.5 and d[3]<=1.5):
@@ -435,22 +430,104 @@ class fullyconnected(doublecyclemodels):
                 if np.abs(np.sum(r) -1.0)<0.1:
                     ind=np.where(np.abs(r-1.0)<0.1)[0]
                     if ind == 0:
-                        if (d[0]==0.5 and (d[2]>=1.5 or d[5]==2.5)) or (d[0]==1.5 and d[2]==0.5 and d[5]<=1.5):
+                        if (d[0]<=1.5 and (d[2]>=1.5 or d[5]==2.5)) or (d[0]>=1.5 and d[2]==0.5 and d[5]==0.5):
                             edges.append(j)
                     elif ind==1:
-                        if (d[1]==0.5 and d[0]==0.5 and d[3]<=1.5) or (d[1]==1.5 and (d[0]>=1.5 or d[3]==2.5)):
+                        if (d[1]<=1.5 and d[0]==0.5 and d[3]<=1.5) or (d[1]>=1.5 and (d[0]>=1.5 or d[3]==2.5)):
                             edges.append(j)
                     elif ind == 2:
-                        if (d[2]==0.5 and (d[1]>=1.5 or d[4]==2.5)) or (d[2]==1.5 and d[1]==0.5 and d[4]<=1.5):
+                        if (d[2]<=1.5 and (d[1]>=1.5 or d[4]==2.5)) or (d[2]>=1.5 and d[1]==0.5 and d[4]<=1.5):
                             edges.append(j)
                     elif ind == 3:
-                        if (d[3]==0.5 and (d[2]==2.5 or d[5]>=1.5)) or (d[3]==1.5 and d[2]<=1.5 and d[5]==0.5):
+                        if (d[3]<=1.5 and (d[2]==2.5 or d[5]>=1.5)) or (d[3]>=1.5 and d[2]<=1.5 and d[5]==0.5):
                             edges.append(j)
                     elif ind==4:
-                        if (d[4]==0.5 and d[0]<=1.5 and d[3]==0.5) or (d[4]==1.5 and (d[0]==2.5 or d[3]>=1.5)):
+                        if (d[4]<=1.5 and d[0]<=1.5 and d[3]==0.5) or (d[4]>=1.5 and (d[0]==2.5 or d[3]>=1.5)):
                             edges.append(j)
                     elif ind == 5:
-                        if (d[5]==0.5 and (d[1]==2.5 or d[4]>=1.5)) or (d[5]==1.5 and d[1]<=1.5 and d[4]==0.5):
+                        if (d[5]<=1.5 and (d[1]==2.5 or d[4]>=1.5)) or (d[5]>=1.5 and d[1]<=1.5 and d[4]==0.5):
+                            edges.append(j)
+            outedges.append(tuple(edges))
+        return outedges
+
+    def makeVarsAffected(self,walls):
+        # (x,y,z,s,u,v,w)
+        # (0,1,2,3,4,5,6)
+        affects=[(1,4),(2,5),(0,3),(4,1),(5,2),(3,0)]
+        varsaffectedatwalls=[]
+        for w in walls:
+            for k,v in enumerate(w):
+                if abs(v-int(v)) < 0.25:
+                    a=affects[k]
+                    if v==1:
+                        varsaffectedatwalls.append(a[0])
+                        break
+                    elif v==2:
+                        varsaffectedatwalls.append(a[1])
+                        break
+        return varsaffectedatwalls
+
+class partiallyconnected(doublecyclemodels):
+    '''
+    x : z+w : y
+    y : (~x) : z w
+    z : y : x
+    u : w : v
+    v : (~u) : w
+    w : v+y : u x
+
+    '''
+
+    def __init__(self):
+        doublecyclemodels.__init__(self)
+
+    def writePatterns(self):
+        f=open('patterngenerator.txt','w') 
+        patternstart='z max, w max, x max, u max, y min, v min, z min, w min, x min, u min, y max'
+        remainder=''
+        f.write(patternstart+'\n')
+        f.write(remainder+'\n')
+        f.close()
+
+    def writeVars(self):
+        f=open('variables.txt','w')
+        f.write('0 x\n1 y\n2 z\n3 u\n4 v\n5 w')
+        f.close()
+
+    def makeDomains(self):
+        L=[[0.5,1.5],[0.5,1.5,2.5]] + [[0.5,1.5]]*3 + [[0.5,1.5,2.5]]
+        return list(itertools.product(*L))
+
+    def makeDomainGraph(self,domains):
+        # (x,y,z,u,v,w)
+        # (0,1,2,3,4,5)
+        # affectedby=[(2,5),(0,3),(1,4),(2,5),(0,3),(1,4)]
+        # when w==1, u affected; when w==2, s affected
+        outedges=[]
+        Domains=np.array(domains)
+        for d in Domains:
+            diffs=np.abs(Domains-d)
+            edges=[]
+            for j,r in enumerate(diffs):
+                if np.abs(np.sum(r) -1.0)<0.1:
+                    ind=np.where(np.abs(r-1.0)<0.1)[0]
+                    if ind == 0:
+                        if (d[0]==0.5 and (d[2]==1.5 or d[5]==2.5)) or (d[0]==1.5 and d[2]==0.5 and d[5]==0.5):
+                            edges.append(j)
+                    elif ind==1:
+                        if (d[1]<=1.5 and d[0]==0.5) or (d[1]>=1.5 and d[0]==1.5):
+                            edges.append(j)
+                    elif ind == 2:
+                        if (d[2]==0.5 and d[1]>=1.5) or (d[2]==1.5 and d[1]==0.5):
+                            edges.append(j)
+                    elif ind == 3:
+                        if (d[3]==0.5 and d[5]>=1.5) or (d[3]==1.5 and d[5]==0.5):
+                            edges.append(j)
+                    elif ind==4:
+                        if (d[4]==0.5 and d[3]==0.5) or (d[4]==1.5 and d[3]==1.5):
+                            edges.append(j)
+                    elif ind == 5:
+                        if (d[5]<=1.5 and (d[1]==2.5 or d[4]==1.5)) or (d[5]>=1.5 and d[1]<=1.5 and d[4]==0.5):
                             edges.append(j)
             outedges.append(tuple(edges))
         return outedges
