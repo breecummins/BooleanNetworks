@@ -222,8 +222,10 @@ class oneintermediatenode(doublecyclemodels):
         # remainder='u min, v min, w min, v max, w max'
         # patternstart='x max'
         # remainder='x min, y min, z min, y max, z max'
-        patternstart='w max, s max, x max'
-        remainder='u min, y min, v max, z max, w min, s min, x min, u max, y max, v min, z min'
+        patternstart='w max, x min, u min'
+        remainder='s min, y max, v max, z min, w min, x max, u max, s max, y min, v min, z max'
+        # patternstart='w max, x min, u min, s min, y max, v max, z min, w min, x max, u max, s max, y min, v min'
+        # remainder='z max'
         f.write(patternstart+'\n')
         f.write(remainder+'\n')
         f.close()
@@ -316,6 +318,7 @@ class twointermediatenodesymmetric(doublecyclemodels):
         remainder='x1 min, x2 min, x3 min, x2 max, x3 max'
         patternstart='x4 max'
         remainder='x4 min, x5 min, x6 min, x5 max, x6 max'
+        patternstart=''
         f.write(patternstart+'\n')
         f.write(remainder+'\n')
         f.close()
