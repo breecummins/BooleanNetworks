@@ -218,12 +218,12 @@ class oneintermediatenode(doublecyclemodels):
 
     def writePatterns(self):
         f=open('patterngenerator.txt','w') 
-        patternstart='u max'
-        remainder='u min, v min, w min, v max, w max'
-        patternstart='x max'
-        remainder='x min, y min, z min, y max, z max'
-        patternstart='x max, y min'
-        remainder='x min, z min, y max, z max, u min, v min, w min, u max, v max, w max, s min, s max'
+        # patternstart='u max'
+        # remainder='u min, v min, w min, v max, w max'
+        # patternstart='x max'
+        # remainder='x min, y min, z min, y max, z max'
+        patternstart='w max, s max, x max'
+        remainder='u min, y min, v max, z max, w min, s min, x min, u max, y max, v min, z min'
         f.write(patternstart+'\n')
         f.write(remainder+'\n')
         f.close()
@@ -314,8 +314,8 @@ class twointermediatenodesymmetric(doublecyclemodels):
         f=open('patterngenerator.txt','w') 
         patternstart='x1 max'
         remainder='x1 min, x2 min, x3 min, x2 max, x3 max'
-        # patternstart='x4 max'
-        # remainder='x4 min, x5 min, x6 min, x5 max, x6 max'
+        patternstart='x4 max'
+        remainder='x4 min, x5 min, x6 min, x5 max, x6 max'
         f.write(patternstart+'\n')
         f.write(remainder+'\n')
         f.close()
@@ -404,8 +404,12 @@ class fullyconnected(doublecyclemodels):
 
     def writePatterns(self):
         f=open('patterngenerator.txt','w') 
-        patternstart='z max, w max, x max, u max'
-        remainder='x min, y min, z min, u min, v min, w min, y max, v max'
+        patternstart='x max'
+        remainder='x min, y min, z min, y max, z max'
+        # patternstart='u max'
+        # remainder='u min, v min, w min, v max, w max'
+        # patternstart='z max, w max, x max, u max'
+        # remainder='x min, y min, z min, u min, v min, w min, y max, v max'
         f.write(patternstart+'\n')
         f.write(remainder+'\n')
         f.close()
@@ -485,8 +489,12 @@ class partiallyconnected(doublecyclemodels):
 
     def writePatterns(self):
         f=open('patterngenerator.txt','w') 
-        patternstart='z max, w max, x max, u max, y min, v min, z min, w min, x min, u min, y max'
-        remainder=''
+        patternstart='x max'
+        remainder='x min, y min, z min, y max, z max'
+        # patternstart='u max'
+        # remainder='u min, v min, w min, v max, w max'
+        # patternstart='z max, w max, x max, u max, y min, v min, z min, w min, x min, u min, y max'
+        # remainder=''
         f.write(patternstart+'\n')
         f.write(remainder+'\n')
         f.close()

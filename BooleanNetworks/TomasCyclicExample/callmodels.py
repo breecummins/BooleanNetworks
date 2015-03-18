@@ -24,8 +24,9 @@ if __name__=='__main__':
     print "Preprocessing..."
     sys.stdout.flush()
     # model=dcm.symmetric5D()
-    # model=dcm.oneintermediatenode()
-    model=dcm.twointermediatenodesymmetric()
+    model=dcm.oneintermediatenode()
+    # model=dcm.twointermediatenodesymmetric()
     # model=dcm.fullyconnected()
+    # model=dcm.partiallyconnected()
     searchForPatterns(model)
     # model.checkAllChange()
