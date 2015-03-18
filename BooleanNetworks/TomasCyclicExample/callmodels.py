@@ -1,10 +1,11 @@
 import BooleanNetworks.PatternMatching.patternmatch as pm
 import doublecyclemodels as dcm
-import itertools
+import itertools, sys
 
 def searchForPatterns(model):
     perms=0
     print 'Searching...'
+    sys.stdout.flush()
     f=open('results.txt','w')
     for r in itertools.permutations(model.patternremainder):
         patterns=pm.constructPatternGenerator(model.patternstart+list(r),model.varnames)
@@ -16,12 +17,15 @@ def searchForPatterns(model):
             perms+=1
             if perms%10000==0:
                 print perms
+                sys.stdout.flush()
     
 
 if __name__=='__main__':
     print "Preprocessing..."
+    sys.stdout.flush()
     # model=dcm.symmetric5D()
-    model=dcm.oneintermediatenode()
+    # model=dcm.oneintermediatenode()
+    model=dcm.twointermediatenodesymmetric()
     # model=dcm.fullyconnected()
     searchForPatterns(model)
     # model.checkAllChange()

@@ -312,8 +312,10 @@ class twointermediatenodesymmetric(doublecyclemodels):
 
     def writePatterns(self):
         f=open('patterngenerator.txt','w') 
-        patternstart='x2 max, x3 max, x8 max, x1 max, x6 max'
-        remainder='x1 min, x2 min, x3 min, x4 min, x5 min, x6 min, x7 min, x8 min, x4 max, x5 max, x7 max'
+        patternstart='x1 max'
+        remainder='x1 min, x2 min, x3 min, x2 max, x3 max'
+        # patternstart='x4 max'
+        # remainder='x4 min, x5 min, x6 min, x5 max, x6 max'
         f.write(patternstart+'\n')
         f.write(remainder+'\n')
         f.close()
