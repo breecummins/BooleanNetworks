@@ -220,15 +220,32 @@ class oneintermediatenode(doublecyclemodels):
         f=open('patterngenerator.txt','w') 
         # patternstart='u max'
         # remainder='u min, v min, w min, v max, w max'
-        # patternstart='x max'
+        # # patternstart='x max'
         # remainder='x min, y min, z min, y max, z max'
-        patternstart='w max, x min, u min'
-        remainder='s min, y max, v max, z min, w min, x max, u max, s max, y min, v min, z max'
+        patternstart='w min, x min, u max'
+        remainder='z min, w max, x max, u min, s max, y min, v min, z max, s min, v max, y max'
         # patternstart='w max, x min, u min, s min, y max, v max, z min, w min, x max, u max, s max, y min, v min'
         # remainder='z max'
+        # patternstart='w max, z max, x min, u min, s min, v max, y max, w min, z min, x max, u max, s max, v min'
+        # remainder='y min'
+        # patternstart='w max, x max, u min, y min, s min, v max, z max, w min, x min, u max, y max, s max, v min'
+        # remainder='z min'
+        # patternstart='x max, w max, y min, u min, z max, s min, v max, x min, w min, y max, u max, z min, s max'
+        # remainder='v min'
         f.write(patternstart+'\n')
         f.write(remainder+'\n')
         f.close()
+        # patterns=[['w min, x min'],['x min, w min']]
+        # for n in [['u max', 'y max'],['s max','v min','z min'],['x max','w max'],['y min','u min'],['z max', 's min','v max']]:
+        #     newpatterns=[]
+        #     for r in itertools.permutations(n):
+        #         newpatterns.extend([p+list(r) for p in patterns])
+        #     patterns=newpatterns
+        # f=open('patterns.txt','w')
+        # for p in patterns:
+        #     f.write(' '.join(p)+'\n')
+        # f.close()
+
 
     def writeVars(self):
         f=open('variables.txt','w')
