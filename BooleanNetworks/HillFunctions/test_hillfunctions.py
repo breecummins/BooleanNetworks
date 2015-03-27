@@ -1,4 +1,4 @@
-import hillfunctions as hf
+import integratehillfunctions as ihf
 import numpy as np
 from scipy.integrate import ode
 
@@ -15,7 +15,7 @@ class testcase(object):
     def evalAnalytic(self,n,y0,t0,t1,dt):
         r = ode(self.analyticRHS).set_integrator('vode', method='bdf')
         r.set_initial_value(y0,t0).set_f_params(n)
-        return hf.integrate(r,y0,t0,t1,dt)
+        return ihf.integrate(r,y0,t0,t1,dt)
 
 class test2D(testcase):
     def __init__(self):
@@ -30,7 +30,7 @@ class test2D(testcase):
         f.close()
 
     def analyticRHS(self,t,x,n):
-        return np.array([-x[0]+hf.posHillFunction(3.4,1.2,1.5,n,x[0])*hf.negHillFunction(2.5,1.0,5.0,n,x[1]),-x[1]+hf.posHillFunction(6.2,4.1,2.0,n,x[0])])
+        return np.array([-x[0]+ihf.posHillFunction(3.4,1.2,1.5,n,x[0])*ihf.negHillFunction(2.5,1.0,5.0,n,x[1]),-x[1]+ihf.posHillFunction(6.2,4.1,2.0,n,x[0])])
 
 class testrepressilator(testcase):
     def __init__(self):
@@ -45,7 +45,7 @@ class testrepressilator(testcase):
         f.close()
 
     def analyticRHS(self,t,x,n):
-        return np.array([-x[0]+hf.negHillFunction(2.1,0.6,2.0,n,x[2]),-x[1]+hf.negHillFunction(3.4,1.2,1.5,n,x[0]),-x[2]+hf.negHillFunction(2.5,1.0,2.4,n,x[1])])
+        return np.array([-x[0]+ihf.negHillFunction(2.1,0.6,2.0,n,x[2]),-x[1]+ihf.negHillFunction(3.4,1.2,1.5,n,x[0]),-x[2]+ihf.negHillFunction(2.5,1.0,2.4,n,x[1])])
 
 
 class test4DCycle(testcase):
@@ -61,13 +61,13 @@ class test4DCycle(testcase):
         f.close()
 
     def analyticRHS(self,t,x,n):
-        return np.array([-x[0]+hf.posHillFunction(3.4,1.2,1.5,n,x[0])*(hf.negHillFunction(3.1,1.7,5.0,n,x[1]) + hf.negHillFunction(4.6,2.2,1.0,n,x[3])),-x[1]+hf.posHillFunction(6.2,4.1,2.7,n,x[0])*hf.negHillFunction(9.2,5.2,10.8,n,x[2]),-x[2]+hf.posHillFunction(11.0,7.0,7.0,n,x[1]),-x[3]+hf.posHillFunction(2.3,0.2,3.9,n,x[0])*hf.negHillFunction(1.5,0.6,11.3,n,x[2])])
+        return np.array([-x[0]+ihf.posHillFunction(3.4,1.2,1.5,n,x[0])*(ihf.negHillFunction(3.1,1.7,5.0,n,x[1]) + ihf.negHillFunction(4.6,2.2,1.0,n,x[3])),-x[1]+ihf.posHillFunction(6.2,4.1,2.7,n,x[0])*ihf.negHillFunction(9.2,5.2,10.8,n,x[2]),-x[2]+ihf.posHillFunction(11.0,7.0,7.0,n,x[1]),-x[3]+ihf.posHillFunction(2.3,0.2,3.9,n,x[0])*ihf.negHillFunction(1.5,0.6,11.3,n,x[2])])
 
 def compare(test,n,y0,t0=0,t1=10,dt=0.01):
-    times,funcvals=hf.evalHill(n,y0,t0,t1,dt)
-    hf.plotResults(times,funcvals)
+    times,funcvals=ihf.simulateHillModel(n,y0,t0,t1,dt)
+    ihf.plotResults(times,funcvals)
     times,funcvals=test.evalAnalytic(n,y0,t0,t1,dt)
-    hf.plotResults(times,funcvals)
+    ihf.plotResults(times,funcvals)
 
 if __name__=='__main__':
     n=20
