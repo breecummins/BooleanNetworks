@@ -74,7 +74,7 @@ def integrate(r,y0,t0,t1,dt):
     funcvals=[y0]
     while r.successful() and r.t < t1:
         r.integrate(r.t+dt)
-        times.append(r.t+dt)
+        times.append(r.t)
         funcvals.append(r.y)
     return times,funcvals
 
