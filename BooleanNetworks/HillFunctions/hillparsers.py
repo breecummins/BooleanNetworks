@@ -21,7 +21,7 @@ def parseSamples(varnames,fname='samples.txt'):
     for l in f:
         L=l.split()
         params.append(L[0])
-        vals.append(float(L[1]))
+        vals.append(L[1])
     f.close()
     intparams=[]
     for p in params:
