@@ -39,10 +39,10 @@ if __name__=='__main__':
     print "Preprocessing..."
     sys.stdout.flush()
     # model=dcm.symmetric5D()
-    model=dcm.oneintermediatenode()
+    # model=dcm.oneintermediatenode()
     # searchForPatterns(model,0)
     # model=dcm.twointermediatenodesymmetric()
-    # model=dcm.fullyconnected()
+    model=dcm.fullyconnected()
     # model=dcm.partiallyconnected()
     searchForPatterns_Generator(model,0)
     # model.checkAllChange()

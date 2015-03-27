@@ -47,10 +47,9 @@ def simdata_4D_Cycle1_Haase():
     def makepatterns(patternstart,next):
         patterns=patternstart
         for n in next:
-            ps=patterns[:]
             newpatterns=[]
             for r in itertools.permutations(n):
-                newpatterns.extend([p+list(r) for p in ps])
+                newpatterns.extend([p+list(r) for p in patterns])
             patterns=newpatterns
         return patterns
     patterns=makepatterns(patternstart,next1)+makepatterns(patternstart,next2)+makepatterns(patternstart,next3)
