@@ -128,6 +128,7 @@ def matchCyclicPattern(pattern,origwallinds,outedges,walldomains,varsaffectedatw
 def callPatternMatch(basedir='',message=''):
     # basedir must contain the files outEdges.txt, walls.txt, patterns.txt, variables.txt, and 
     # equations.txt.
+    # output printed to screen
     if message:
         print "\n"
         print "-"*len(message)
@@ -146,6 +147,7 @@ def callPatternMatch(basedir='',message=''):
 
 def callPatternMatchJSON(basedir='',message=''):
     # basedir must contain the files output.json, patterns.txt, and equations.txt.
+    # output printed to screen
     if message:
         print "\n"
         print "-"*len(message)
@@ -172,6 +174,7 @@ def callPatternMatchJSON(basedir='',message=''):
 
 def callPatternMatchJSONWriteFile(basedir='',message=''):
     # basedir must contain the files output.json, patterns.txt, and equations.txt.
+    # positive results saved to file; negative results not recorded
     if message:
         print "\n"
         print "-"*len(message)
@@ -195,41 +198,11 @@ def callPatternMatchJSONWriteFile(basedir='',message=''):
         param+=1
     f.close()
 
-def constructPatternGenerator(sequence,varnames):
-    # check that there is a max between each max/min pair (at least for 2 pairs)
-    for v in varnames:
-        m=sequence.count(v+' min')
-        if m !=sequence.count(v+' max'):
-            print 'No cyclic pattern possible. Check that number of maxima and minima match for every variable.'
-            sequence=[]
-            break
-        elif sequence.count(v+' min')==2:
-            i=sequence.index(v+' min')
-            k=sequence[i+1:].index(v+' min')
-            try:
-                j=sequence[i+1:].index(v+' max')
-                if j<k:
-                    pass                
-                else:
-                    sequence=[]
-                    break
-            except:
-                sequence=[]
-                break
-        elif sequence.count(v+'min')>2:
-            print 'WARNING: More than 2 max/min pairs for one variable. Spurious patterns may be created.'
-    if sequence:
-        patternnames=[[s.split()[::2][0] for s in sequence]]
-        patternmaxmin=[[s.split()[1::2][0] for s in sequence]]
-        patterns=pp.constructCyclicPatterns(varnames,patternnames,patternmaxmin)
-    else:
-        patterns=[]
-    return patterns
- 
-
 def callPatternMatchWithPatternGeneratorWriteFile(patternstart,patternremainder,basedir='',message=''):
     # basedir must contain the files outEdges.txt, walls.txt, variables.txt, patterngenerator.txt,
     # and equations.txt.
+    # use when patterns.txt would take too much memory
+    # positive results saved to file; negative results not recorded
     if message:
         print "\n"
         print "-"*len(message)
@@ -240,7 +213,7 @@ def callPatternMatchWithPatternGeneratorWriteFile(patternstart,patternremainder,
     patternstart,patternremainder,origwallinds,outedges,walldomains,varsaffectedatwall,allwalllabels,varnames=pp.preprocessPatternGenerator(basedir) 
     f=open(basedir+'results.txt','w',0)
     for r in itertools.permutations(patternremainder):
-        patterns=constructPatternGenerator(patternstart+list(r),varnames)
+        patterns=pp.constructPatternGenerator(patternstart+list(r),varnames)
         for pattern in patterns:
             flag='No match'
             match=matchCyclicPattern(pattern,origwallinds,outedges,walldomains,varsaffectedatwall, allwalllabels,showfirstwall=0)

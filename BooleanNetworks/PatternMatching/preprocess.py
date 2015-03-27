@@ -95,6 +95,37 @@ def constructCyclicPatterns(varnames,patternnames,patternmaxmin):
             patterns.append([''.join(w)  for w in wl])
     return patterns
 
+def constructPatternGenerator(sequence,varnames):
+    # check that there is a max between each max/min pair (at least for 2 pairs)
+    for v in varnames:
+        m=sequence.count(v+' min')
+        if m !=sequence.count(v+' max'):
+            print 'No cyclic pattern possible. Check that number of maxima and minima match for every variable.'
+            sequence=[]
+            break
+        elif sequence.count(v+' min')==2:
+            i=sequence.index(v+' min')
+            k=sequence[i+1:].index(v+' min')
+            try:
+                j=sequence[i+1:].index(v+' max')
+                if j<k:
+                    pass                
+                else:
+                    sequence=[]
+                    break
+            except:
+                sequence=[]
+                break
+        elif sequence.count(v+'min')>2:
+            print 'WARNING: More than 2 max/min pairs for one variable. Spurious patterns may be created.'
+    if sequence:
+        patternnames=[[s.split()[::2][0] for s in sequence]]
+        patternmaxmin=[[s.split()[1::2][0] for s in sequence]]
+        patterns=pp.constructCyclicPatterns(varnames,patternnames,patternmaxmin)
+    else:
+        patterns=[]
+    return patterns
+ 
 def varsAtWalls(threshnames,walldomains,wallthresh,varnames):
     varsaffectedatthresh=[-1]*len(threshnames)
     for t in threshnames:
