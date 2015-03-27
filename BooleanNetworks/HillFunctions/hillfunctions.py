@@ -69,8 +69,8 @@ def evalHill(n,y0,t0=0,t1=10,dt=0.01):
     r.set_initial_value(y0,t0).set_f_params(*D)
     return integrate(r,y0,t1,dt)
 
-def integrate(r,y0,t1,dt):
-    times=[0]
+def integrate(r,y0,t0,t1,dt):
+    times=[t0]
     funcvals=[y0]
     while r.successful() and r.t < t1:
         r.integrate(r.t+dt)

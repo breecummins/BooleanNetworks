@@ -15,7 +15,7 @@ class testcase(object):
     def evalAnalytic(self,n,y0,t0,t1,dt):
         r = ode(self.analyticRHS).set_integrator('vode', method='bdf')
         r.set_initial_value(y0,t0).set_f_params(n)
-        return hf.integrate(r,y0,t1,dt)
+        return hf.integrate(r,y0,t0,t1,dt)
 
 class test2D(testcase):
     def __init__(self):
