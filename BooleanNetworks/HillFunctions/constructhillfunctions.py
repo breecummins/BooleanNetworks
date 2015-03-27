@@ -22,8 +22,8 @@ def makeHillEqns(eqnstr,params,vals,n):
         K=str(k)
         for j in range(len(eqnstr)):
             J=str(j)
-            # if j affects k, find U,L,T in params
             if J+' ' in e: 
+                # if j affects k, find U,L,T in params
                 U,L,T=None,None,None
                 for p,v in zip(params,vals):
                     if J+','+K in p:
@@ -31,8 +31,10 @@ def makeHillEqns(eqnstr,params,vals,n):
                     if filter(None,[U,L,T])==[U,L,T]: 
                         #quit when U,L,T assigned
                         break
+                # substitute the negative and positive hill strings
                 neghill,poshill=makeHillStrs(U,L,T,str(n),J)
                 e=e.replace(J+' n',neghill).replace(J+' p',poshill)
+        # make a lambda function for each equation
         e="lambda X: -X["+K+"] + " + e
         eqns.append(eval(e))
     return eqns
