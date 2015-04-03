@@ -71,11 +71,11 @@ def compare(test,n,y0,t0=0,t1=10,dt=0.01):
     ihf.plotResults(times,funcvals)
 
 if __name__=='__main__':
-    n=20
+    n=10
     T=test2D()
     y0=np.array([1,1])
     T=testrepressilator()
     y0=np.array([1,1,1])
-    T=test4DCycle()
-    y0=np.array([1,1,1,1])
-    compare(T,n,y0)
+    # T=test4DCycle()
+    # y0=np.array([1,1,0,0])
+    compare(T,n,y0,0,20)

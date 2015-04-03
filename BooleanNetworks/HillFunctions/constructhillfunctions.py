@@ -4,6 +4,12 @@ def posHillFunction(U,L,T,n,X):
 def negHillFunction(U,L,T,n,X):
     return (U-L) * T**n / (X**n + T**n) + L
 
+def posHillFunctionForDuke(b,T,n,X):
+    return b * X**n / (X**n + T**n)
+
+def negHillFunctionForDuke(b,T,n,X):
+    return b * T**n / (X**n + T**n)
+
 def makeHillStrs(U,L,T,n,j):
     scalar = "("+U+"-"+L+")"
     Xn = "X["+j+"]**"+n
