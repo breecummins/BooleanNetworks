@@ -25,8 +25,16 @@ def integrate(r,y0,t0,t1,dt):
         funcvals.append(r.y)
     return times,funcvals
 
-def plotResults(times,funcvals):
-    plt.plot(times,np.array(funcvals))
+def plotResults(times,funcvals,plotoptions={}):
+    funcvals=np.array(funcvals)
+    if 'label' in plotoptions.keys():
+        labels=plotoptions['label']
+        del plotoptions['label']
+        for k in range(funcvals.shape[1]):
+            plt.plot(times,funcvals[:,k],label=labels[k],**plotoptions)
+        plt.legend()
+    else:
+        plt.plot(times,funcvals,**plotoptions)
     plt.show()
 
         
