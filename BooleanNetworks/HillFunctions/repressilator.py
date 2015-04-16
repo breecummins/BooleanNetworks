@@ -23,8 +23,8 @@ def bistable():
 def runme(writefilefunc,n=4,y0=[0.75,0.75,1.25],t0=0,t1=10,dt=0.01):
     writefilefunc()
     times,funcvals=ihf.simulateHillModel(n,y0,t0,t1,dt)
-    ihf.plotResults(times,funcvals,{'linewidth':4,'label':[r'$x_1$',r'$x_2$',r'$x_3$']})
+    ihf.plotResults(times,funcvals,{'linewidth':4,'label':[r'$x_1$',r'$x_2$',r'$x_3$']},{'ncol':3})
 
 if __name__ == '__main__':
-    # runme(repressilator,4,[0.75,0.75,1.25])
-    runme(bistable,4,[2.0,4.0,2.0],t1=20)
+    # runme(repressilator,9,[0.75,0.75,1.25],t1=30)
+    runme(bistable,10,[2.0,4.0,2.0],t1=30)
