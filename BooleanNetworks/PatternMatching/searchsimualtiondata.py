@@ -2,10 +2,12 @@ import os, itertools
 from patternmatch import callPatternMatch, callPatternMatchJSON, callPatternMatchJSONWriteFile
 
 def simdata_5D_Cycle1():
-    basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/5D_cycle_1/MGCC_14419/INCC')  
+    basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/5D_cycle_1/MGCC_14419/')  
     f=open(basedir+'patterns.txt','w')    
-    patternstart=['X1 max','X2 max','X3 max']
-    remainder=['X1 min','X2 min','X3 min','X4 max','X4 min','X5 max','X5 min']
+    # patternstart=['X1 max','X2 max','X3 max']
+    # remainder=['X1 min','X2 min','X3 min','X4 max','X4 min','X5 max','X5 min']
+    patternstart=['X5 min','X3 min','X1 max','X4 min','X2 max']
+    remainder=['X1 min','X2 min','X3 max','X4 max','X5 max']
     for r in itertools.permutations(remainder):
         f.write(' '.join(patternstart+list(r))+'\n')
     f.close()
@@ -122,10 +124,10 @@ def simdata_3D_Cycle1():
 
 if __name__=='__main__':
     # simdata_3D_Example()
-    simdata_3D_Cycle1()
+    # simdata_3D_Cycle1()
     # simdata_4D_Cycle1()
     # simdata_4D_Cycle1_Haase()
-    # simdata_5D_Cycle1()
+    simdata_5D_Cycle1()
     # nummatches,paramsets,patterns=analyze_4D_Cycle1()
     # print nummatches
     # print len(paramsets)

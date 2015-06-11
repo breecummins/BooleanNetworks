@@ -2,7 +2,7 @@ import sys,itertools
 import walllabels as WL
 import preprocess as pp
 
-#THIS MODULE USES CPU INSTEAD OF MEMORY
+#THIS MODULE USES MEMORY INSTEAD OF CPU
 
 def repeatingLoop(match):
     # see if the match has a repeating loop inside it
@@ -24,14 +24,34 @@ def recursePattern(startnode,match,matches,patterns,previouspattern,pDict,lenabo
             for n in pDict['outedges'][startnode]:  # every filtered wall has an outgoing edge
                 if len(match)>lenabort*pDict['lenpattern']: # exclude long matches to avoid chaotic behavior
                     print "Aborting. Match is too long."
-                elif len(match) == 1 or previouspattern in WL.pathDependentStringConstruction(match[-2],match[-1],n,pDict['walldomains'],pDict['outedges'],pDict['varsaffectedatwall'][match[-1]],pDict['inedges']): # consistency check to catch false positives
+                else: 
                     nextwalllabels=pDict['allwalllabels'][n]
                     if p in nextwalllabels: # if we hit the next pattern element, reduce pattern by one
-                        # WE MAY GET FALSE POSITIVES WITHOUT THE CONSISTENCY CHECK ABOVE (this is because we have to pick the right q in the next step)
                         matches=recursePattern(n,match+[n],matches,patterns[1:],p,pDict)
                     if P in nextwalllabels and not repeatingLoop(match+[n]): # if we hit an intermediate node, call pattern without reduction provided there isn't a repeating loop 
                         matches=recursePattern(n,match+[n],matches,patterns,P,pDict)
         return matches
+
+def filterFalsePositives(matches,pDict,patternParams):
+    # consistency check to catch false positives
+    filteredmatches=[]
+    for match in matches:
+        if match and match not in filteredmatches: goodmatch=1
+        else: goodmatch=0
+        if goodmatch:
+            i=0
+            for k in range(1,len(match)-1):
+                pd = WL.pathDependentStringConstruction(match[k-1],match[k],match[k+1],pDict['walldomains'],pDict['outedges'],pDict['varsaffectedatwall'][match[k]],pDict['inedges'])
+                p=set(pd).intersection(patternParams[i])
+                # print (match[k-1],match[k],match[k+1]),pd,p,patternParams[i]
+                if not p:
+                    goodmatch=0
+                    break
+                if any(['m' in q or 'M' in q for q in p]):
+                    i+=1
+        if goodmatch:
+            filteredmatches.append(match)
+    return filteredmatches
 
 def sanityCheck(pattern,allwalllabels,cyclewarn):
     '''
@@ -123,7 +143,8 @@ def matchCyclicPattern(pattern,origwallinds,outedges,walldomains,varsaffectedatw
             print "First wall {}".format(origwallinds[w])
         sys.stdout.flush() # force print messages thus far
         R = recursePattern(w,[w],[],patternParams,[],paramDict) # seek match starting at w
-        results.extend([tuple(l) for l in R if l]) # pull out nonempty paths
+        filteredR = filterFalsePositives(R,paramDict,patternParams)
+        results.extend([tuple(l) for l in filteredR])
     # now translate cyclic paths into original wall numbers; not guaranteed unique because not checking for identical paths that start at different nodes; also, sorting out acyclic paths, since walls may share a wall label
     results = [tuple([origwallinds[r] for r in l]) for l in list(set(results)) if l[0]==l[-1]]
     return results or "None. No results found."

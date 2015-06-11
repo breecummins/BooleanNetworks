@@ -12,8 +12,8 @@ def preprocess(basedir):
     # record which variable is affected at each wall
     varsaffectedatwall=varsAtWalls(threshnames,walldomains,wallthresh,varnames)
     # filter out walls not involved in cycles and create wall labels for the filtered walls
-    inds,outedges,walldomains,varsaffectedatwall,allwalllabels = filterAll(outedges,walldomains,varsaffectedatwall)
-    return patterns,inds,outedges,walldomains,varsaffectedatwall,allwalllabels
+    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges = filterAll(outedges,walldomains,varsaffectedatwall)
+    return patterns,inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges
 
 def preprocessPatternGenerator(basedir):
     # read input files
@@ -21,8 +21,8 @@ def preprocessPatternGenerator(basedir):
     # record which variable is affected at each wall
     varsaffectedatwall=varsAtWalls(threshnames,walldomains,wallthresh,varnames)
     # filter out walls not involved in cycles and create wall labels for the filtered walls
-    inds,outedges,walldomains,varsaffectedatwall,allwalllabels = filterAll(outedges,walldomains,varsaffectedatwall)
-    return patternstart,patternremainder,inds,outedges,walldomains,varsaffectedatwall,allwalllabels,varnames
+    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges = filterAll(outedges,walldomains,varsaffectedatwall)
+    return patternstart,patternremainder,inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,varnames
 
 def preprocessJSON(basedir):
     # read input files
@@ -53,6 +53,7 @@ def preprocessJSON(basedir):
     for (wallinds,outedges) in zip(wallindslist,outedgeslist):
         newoutedgeslist.append(filterOutEdgesJSON(wallinds,outedges))
     outedgeslist=newoutedgeslist
+    inedgeslist=[[tuple([j for j,o in enumerate(outedges) if node in o]) for node in range(len(outedges))] for outedges in outedgeslist]  
     # put max/min patterns in terms of the alphabet u,m,M,d
     patterns=constructCyclicPatterns(varnames,patternnames,patternmaxmin)
     # record which variable is affected at each wall
@@ -61,9 +62,9 @@ def preprocessJSON(basedir):
         varsaffectedatwalllist.append(varsAtWalls(threshnames,wd,wt,varnames))
     # create wall labels
     allwalllabelslist=[]
-    for (oe,wd,vw) in zip(outedgeslist,walldomainslist,varsaffectedatwalllist):
-        allwalllabelslist.append(WL.makeAllWallLabels(oe,wd,vw))
-    return patterns,wallindslist,outedgeslist,walldomainslist,varsaffectedatwalllist,allwalllabelslist,splitparameterinds
+    for (oe,wd,vw,pn) in zip(outedgeslist,walldomainslist,varsaffectedatwalllist,inedgeslist):
+        allwalllabelslist.append(WL.makeAllWallLabels(oe,wd,vw,pn))
+    return patterns,wallindslist,outedgeslist,walldomainslist,varsaffectedatwalllist,allwalllabelslist,inedgeslist,splitparameterinds
 
 def constructCyclicPatterns(varnames,patternnames,patternmaxmin):
     numvars=len(varnames)
@@ -163,10 +164,11 @@ def filterAll(outedges,walldomains,varsaffectedatwall):
     wallinds=strongConnectWallNumbers(outedges)
     # renumber the remaining walls and filter the wall properties
     outedges=filterOutEdges(wallinds,outedges)
+    inedges=[tuple([j for j,o in enumerate(outedges) if node in o]) for node in range(len(outedges))]  
     (walldomains,varsaffectedatwall)=filterWallProperties(wallinds,(walldomains,varsaffectedatwall))
     # create all possible wall labels for the remaining walls
-    allwalllabels=WL.makeAllWallLabels(outedges,walldomains,varsaffectedatwall)
-    return wallinds,outedges,walldomains,varsaffectedatwall,allwalllabels
+    allwalllabels=WL.makeAllWallLabels(outedges,walldomains,varsaffectedatwall,inedges)
+    return wallinds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges
 
 if __name__=='__main__':
     out=preprocessJSON('')
