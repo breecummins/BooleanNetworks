@@ -12,8 +12,9 @@ def preprocess(basedir):
     # record which variable is affected at each wall
     varsaffectedatwall=varsAtWalls(threshnames,walldomains,wallthresh,varnames)
     # filter out walls not involved in cycles and create wall labels for the filtered walls
-    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges = filterAll(outedges,walldomains,varsaffectedatwall)
-    return patterns,inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges
+    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = filterAllTriples(outedges,walldomains,varsaffectedatwall)
+    paramDict = {'walldomains':walldomains,'outedges':outedges,'varsaffectedatwall':varsaffectedatwall,'allwalllabels':allwalllabels,'inedges':inedges,'triples':triples,'sortedwalllabels':sortedwalllabels}
+    return patterns,inds,paramDict
 
 def preprocessPatternGenerator(basedir):
     # read input files
@@ -21,8 +22,9 @@ def preprocessPatternGenerator(basedir):
     # record which variable is affected at each wall
     varsaffectedatwall=varsAtWalls(threshnames,walldomains,wallthresh,varnames)
     # filter out walls not involved in cycles and create wall labels for the filtered walls
-    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges = filterAll(outedges,walldomains,varsaffectedatwall)
-    return patternstart,patternremainder,inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,varnames
+    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = filterAllTriples(outedges,walldomains,varsaffectedatwall)
+    paramDict = {'walldomains':walldomains,'outedges':outedges,'varsaffectedatwall':varsaffectedatwall,'allwalllabels':allwalllabels,'inedges':inedges,'triples':triples,'sortedwalllabels':sortedwalllabels}
+    return patternstart,patternremainder,inds,varnames,paramDict
 
 def preprocessJSON(basedir):
     # read input files
@@ -62,9 +64,17 @@ def preprocessJSON(basedir):
         varsaffectedatwalllist.append(varsAtWalls(threshnames,wd,wt,varnames))
     # create wall labels
     allwalllabelslist=[]
-    for (oe,wd,vw,pn) in zip(outedgeslist,walldomainslist,varsaffectedatwalllist,inedgeslist):
-        allwalllabelslist.append(WL.makeAllWallLabels(oe,wd,vw,pn))
-    return patterns,wallindslist,outedgeslist,walldomainslist,varsaffectedatwalllist,allwalllabelslist,inedgeslist,splitparameterinds
+    tripleslist=[]
+    for (oe,wd,vw,ie) in zip(outedgeslist,walldomainslist,varsaffectedatwalllist,inedgeslist):
+        t,sa,a=WL.makeAllTriples(oe,wd,vw,ie)
+        allwalllabelslist.append(a)
+        sortedwalllabelslist.append(sa)
+        tripleslist.append(t)
+    paramDictlist=[]
+    for (oe,wd,wv,ie,aw,tp,sw) in zip(outedgeslist,walldomainslist,varsaffectedatwalllist,inedgeslist,allwalllabelslist,tripleslist,sortedwalllabelslist):
+        paramDict = {'walldomains':wd,'outedges':oe,'varsaffectedatwall':wv,'allwalllabels':aw,'inedges':ie,'triples':tp,'sortedwalllabels':sw}
+        paramDictlist.append(paramDict)
+    return patterns,wallindslist,splitparameterinds,paramDictlist
 
 def constructCyclicPatterns(varnames,patternnames,patternmaxmin):
     numvars=len(varnames)
@@ -167,8 +177,19 @@ def filterAll(outedges,walldomains,varsaffectedatwall):
     inedges=[tuple([j for j,o in enumerate(outedges) if node in o]) for node in range(len(outedges))]  
     (walldomains,varsaffectedatwall)=filterWallProperties(wallinds,(walldomains,varsaffectedatwall))
     # create all possible wall labels for the remaining walls
-    allwalllabels=WL.makeAllWallLabels(outedges,walldomains,varsaffectedatwall,inedges)
+    allwalllabels=WL.makeAllTriples(outedges,walldomains,varsaffectedatwall,inedges)[2]
     return wallinds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges
+
+def filterAllTriples(outedges,walldomains,varsaffectedatwall):
+    # get indices of walls in nontrivial strongly connected components of the wall graph
+    wallinds=strongConnectWallNumbers(outedges)
+    # renumber the remaining walls and filter the wall properties
+    outedges=filterOutEdges(wallinds,outedges)
+    inedges=[tuple([j for j,o in enumerate(outedges) if node in o]) for node in range(len(outedges))]  
+    (walldomains,varsaffectedatwall)=filterWallProperties(wallinds,(walldomains,varsaffectedatwall))
+    # create all possible wall labels for the remaining walls
+    triples,sortedwalllabels,allwalllabels=WL.makeAllTriples(outedges,walldomains,varsaffectedatwall,inedges)
+    return wallinds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels
 
 if __name__=='__main__':
     out=preprocessJSON('')

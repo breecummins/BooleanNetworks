@@ -17,7 +17,7 @@ def testme():
     print PP.strongConnectWallNumbers(outedges) == [0,1,2,3,4,6,7,8]
 
 def test0():
-    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges = PP.filterAll(*tc.test0())
+    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = PP.filterAllTriples(*tc.test0())
     print inds==[3, 5, 6, 8, 10, 11, 13]
     print outedges==[(1,), (4,), (0,), (4,), (6,), (2, 3), (5,)]
     print walldomains==[(0.5, 1), (1, 0.5), (1, 1.5), (1.5, 1), (2, 0.5), (2, 1.5), (2.5, 1)]
@@ -29,7 +29,7 @@ def test0():
     print patterns==[['Mu','dM','md','um','Mu']]
 
 def test1():
-    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges = PP.filterAll(*tc.test1())
+    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = PP.filterAllTriples(*tc.test1())
     print inds==[8, 10, 11, 13]
     print outedges==[(1,), (3,), (0,), (2,)]
     print walldomains==[(1.5, 1), (2, 0.5), (2, 1.5), (2.5, 1)]
@@ -41,14 +41,14 @@ def test1():
     print patterns==[['Mu','mu','uM','um','Mu']]
 
 def test2():
-    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges = PP.filterAll(*tc.test2())
+    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = PP.filterAllTriples(*tc.test2())
     print inds==[3, 5, 6, 8, 10, 11, 13]
     print outedges==[(1,), (3,4), (0,), (2,), (6,), (2,), (5,)]
     print walldomains==[(0.5, 1), (1, 0.5), (1, 1.5), (1.5, 1), (2, 0.5), (2, 1.5), (2.5, 1)]
     print varsaffectedatwall==[0, 1, 1, 0, 0, 0, 0]
 
 def test3():
-    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges = PP.filterAll(*tc.test3())
+    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = PP.filterAllTriples(*tc.test3())
     print inds==[0,3,4,6,9,10]
     print outedges==[(2,),(0,),(4,),(1,),(5,),(3,)]
     print walldomains==[(1.5,1,0.5),(1,1.5,0.5),(1.5,0.5,1),(0.5,1.5,1),(1,0.5,1.5),(0.5,1,1.5)]
@@ -70,7 +70,7 @@ def test3():
 
 
 def test4():
-    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges = PP.filterAll(*tc.test4())
+    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = PP.filterAllTriples(*tc.test4())
     print inds==range(5,12)
     print outedges==[(2,),(0,3),(5,),(6,),(1,),(6,),(4,)]
     print walldomains==[(1.5,1),(1.5,2),(2,0.5),(2,1.5),(2,2.5),(2.5,1),(2.5,2)]
@@ -82,7 +82,7 @@ def test4():
     print patterns==[['md','um','Mu','dM','md'],['Md','md','um','uM','Md']]
 
 def test5():
-    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges = PP.filterAll(*tc.test5())
+    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = PP.filterAllTriples(*tc.test5())
     print inds==[0,1,4,7,8,12,13,15,16,18,19]
     print outedges==[(3,),(0,4),(1,),(7,),(6,8),(2,),(7,),(9,),(10,),(10,),(5,)]
     print walldomains==[(0.5,1,1.5),(0.5,2,1.5),(1,2.5,1.5),(0.5,0.5,1),(0.5,1.5,1),(1.5,2.5,1),(0.5,1,0.5),(1,0.5,0.5),(1,1.5,0.5),(1.5,1,0.5),(1.5,2,0.5)]
@@ -93,7 +93,7 @@ def test5():
     print patterns==[['mdd','umd','uum','Muu','dMu','ddM','mdd'],['mdd','umd','Mud','dum','dMu','ddM','mdd']]
 
 def test6():
-    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges = PP.filterAll(*tc.test6())
+    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = PP.filterAllTriples(*tc.test6())
     print inds==[4,5,7,8,9,10,11,14,16,17,18,19,23,24,25,26,27]
     print outedges==[(3,8,13),(4,),(12,),(10,15),(16,),(9,),(2,14),(0,),(4,),(2,14),(16,),(6,),(1,7),(9,),(4,),(5,11),(6,)]
     patternnames,patternmaxmin=fp.parsePatterns()

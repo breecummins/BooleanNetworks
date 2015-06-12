@@ -1,5 +1,5 @@
 import os, itertools
-from patternmatch import callPatternMatch, callPatternMatchJSON, callPatternMatchJSONWriteFile
+from patternmatch_triples import callPatternMatch, callPatternMatchJSON, callPatternMatchJSONWriteFile
 
 def simdata_5D_Cycle1():
     basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/5D_cycle_1/MGCC_14419/')  
