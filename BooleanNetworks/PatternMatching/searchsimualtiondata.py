@@ -126,8 +126,8 @@ if __name__=='__main__':
     # simdata_3D_Example()
     # simdata_3D_Cycle1()
     # simdata_4D_Cycle1()
-    # simdata_4D_Cycle1_Haase()
-    simdata_5D_Cycle1()
+    simdata_4D_Cycle1_Haase()
+    # simdata_5D_Cycle1()
     # nummatches,paramsets,patterns=analyze_4D_Cycle1()
     # print nummatches
     # print len(paramsets)

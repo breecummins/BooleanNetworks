@@ -2,7 +2,7 @@ import sys,itertools
 import walllabels as WL
 import preprocess as pp
 
-#THIS MODULE USES CPU INSTEAD OF MEMORY
+#THIS MODULE USES MEMORY INSTEAD OF CPU
 
 def repeatingLoop(match):
     # see if the match has a repeating loop inside it
@@ -25,16 +25,22 @@ def recursePattern(startnode,match,matches,patterns,nextwall,pDict,lenabort=5):
         for p,P in patterns:
             for k,t in enumerate(pDict['triples'][startnode]):
                 if t[1] == nextwall:
-                    label=pDict['sortedwalllabels'][startnode][k]
-                    if label == p: # if we hit the next pattern element, reduce pattern by one
+                    labels=pDict['sortedwalllabels'][startnode][k]
+                    if p in labels: # if we hit the next pattern element, reduce pattern by one
                         matches=recursePattern(t[1],match+[t[1]],matches,patterns[1:],t[2],pDict)
-                    elif label == P and not repeatingLoop(match+[t[1]]): # if we hit an intermediate node, call pattern without reduction provided there isn't a repeating loop 
+                    elif P in labels and not repeatingLoop(match+[t[1]]): # if we hit an intermediate node, call pattern without reduction provided there isn't a repeating loop 
                         matches=recursePattern(t[1],match+[t[1]],matches,patterns,t[2],pDict)
         return matches
 
-def sanityCheck(pattern,allwalllabels,cyclewarn):
+def sanityCheckPattern(pattern,cyclewarn=1):
     '''
-    Make sure the input pattern meets the requirements of the algorithm.
+    Make sure the input pattern meets the requirements of the algorithm:
+        1) Pattern must be nonempty and cyclic.
+        2) Every element of the pattern must have exactly one extremum.
+        3) Every variable in the pattern must alternate back and forth between
+           maxima and minima.
+        4) If the pattern has a repeating loop, warn that the search may fail 
+           to match the pattern when it exists. 
 
     '''
     # reject empty patterns
@@ -53,21 +59,18 @@ def sanityCheck(pattern,allwalllabels,cyclewarn):
     for k in range(len(pattern[0])):
         seq = filter(None,[p[k] if p[k] in ['m','M'] else None for p in pattern[:-1]])
         if len(seq)%2 != 0:
-            return "None. Variable {} has an odd number of extrema.".format(k)
+            return "None. Variable {} has an odd number of extrema in the pattern.".format(k)
         elif len(seq) > 2 and ( set(seq[::2])==set(['m','M']) or set(seq[1::2])==set(['m','M']) ):
-            return "None. Variable {} has two identical extrema in a row.".format(k)
-    # check if any word in pattern is not a wall label (it's pointless to search in that case)
-    awl = [a for l in allwalllabels for a in l]
-    if not set(pattern).issubset(awl):
-        return "None. No results found. Pattern contains an element that is not a wall label."
+            return "None. Variable {} has two identical extrema in a row in the pattern.".format(k)
     # check for repeating pattern
     for k in range(1,len(pattern)):
         for j in range(len(pattern)):
-            if j+k < len(pattern) and repeatingLoop(pattern[j:j+k]):
-                print "Warning: Pattern has repeating loop in it. Search may fail."
+            if j+k <= len(pattern) and repeatingLoop(pattern[j:j+k]):
+                if cyclewarn:
+                    print "Warning: Pattern has repeating loop in it. Search may fail."
     return "sane"  
 
-def matchCyclicPattern(pattern,origwallinds,paramDict,showfirstwall=0,cyclewarn=1,showsanitycheck=0):
+def matchCyclicPattern(pattern,origwallinds,paramDict,showfirstwall=0):
     '''
     This function finds paths in a directed graph that are consistent with a target pattern. The nodes
     of the directed graph are called walls, and each node is associated with a wall label (in walldomains)
@@ -104,12 +107,10 @@ def matchCyclicPattern(pattern,origwallinds,paramDict,showfirstwall=0,cyclewarn=
     See patternmatch_tests.py for examples of function calls.
 
     '''
-    # sanity check the input, abort if insane 
-    S=sanityCheck(pattern,paramDict['allwalllabels'],cyclewarn)
-    if S != "sane":
-        if showsanitycheck:
-            print S
-        return S
+    # check if any word in pattern is not a wall label (it's pointless to search in that case)
+    awl = [a for l in paramDict['allwalllabels'] for a in l]
+    if not set(pattern).issubset(awl):
+        return "None. No results found. Pattern contains an element that is not a wall label."
     # find all possible starting nodes for a matching path
     firstwalls,nextwalls=WL.getFirstAndNextWalls(pattern[0],paramDict['triples'],paramDict['sortedwalllabels'])
     # return trivial length one patterns
@@ -134,7 +135,7 @@ def matchCyclicPattern(pattern,origwallinds,paramDict,showfirstwall=0,cyclewarn=
     results = [tuple([origwallinds[r] for r in l]) for l in list(set(results)) if l[0]==l[-1]]
     return results or "None. No results found."
 
-def callPatternMatch(basedir='',message=''):
+def callPatternMatch(basedir='',message='',showsanitycheck=1):
     # basedir must contain the files outEdges.txt, walls.txt, patterns.txt, variables.txt, and 
     # equations.txt.
     # output printed to screen
@@ -147,14 +148,18 @@ def callPatternMatch(basedir='',message=''):
     print "Preprocessing..."
     Patterns,origwallinds,paramDict=pp.preprocess(basedir) 
     for pattern in Patterns:
-        print "\n"
-        print '-'*25
-        print "Pattern: {}".format(pattern)
-        match=matchCyclicPattern(pattern,origwallinds,paramDict,showfirstwall=1)
-        print "Results: {}".format(match)
-        print '-'*25
+        S=sanityCheckPattern(pattern,showsanitycheck)
+        if S=='sane':
+            print "\n"
+            print '-'*25
+            print "Pattern: {}".format(pattern)
+            match=matchCyclicPattern(pattern,origwallinds,paramDict,showfirstwall=1)
+            print "Results: {}".format(match)
+            print '-'*25
+        elif showsanitycheck:
+            print S
 
-def callPatternMatchJSON(basedir='',message=''):
+def callPatternMatchJSON(basedir='',message='',showsanitycheck=1):
     # basedir must contain the files output.json, patterns.txt, and equations.txt.
     # output printed to screen
     if message:
@@ -174,14 +179,18 @@ def callPatternMatchJSON(basedir='',message=''):
         print '-'*50
         param+=1
         for pattern in Patterns:
-            print "\n"
-            print '-'*25
-            print "Pattern: {}".format(pattern)
-            match=matchCyclicPattern(pattern,origwallinds,paramDict,showfirstwall=1)
-            print "Results: {}".format(match)
-            print '-'*25
+            S=sanityCheckPattern(pattern,showsanitycheck)
+            if S=='sane':
+                print "\n"
+                print '-'*25
+                print "Pattern: {}".format(pattern)
+                match=matchCyclicPattern(pattern,origwallinds,paramDict,showfirstwall=1)
+                print "Results: {}".format(match)
+                print '-'*25
+            elif showsanitycheck:
+                print S
 
-def callPatternMatchJSONWriteFile(basedir='',message=''):
+def callPatternMatchJSONWriteFile(basedir='',message='',showsanitycheck=1):
     # basedir must contain the files output.json, patterns.txt, and equations.txt.
     # positive results saved to file; negative results not recorded
     if message:
@@ -199,15 +208,19 @@ def callPatternMatchJSONWriteFile(basedir='',message=''):
         print "Morse set {} of {}".format(param,len(origwallindslist))
         print "Parameters={}".format(parameterinds[param-1])
         for pattern in Patterns:
-            match=matchCyclicPattern(pattern,origwallinds,paramDict,showfirstwall=0)
-            if 'None' not in match:
-                f.write('\n'+"Parameters={}".format(parameterinds[param-1])+'\n')
-                f.write("Pattern: {}".format(pattern)+'\n')
-                f.write("Results: {}".format(match)+'\n')
+            S=sanityCheckPattern(pattern,showsanitycheck)
+            if S=='sane':
+                match=matchCyclicPattern(pattern,origwallinds,paramDict,showfirstwall=0)
+                if 'None' not in match:
+                    f.write('\n'+"Parameters={}".format(parameterinds[param-1])+'\n')
+                    f.write("Pattern: {}".format(pattern)+'\n')
+                    f.write("Results: {}".format(match)+'\n')
+            elif showsanitycheck:
+                print S
         param+=1
     f.close()
 
-def callPatternMatchWithPatternGeneratorWriteFile(patternstart,patternremainder,basedir='',message=''):
+def callPatternMatchWithPatternGeneratorWriteFile(patternstart,patternremainder,basedir='',message='',showsanitycheck=1):
     # basedir must contain the files outEdges.txt, walls.txt, variables.txt, patterngenerator.txt,
     # and equations.txt.
     # use when patterns.txt would take too much memory
@@ -224,12 +237,16 @@ def callPatternMatchWithPatternGeneratorWriteFile(patternstart,patternremainder,
     for r in itertools.permutations(patternremainder):
         patterns=pp.constructPatternGenerator(patternstart+list(r),varnames)
         for pattern in patterns:
+            S=sanityCheckPattern(pattern,showsanitycheck)
             flag='No match'
-            match=matchCyclicPattern(pattern,origwallinds,paramDict,showfirstwall=0)
-            if 'None' not in match:
-                flag='Match'
-                f.write('\n'+"Parameters={}".format(parameterinds[param-1])+'\n')
-                f.write("Pattern: {}".format(pattern)+'\n')
-                f.write("Results: {}".format(match)+'\n')
+            if S=='sane':
+                match=matchCyclicPattern(pattern,origwallinds,paramDict,showfirstwall=0)
+                if 'None' not in match:
+                    flag='Match'
+                    f.write('\n'+"Parameters={}".format(parameterinds[param-1])+'\n')
+                    f.write("Pattern: {}".format(pattern)+'\n')
+                    f.write("Results: {}".format(match)+'\n')
+            elif showsanitycheck:
+                print S
         print flag
     f.close()

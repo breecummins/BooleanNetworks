@@ -15,7 +15,7 @@ def repeatingLoop(match):
                 return True
         return False
 
-def recursePattern(startnode,match,matches,patterns,previouspattern,pDict,lenabort=3):
+def recursePattern(startnode,match,matches,patterns,previouspattern,pDict,lenabort=5):
     if len(match) >= pDict['lenpattern'] and pDict['stop'] in pDict['allwalllabels'][match[-1]]: # Stop condition ensures that the whole pattern is in the match. For this to work, every word in the pattern must have exactly one 'm' or 'M' (pattern checked for this in the function sanityCheck). The algorithm excludes the insertion of intermediate extrema in the match. 
         matches.append(match)
         return matches
@@ -64,7 +64,7 @@ def sanityCheck(pattern,allwalllabels,cyclewarn):
     # check for repeating pattern
     for k in range(1,len(pattern)):
         for j in range(len(pattern)):
-            if j+k < len(pattern) and repeatingLoop(pattern[j:j+k]):
+            if j+k <= len(pattern) and repeatingLoop(pattern[j:j+k]):
                 print "Warning: Pattern has repeating loop in it. Search may fail."
     return "sane"  
 

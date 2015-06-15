@@ -227,7 +227,7 @@ def getFirstAndNextWalls(firstpattern,triples,sortedwalllabels):
     nextwalls=[]
     for k,l in enumerate(triples):
         for j,t in enumerate(l):
-            if firstpattern == sortedwalllabels[k][j]:
+            if firstpattern in sortedwalllabels[k][j]:
                 firstwalls.append(t[1])
                 nextwalls.append(t[2])
     return firstwalls, nextwalls
@@ -248,24 +248,27 @@ def makeAllTriples(outedges,walldomains,varsaffectedatwall,inedges):
     # construct the wall label for every permissible triple (in-edge, wall, out-edge)
     allwalllabels=[]
     triples=[]
+    # trip2=[]
     unfoldedwalllabels=[]
     for k,(ie,oe) in enumerate(zip(inedges,outedges)):
         wl=[]
+        uwl=[]
         t=[]
+        # t2=[]
         for i,o in itertools.product(ie,oe):
-            wl.extend(pathDependentStringConstruction(i,k,o,walldomains,outedges,varsaffectedatwall[k],inedges))
+            pds=pathDependentStringConstruction(i,k,o,walldomains,outedges,varsaffectedatwall[k],inedges)
+            wl.extend(pds)
+            # t2.extend((i,k,o))
+            uwl.append(pds)
             t.append((i,k,o))
         allwalllabels.append(wl)
-        unfoldedwalllabels.extend(wl)
+        # trip2.append(t2)
+        unfoldedwalllabels.extend(uwl)
         triples.extend(t)
     # now sort the triples and make a sorted wall label list too
-    # print triples
-    # print unfoldedwalllabels
     sorttriples=sorted(zip(triples,range(len(triples))))
     triples,sortedinds=zip(*sorttriples)
     sortedwalllabels=[unfoldedwalllabels[j] for j in sortedinds]
-    # print triples
-    # print sortedwalllabels
     collapsedtriples=[]
     collapsedsortedwalls=[]
     i=0   

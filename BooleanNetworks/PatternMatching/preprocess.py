@@ -65,6 +65,7 @@ def preprocessJSON(basedir):
     # create wall labels
     allwalllabelslist=[]
     tripleslist=[]
+    sortedwalllabelslist=[]
     for (oe,wd,vw,ie) in zip(outedgeslist,walldomainslist,varsaffectedatwalllist,inedgeslist):
         t,sa,a=WL.makeAllTriples(oe,wd,vw,ie)
         allwalllabelslist.append(a)
