@@ -1,5 +1,4 @@
-# from patternmatch import matchPattern
-from patternmatch_triples import matchPattern
+from patternmatch import matchPattern
 import preprocess as PP
 import fileparsers as fp
 import testcases as tc

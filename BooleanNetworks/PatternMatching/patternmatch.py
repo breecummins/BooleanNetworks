@@ -2,10 +2,9 @@ import sys,itertools
 import walllabels as WL
 import preprocess as pp
 
-#THIS MODULE USES MEMORY INSTEAD OF CPU; allwalllabels and sortedwalllabels are different indexings
-#of the same information. Could use just sortedwalllabels and do a sort at every recursive call instead.
-
 def recursePattern(firstwall,nextwall,match,matches,patterns,pDict,lenabort=5):
+    # THIS FUNCTION USES MEMORY INSTEAD OF CPU; allwalllabels and sortedwalllabels are different indexings
+    # of the same information. Could use just one and do a sort at every recursive call instead.
     if len(match) >= pDict['lenpattern'] and pDict['stop'] in pDict['allwalllabels'][match[-1]]:  
         matches.append(match)
         return matches
