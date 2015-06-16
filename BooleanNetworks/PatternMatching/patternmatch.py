@@ -68,7 +68,7 @@ def sanityCheck(pattern,allwalllabels,cyclewarn):
                 print "Warning: Pattern has repeating loop in it. Search may fail."
     return "sane"  
 
-def matchCyclicPattern(pattern,origwallinds,paramDict,showfirstwall=0,cyclewarn=1,showsanitycheck=0):
+def matchPattern(pattern,origwallinds,paramDict,showfirstwall=0,cyclewarn=1,showsanitycheck=0):
     '''
     This function finds paths in a directed graph that are consistent with a target pattern. The nodes
     of the directed graph are called walls, and each node is associated with a wall label (in walldomains)
@@ -151,7 +151,7 @@ def callPatternMatch(basedir='',message=''):
         print "\n"
         print '-'*25
         print "Pattern: {}".format(pattern)
-        match=matchCyclicPattern(pattern,origwallinds,paramDict,showfirstwall=1)
+        match=matchPattern(pattern,origwallinds,paramDict,showfirstwall=1)
         print "Results: {}".format(match)
         print '-'*25
 
@@ -178,7 +178,7 @@ def callPatternMatchJSON(basedir='',message=''):
             print "\n"
             print '-'*25
             print "Pattern: {}".format(pattern)
-            match=matchCyclicPattern(pattern,origwallinds,paramDict,showfirstwall=1)
+            match=matchPattern(pattern,origwallinds,paramDict,showfirstwall=1)
             print "Results: {}".format(match)
             print '-'*25
 
@@ -200,7 +200,7 @@ def callPatternMatchJSONWriteFile(basedir='',message=''):
         print "Morse set {} of {}".format(param,len(origwallindslist))
         print "Parameters={}".format(parameterinds[param-1])
         for pattern in Patterns:
-            match=matchCyclicPattern(pattern,origwallinds,paramDict,showfirstwall=0)
+            match=matchPattern(pattern,origwallinds,paramDict,showfirstwall=0)
             if 'None' not in match:
                 f.write('\n'+"Parameters={}".format(parameterinds[param-1])+'\n')
                 f.write("Pattern: {}".format(pattern)+'\n')
@@ -226,7 +226,7 @@ def callPatternMatchWithPatternGeneratorWriteFile(patternstart,patternremainder,
         patterns=pp.constructPatternGenerator(patternstart+list(r),varnames)
         for pattern in patterns:
             flag='No match'
-            match=matchCyclicPattern(pattern,origwallinds,paramDict,showfirstwall=0)
+            match=matchPattern(pattern,origwallinds,paramDict,showfirstwall=0)
             if 'None' not in match:
                 flag='Match'
                 f.write('\n'+"Parameters={}".format(parameterinds[param-1])+'\n')

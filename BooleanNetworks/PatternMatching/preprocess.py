@@ -4,11 +4,11 @@ from scipy.sparse.csgraph import connected_components
 import numpy as np
 import itertools
 
-def preprocess(basedir):
+def preprocess(basedir,cyclic=1):
     # read input files
     outedges,(walldomains,wallthresh),varnames,threshnames,(patternnames,patternmaxmin)=fp.parseAll(basedir+'outEdges.txt',basedir+'walls.txt',basedir+'variables.txt',basedir+'equations.txt',basedir+'patterns.txt')
     # put max/min patterns in terms of the alphabet u,m,M,d
-    patterns=constructCyclicPatterns(varnames,patternnames,patternmaxmin)
+    patterns=constructAcyclicPatterns(varnames,patternnames,patternmaxmin,cyclic=cyclic)
     # record which variable is affected at each wall
     varsaffectedatwall=varsAtWalls(threshnames,walldomains,wallthresh,varnames)
     # filter out walls not involved in cycles and create wall labels for the filtered walls
@@ -16,7 +16,8 @@ def preprocess(basedir):
     paramDict = {'walldomains':walldomains,'outedges':outedges,'varsaffectedatwall':varsaffectedatwall,'allwalllabels':allwalllabels,'inedges':inedges,'triples':triples,'sortedwalllabels':sortedwalllabels}
     return patterns,inds,paramDict
 
-def preprocessPatternGenerator(basedir):
+def preprocessPatternGenerator(basedir,cyclic=1):
+    # cyclic keyword is placeholder for the fact that this function produces only cyclic patterns
     # read input files
     outedges,(walldomains,wallthresh),varnames,threshnames,(patternstart,patternremainder)=fp.parseAllPatternGenerator(basedir+'outEdges.txt',basedir+'walls.txt',basedir+'variables.txt',basedir+'equations.txt',basedir+'patterngenerator.txt')
     # record which variable is affected at each wall
@@ -26,7 +27,7 @@ def preprocessPatternGenerator(basedir):
     paramDict = {'walldomains':walldomains,'outedges':outedges,'varsaffectedatwall':varsaffectedatwall,'allwalllabels':allwalllabels,'inedges':inedges,'triples':triples,'sortedwalllabels':sortedwalllabels}
     return patternstart,patternremainder,inds,varnames,paramDict
 
-def preprocessJSON(basedir):
+def preprocessJSON(basedir,cyclic=1):
     # read input files
     varnames,wallindslist,outedgeslist,walldomainslist,wallthreshlist,parameterinds=fp.parseJSON(basedir+'output.json')
     threshnames=fp.parseEqns(basedir+'equations.txt')
@@ -57,7 +58,7 @@ def preprocessJSON(basedir):
     outedgeslist=newoutedgeslist
     inedgeslist=[[tuple([j for j,o in enumerate(outedges) if node in o]) for node in range(len(outedges))] for outedges in outedgeslist]  
     # put max/min patterns in terms of the alphabet u,m,M,d
-    patterns=constructCyclicPatterns(varnames,patternnames,patternmaxmin)
+    patterns=constructAcyclicPatterns(varnames,patternnames,patternmaxmin,cyclic=cyclic)
     # record which variable is affected at each wall
     varsaffectedatwalllist=[]
     for (wd,wt) in zip(walldomainslist,wallthreshlist):
@@ -107,7 +108,61 @@ def constructCyclicPatterns(varnames,patternnames,patternmaxmin):
             patterns.append([''.join(w)  for w in wl])
     return patterns
 
-def constructPatternGenerator(sequence,varnames):
+def constructAcyclicPatterns(varnames,patternnames,patternmaxmin,cyclic=0):
+    numvars=len(varnames)
+    varinds=[[varnames.index(q) for q in p] for p in patternnames]
+    patterns=[]
+    # loop over each provided pattern
+    for pvars,extrema in zip(varinds,patternmaxmin):
+        P = len(pvars)
+        # record locations of extrema
+        split_pattern=[]
+        for k in range(numvars):
+            varstring=[]
+            for j in range(P):
+                varstring.append('0' if k != pvars[j] else 'M' if extrema[j]=='max' else 'm')
+            split_pattern.append(varstring)
+        # make sure the pattern makes physical sense (no two identical extrema in a row)
+        good_pattern=1
+        for sp in split_pattern:
+            seq = filter(None,[sp[k] if sp[k] in ['m','M'] else None for k in range(P)])
+            if set(seq[::2])==set(['m','M']) or set(seq[1::2])==set(['m','M']):
+                print "Pattern {} is not consistent; not including in search. Every variable must alternate maxima and minima.".format(zip(patternnames,patternmaxmin))
+                good_pattern=0
+        # if the pattern meets the criterion, proceed with transalation
+        # first build a set of template patterns if there are missing variables in the pattern (these could either be 'u' or 'd')
+        if good_pattern:
+            missingvars=sorted(list(set(range(numvars)).difference(set(pvars))))
+            if missingvars:
+                split_patterns=[]
+                for c in itertools.combinations_with_replacement(['u','d'],len(missingvars)):
+                    spc = split_pattern[:]
+                    for k in range(numvars):
+                        if k in missingvars:
+                            spc[k]=[c[missingvars.index(k)]]*P 
+                    split_patterns.append(spc)
+            else:
+                split_patterns=[split_pattern]
+            # for each pattern, fill in the remaining blanks based on the location of the extrema
+            for pat in split_patterns:
+                for v in range(len(pat)):
+                    for k in range(P):
+                        if pat[v][k]=='0':
+                            K=k
+                            while pat[v][K]=='0' and K>0:
+                                K-=1
+                            J=k
+                            while pat[v][J]=='0' and J<P-1:
+                                J+=1
+                            pat[v][k] = 'd' if pat[v][K] in ['M','d'] or pat[v][J] in ['m','d'] else 'u'
+                pattern = [''.join([p[k] for p in pat]) for k in range(P)]
+                if cyclic and pattern[0] != pattern[-1]: 
+                    pattern.append(pattern[0])
+                patterns.append(pattern)
+    return patterns
+
+def constructPatternGenerator(sequence,varnames,cyclic=1):
+    # code currently only works for cyclic=1
     # check that there is a max between each max/min pair (at least for 2 pairs)
     for v in varnames:
         m=sequence.count(v+' min')
@@ -133,7 +188,7 @@ def constructPatternGenerator(sequence,varnames):
     if sequence:
         patternnames=[[s.split()[::2][0] for s in sequence]]
         patternmaxmin=[[s.split()[1::2][0] for s in sequence]]
-        patterns=pp.constructCyclicPatterns(varnames,patternnames,patternmaxmin)
+        patterns=pp.constructAcyclicPatterns(varnames,patternnames,patternmaxmin,cyclic=cyclic)
     else:
         patterns=[]
     return patterns
