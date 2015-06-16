@@ -214,34 +214,16 @@ def pathDependentStringConstruction(previouswall,wall,nextwall,walldomains,outed
             return []
     return walllabels
 
-def getFirstwalls(firstpattern,allwalllabels):
-    # Given the first word in the pattern, find the nodes in the graph that have 
-    # this pattern for some path. Our searches will start at each of these nodes.
-    return [k for k,wl in enumerate(allwalllabels) if firstpattern in wl]
-
 def getFirstAndNextWalls(firstpattern,triples,sortedwalllabels):
     # Given the first word in the pattern, find the nodes in the graph that have 
     # this pattern for some path. Our searches will start at each of these nodes, 
     # and proceed to the next nodes found in this algorithm.
-    firstwalls=[]
-    nextwalls=[]
+    startwallpairs=[]
     for k,l in enumerate(triples):
         for j,t in enumerate(l):
             if firstpattern in sortedwalllabels[k][j]:
-                firstwalls.append(t[1])
-                nextwalls.append(t[2])
-    return firstwalls, nextwalls
-
-def makeAllWallLabels(outedges,walldomains,varsaffectedatwall,inedges):
-    # step through every wall in the list 
-    # construct the wall label for every permissible triple (in-edge, wall, out-edge)
-    allwalllabels=[]
-    for k,(ie,oe) in enumerate(zip(inedges,outedges)):
-        wl=[]
-        for i,o in itertools.product(ie,oe):
-            wl.extend(pathDependentStringConstruction(i,k,o,walldomains,outedges,varsaffectedatwall[k],inedges))
-        allwalllabels.append(list(set(wl)))
-    return allwalllabels
+                startwallpairs.append(t[1:])
+    return list(set(startwallpairs))
 
 def makeAllTriples(outedges,walldomains,varsaffectedatwall,inedges):
     # step through every wall in the list 

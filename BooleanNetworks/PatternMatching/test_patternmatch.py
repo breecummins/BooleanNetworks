@@ -63,7 +63,7 @@ def testme(showme=1):
     paramDict = {'walldomains':walldomains,'outedges':outedges,'varsaffectedatwall':varsaffectedatwall,'allwalllabels':allwalllabels,'inedges':inedges,'triples':triples,'sortedwalllabels':sortedwalllabels}
     patternnames,patternmaxmin=fp.parsePatterns()
     varnames=fp.parseVars()
-    patterns=PP.constructAcyclicPatterns(varnames,patternnames,patternmaxmin,cyclic=1)
+    patterns=PP.constructPatterns(varnames,patternnames,patternmaxmin,cyclic=1)
     match = matchPattern(patterns[0],inds,paramDict,showfirstwall=0)
     if showme: print match==[(0,4,9,10,6,3,0)]
     match = matchPattern(patterns[1],inds,paramDict,showfirstwall=0)
@@ -89,7 +89,7 @@ def testme(showme=1):
     paramDict = {'walldomains':walldomains,'outedges':outedges,'varsaffectedatwall':varsaffectedatwall,'allwalllabels':allwalllabels,'inedges':inedges,'triples':triples,'sortedwalllabels':sortedwalllabels}
     patternnames,patternmaxmin=fp.parsePatterns()
     varnames=fp.parseVars()
-    patterns=PP.constructAcyclicPatterns(varnames,patternnames,patternmaxmin,cyclic=1)
+    patterns=PP.constructPatterns(varnames,patternnames,patternmaxmin,cyclic=1)
     match = matchPattern(patterns[0],inds,paramDict,showfirstwall=0)
     if showme: print match==[(8,13,15,18,19,12,4,1,8),(8,16,19,12,4,1,8),(0,7,15,18,19,12,4,1,0)]
     match = matchPattern(patterns[1],inds,paramDict,showfirstwall=0)
@@ -101,7 +101,7 @@ def testme(showme=1):
     paramDict = {'walldomains':walldomains,'outedges':outedges,'varsaffectedatwall':varsaffectedatwall,'allwalllabels':allwalllabels,'inedges':inedges,'triples':triples,'sortedwalllabels':sortedwalllabels}
     patternnames,patternmaxmin=fp.parsePatterns()
     varnames=fp.parseVars()
-    patterns=PP.constructAcyclicPatterns(varnames,patternnames,patternmaxmin,cyclic=1)
+    patterns=PP.constructPatterns(varnames,patternnames,patternmaxmin,cyclic=1)
     solutions=[[(4, 24, 17, 7, 23, 14, 4), (4, 8, 26, 19, 11, 7, 23, 14, 4), (4, 8, 26, 10, 17, 7, 23, 14, 4), (4, 8, 18, 27, 11, 7, 23, 14, 4)],[(16,9,27,11,7,23,14,4,16)],[(25,9,27,11,25)],None,[(5,9,27,11,7,23,5)],None]
     for p,s in zip(patterns,solutions):
         match = matchPattern(p,inds,paramDict,showfirstwall=0)
@@ -115,7 +115,7 @@ def testtiming(iterates=500):
     paramDict = {'walldomains':walldomains,'outedges':outedges,'varsaffectedatwall':varsaffectedatwall,'allwalllabels':allwalllabels,'inedges':inedges,'triples':triples,'sortedwalllabels':sortedwalllabels}
     patternnames,patternmaxmin=fp.parsePatterns()
     varnames=fp.parseVars()
-    patterns=PP.constructAcyclicPatterns(varnames,patternnames,patternmaxmin,cyclic=1)
+    patterns=PP.constructPatterns(varnames,patternnames,patternmaxmin,cyclic=1)
     solutions=[[(4, 24, 17, 7, 23, 14, 4), (4, 8, 26, 19, 11, 7, 23, 14, 4), (4, 8, 26, 10, 17, 7, 23, 14, 4), (4, 8, 18, 27, 11, 7, 23, 14, 4)],[(16,9,27,11,7,23,14,4,16)],[(25,9,27,11,25)],None,[(5,9,27,11,7,23,5)],None]
     for _ in range(iterates):
         for p in patterns:

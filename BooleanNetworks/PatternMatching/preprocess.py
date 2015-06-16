@@ -8,7 +8,7 @@ def preprocess(basedir,cyclic=1):
     # read input files
     outedges,(walldomains,wallthresh),varnames,threshnames,(patternnames,patternmaxmin)=fp.parseAll(basedir+'outEdges.txt',basedir+'walls.txt',basedir+'variables.txt',basedir+'equations.txt',basedir+'patterns.txt')
     # put max/min patterns in terms of the alphabet u,m,M,d
-    patterns=constructAcyclicPatterns(varnames,patternnames,patternmaxmin,cyclic=cyclic)
+    patterns=constructPatterns(varnames,patternnames,patternmaxmin,cyclic=cyclic)
     # record which variable is affected at each wall
     varsaffectedatwall=varsAtWalls(threshnames,walldomains,wallthresh,varnames)
     # filter out walls not involved in cycles and create wall labels for the filtered walls
@@ -58,7 +58,7 @@ def preprocessJSON(basedir,cyclic=1):
     outedgeslist=newoutedgeslist
     inedgeslist=[[tuple([j for j,o in enumerate(outedges) if node in o]) for node in range(len(outedges))] for outedges in outedgeslist]  
     # put max/min patterns in terms of the alphabet u,m,M,d
-    patterns=constructAcyclicPatterns(varnames,patternnames,patternmaxmin,cyclic=cyclic)
+    patterns=constructPatterns(varnames,patternnames,patternmaxmin,cyclic=cyclic)
     # record which variable is affected at each wall
     varsaffectedatwalllist=[]
     for (wd,wt) in zip(walldomainslist,wallthreshlist):
@@ -78,37 +78,7 @@ def preprocessJSON(basedir,cyclic=1):
         paramDictlist.append(paramDict)
     return patterns,wallindslist,splitparameterinds,paramDictlist
 
-def constructCyclicPatterns(varnames,patternnames,patternmaxmin):
-    numvars=len(varnames)
-    varinds=[[varnames.index(q) for q in p] for p in patternnames]
-    patterns=[]
-    for v,p in zip(varinds,patternmaxmin):
-        P=len(p)
-        missingvars=sorted(list(set(range(numvars)).difference(set(v))))
-        if not missingvars:
-            wordlist=[['0' for _ in range(numvars)] for _ in range(P)]
-        else:
-            wordlist=[]
-            for c in itertools.combinations_with_replacement(['u','d'],len(missingvars)):
-                wl = [[c[missingvars.index(k)] if k in missingvars else '0' for k in range(numvars)] for _ in range(P)]
-                wordlist.extend(wl)
-        for j in range(len(wordlist)/P):
-            wl=wordlist[j*P:(j+1)*P]
-            for i,(k,q) in zip(v,enumerate(p)):
-                wl[k][i] = 'M' if q=='max' else 'm' 
-            for k in range(len(wl)):
-                for n in range(numvars):
-                    if wl[k][n]=='0':
-                        K=k
-                        while wl[K][n] == '0':
-                            K=(K-1)%P #the mod P means I'm assuming cyclicity
-                        wl[k][n] = 'd' if wl[K][n] in ['M','d'] else 'u'
-            if wl[0] != wl[-1]:
-                wl+=[wl[0]]
-            patterns.append([''.join(w)  for w in wl])
-    return patterns
-
-def constructAcyclicPatterns(varnames,patternnames,patternmaxmin,cyclic=0):
+def constructPatterns(varnames,patternnames,patternmaxmin,cyclic=0):
     numvars=len(varnames)
     varinds=[[varnames.index(q) for q in p] for p in patternnames]
     patterns=[]
@@ -188,7 +158,7 @@ def constructPatternGenerator(sequence,varnames,cyclic=1):
     if sequence:
         patternnames=[[s.split()[::2][0] for s in sequence]]
         patternmaxmin=[[s.split()[1::2][0] for s in sequence]]
-        patterns=pp.constructAcyclicPatterns(varnames,patternnames,patternmaxmin,cyclic=cyclic)
+        patterns=pp.constructPatterns(varnames,patternnames,patternmaxmin,cyclic=cyclic)
     else:
         patterns=[]
     return patterns
@@ -224,17 +194,6 @@ def filterOutEdgesJSON(wallinds,outedges):
 def filterWallProperties(interiorinds,wallproperties):
     # strip filtered walls from associated wall properties
     return [[p for i,p in enumerate(wp) if i in interiorinds] for wp in wallproperties]
-
-def filterAll(outedges,walldomains,varsaffectedatwall):
-    # get indices of walls in nontrivial strongly connected components of the wall graph
-    wallinds=strongConnectWallNumbers(outedges)
-    # renumber the remaining walls and filter the wall properties
-    outedges=filterOutEdges(wallinds,outedges)
-    inedges=[tuple([j for j,o in enumerate(outedges) if node in o]) for node in range(len(outedges))]  
-    (walldomains,varsaffectedatwall)=filterWallProperties(wallinds,(walldomains,varsaffectedatwall))
-    # create all possible wall labels for the remaining walls
-    allwalllabels=WL.makeAllTriples(outedges,walldomains,varsaffectedatwall,inedges)[2]
-    return wallinds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges
 
 def filterAllTriples(outedges,walldomains,varsaffectedatwall):
     # get indices of walls in nontrivial strongly connected components of the wall graph

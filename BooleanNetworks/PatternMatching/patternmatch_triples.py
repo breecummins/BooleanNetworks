@@ -2,7 +2,8 @@ import sys,itertools
 import walllabels as WL
 import preprocess as pp
 
-#THIS MODULE USES MEMORY INSTEAD OF CPU
+#THIS MODULE USES MEMORY INSTEAD OF CPU; allwalllabels and sortedwalllabels are different indexings
+#of the same information. Could use just sortedwalllabels and do a sort at every recursive call instead.
 
 def recursePattern(firstwall,nextwall,match,matches,patterns,pDict,lenabort=5):
     if len(match) >= pDict['lenpattern'] and pDict['stop'] in pDict['allwalllabels'][match[-1]]:  
@@ -67,7 +68,8 @@ def matchPattern(pattern,origwallinds,paramDict,cyclic=1,showfirstwall=0):
     if not set(pattern).issubset(awl):
         return "None. No results found. Pattern contains an element that is not a wall label."
     # find all possible starting nodes for a matching path
-    firstwalls,nextwalls=WL.getFirstAndNextWalls(pattern[0],paramDict['triples'],paramDict['sortedwalllabels'])
+    startwallpairs=WL.getFirstAndNextWalls(pattern[0],paramDict['triples'],paramDict['sortedwalllabels'])
+    firstwalls,nextwalls=zip(*startwallpairs)
     # return trivial length one patterns
     if len(pattern)==1:
         return [ (origwallinds.index(w),) for w in firstwalls ] or "None. No results found."
@@ -80,7 +82,7 @@ def matchPattern(pattern,origwallinds,paramDict,cyclic=1,showfirstwall=0):
     results=[]
     if showfirstwall:
         print "All first walls {}".format([origwallinds[w] for w in firstwalls])
-    for w,n in zip(firstwalls,nextwalls):
+    for w,n in startwallpairs:
         if showfirstwall:
             print "First wall {}".format(origwallinds[w])
         sys.stdout.flush() # force print messages thus far

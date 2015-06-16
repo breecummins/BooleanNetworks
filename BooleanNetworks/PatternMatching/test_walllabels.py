@@ -13,35 +13,31 @@ def testme():
 
 def test0():
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels= PP.filterAllTriples(*tc.test0())
-    inedges=[[j for j,o in enumerate(outedges) if node in o] for node in range(len(outedges))]
     print [set(a) for a in allwalllabels]==[set(a) for a in [['md'],['ud'],['dd'],['md'],['um'],['dM'],['Mu']]]
-    print [inds[j] for j in WL.getFirstwalls('md',allwalllabels)]==[3, 8]
-    print [inds[j] for j in WL.getFirstwalls('um',allwalllabels)]==[10]
-    print [inds[j] for j in WL.getFirstwalls('ud',allwalllabels)]==[5]
-    print [inds[j] for j in WL.getFirstwalls('uM',allwalllabels)]==[]
+    print set(WL.getFirstAndNextWalls('md',triples,sortedwalllabels))==set([(0,1),(3,4)])    
+    print set(WL.getFirstAndNextWalls('um',triples,sortedwalllabels))==set([(4,6)])    
+    print set(WL.getFirstAndNextWalls('ud',triples,sortedwalllabels))==set([(1,4)])    
+    print set(WL.getFirstAndNextWalls('uM',triples,sortedwalllabels))==set([])    
     print WL.pathDependentStringConstruction(inds.index(8),inds.index(10),inds.index(13),walldomains, outedges,varsaffectedatwall[inds.index(10)],inedges)==['um']
     print WL.pathDependentStringConstruction(inds.index(5),inds.index(10),inds.index(13),walldomains,outedges,varsaffectedatwall[inds.index(10)],inedges)==['um']
     print WL.infoFromWalls(0,walldomains[inds.index(10)][0],[inds.index(5),inds.index(8)],2,walldomains)==(True,False)
-    # print WL.isVarGTorLT(walldomains[inds.index(10)][0],[inds.index(5),inds.index(8)],walldomains,0)==(True,False)
 
 def test1():
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = PP.filterAllTriples(*tc.test1())
-    inedges=[[j for j,o in enumerate(outedges) if node in o] for node in range(len(outedges))]
     print [set(a) for a in allwalllabels]==[set(a) for a in [['md'],['um'],['dM'],['Mu']]]
-    print [inds[j] for j in WL.getFirstwalls('dd',allwalllabels)]==[] 
-    print [inds[j] for j in WL.getFirstwalls('md',allwalllabels)]==[8]
-    print [inds[j] for j in WL.getFirstwalls('dM',allwalllabels)]==[11]
+    print set(WL.getFirstAndNextWalls('dd',triples,sortedwalllabels))==set([])    
+    print set(WL.getFirstAndNextWalls('md',triples,sortedwalllabels))==set([(0,1)])    
+    print set(WL.getFirstAndNextWalls('dM',triples,sortedwalllabels))==set([(2,0)])    
     print WL.pathDependentStringConstruction(inds.index(8),inds.index(10),inds.index(13),walldomains, outedges,varsaffectedatwall[inds.index(10)],inedges)==['um']
     print WL.pathDependentStringConstruction(inds.index(13),inds.index(11),inds.index(10),walldomains,outedges,varsaffectedatwall[inds.index(11)],inedges)==['dM']    
     print WL.infoFromWalls(1,walldomains[inds.index(11)][1],[inds.index(13)],2,walldomains)==(True,False)
 
 def test2():
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = PP.filterAllTriples(*tc.test2())
-    inedges=[[j for j,o in enumerate(outedges) if node in o] for node in range(len(outedges))]
     print [set(a) for a in allwalllabels]==[set(a) for a in [['md'],['um'],['dM'],['Mu'],['uu'],['du'],['Mu']]]
-    print [inds[j] for j in WL.getFirstwalls('Mu',allwalllabels)]==[8,13] 
-    print [inds[j] for j in WL.getFirstwalls('md',allwalllabels)]==[3]
-    print [inds[j] for j in WL.getFirstwalls('uM',allwalllabels)]==[]
+    print set(WL.getFirstAndNextWalls('Mu',triples,sortedwalllabels))==set([(3,2),(6,5)])    
+    print set(WL.getFirstAndNextWalls('md',triples,sortedwalllabels))==set([(0,1)])    
+    print set(WL.getFirstAndNextWalls('uM',triples,sortedwalllabels))==set([])    
     print WL.pathDependentStringConstruction(inds.index(3),inds.index(5),inds.index(8),walldomains, outedges,varsaffectedatwall[inds.index(5)],inedges)==['um']
     print WL.pathDependentStringConstruction(inds.index(8),inds.index(6),inds.index(3),walldomains,outedges,varsaffectedatwall[inds.index(6)],inedges)==['dM']
     print WL.pathDependentStringConstruction(inds.index(5),inds.index(10),inds.index(13),walldomains,outedges,varsaffectedatwall[inds.index(10)],inedges)==['uu']    
@@ -49,12 +45,11 @@ def test2():
 
 def test3():
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = PP.filterAllTriples(*tc.test3())
-    inedges=[[j for j,o in enumerate(outedges) if node in o] for node in range(len(outedges))]
     print [set(a) for a in allwalllabels]==[set(a) for a in [['udm','udu'],['uMd','udd'],['ddu','Mdu'],['uud','mud'],['duu','dmu'],['dud','duM']]]
-    print [inds[j] for j in WL.getFirstwalls('Muu',allwalllabels)]==[] 
-    print [inds[j] for j in WL.getFirstwalls('ddm',allwalllabels)]==[] 
-    print [inds[j] for j in WL.getFirstwalls('uMd',allwalllabels)]==[3] 
-    print [inds[j] for j in WL.getFirstwalls('dmu',allwalllabels)]==[9] 
+    print set(WL.getFirstAndNextWalls('Muu',triples,sortedwalllabels))==set([])    
+    print set(WL.getFirstAndNextWalls('ddm',triples,sortedwalllabels))==set([])    
+    print set(WL.getFirstAndNextWalls('uMd',triples,sortedwalllabels))==set([(1,0)])    
+    print set(WL.getFirstAndNextWalls('dmu',triples,sortedwalllabels))==set([(4,5)])    
     print WL.pathDependentStringConstruction(inds.index(0),inds.index(4),inds.index(9),walldomains, outedges,varsaffectedatwall[inds.index(4)],inedges)==['ddu','Mdu']
     print WL.pathDependentStringConstruction(inds.index(6),inds.index(3),inds.index(0),walldomains, outedges,varsaffectedatwall[inds.index(3)],inedges)==['udd','uMd']
     print WL.pathDependentStringConstruction(inds.index(9),inds.index(10),inds.index(6),walldomains,outedges,varsaffectedatwall[inds.index(10)],inedges)==['dud','duM']    
@@ -63,10 +58,9 @@ def test3():
 
 def test4():
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = PP.filterAllTriples(*tc.test4())
-    inedges=[[j for j,o in enumerate(outedges) if node in o] for node in range(len(outedges))]
     print [set(a) for a in allwalllabels]==[set(a) for a in [['ud'],['md'],['um'],['um'],['dM'],['uu'],['Mu']]]
-    print [inds[j] for j in WL.getFirstwalls('um',allwalllabels)]==[7,8]
-    print [inds[j] for j in WL.getFirstwalls('dd',allwalllabels)]==[] 
+    print set(WL.getFirstAndNextWalls('um',triples,sortedwalllabels))==set([(2,5),(3,6)])    
+    print set(WL.getFirstAndNextWalls('dd',triples,sortedwalllabels))==set([])    
     print WL.pathDependentStringConstruction(inds.index(9),inds.index(6),inds.index(8),walldomains, outedges,varsaffectedatwall[inds.index(6)],inedges)==['md']
     print WL.pathDependentStringConstruction(inds.index(9),inds.index(6),inds.index(5),walldomains, outedges,varsaffectedatwall[inds.index(6)],inedges)==['md']
     print WL.pathDependentStringConstruction(inds.index(10),inds.index(11),inds.index(9),walldomains, outedges,varsaffectedatwall[inds.index(11)],inedges)==['Mu']
@@ -75,8 +69,8 @@ def test5():
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = PP.filterAllTriples(*tc.test5())
     mylist=[['mdd','udd','Mdd','ddd'],['ddM','ddd'],['dMu','ddu'],['mdd','udd'],['mdd','udd'],['Muu','duu'],['udd'],['umd'],['umd'],['uuu','uud'],['uuu','uum']]
     print [set(a) for a in allwalllabels]==[set(a) for a in mylist]
-    print WL.getFirstwalls('mdd',allwalllabels)==[0,3,4]
-    print WL.getFirstwalls('umd',allwalllabels)==[7,8]
+    print set(WL.getFirstAndNextWalls('mdd',triples,sortedwalllabels))==set([(0,3),(3,7),(4,8),(4,6)])
+    print set(WL.getFirstAndNextWalls('umd',triples,sortedwalllabels))==set([(7,9),(8,10)])
 
 def test6():
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = PP.filterAllTriples(*tc.test6())
