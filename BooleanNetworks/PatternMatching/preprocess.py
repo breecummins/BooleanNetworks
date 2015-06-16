@@ -12,9 +12,9 @@ def preprocess(basedir,cyclic=1):
     # record which variable is affected at each wall
     varsaffectedatwall=varsAtWalls(threshnames,walldomains,wallthresh,varnames)
     # filter out walls not involved in cycles and create wall labels for the filtered walls
-    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = filterAllTriples(outedges,walldomains,varsaffectedatwall)
-    paramDict = {'walldomains':walldomains,'outedges':outedges,'varsaffectedatwall':varsaffectedatwall,'allwalllabels':allwalllabels,'inedges':inedges,'triples':triples,'sortedwalllabels':sortedwalllabels}
-    return patterns,inds,paramDict
+    origwallinds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = filterAllTriples(outedges,walldomains,varsaffectedatwall)
+    paramDict = {'allwalllabels':allwalllabels,'triples':triples,'sortedwalllabels':sortedwalllabels}
+    return patterns,origwallinds,paramDict
 
 def preprocessPatternGenerator(basedir,cyclic=1):
     # cyclic keyword is placeholder for the fact that this function produces only cyclic patterns
@@ -23,9 +23,9 @@ def preprocessPatternGenerator(basedir,cyclic=1):
     # record which variable is affected at each wall
     varsaffectedatwall=varsAtWalls(threshnames,walldomains,wallthresh,varnames)
     # filter out walls not involved in cycles and create wall labels for the filtered walls
-    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = filterAllTriples(outedges,walldomains,varsaffectedatwall)
-    paramDict = {'walldomains':walldomains,'outedges':outedges,'varsaffectedatwall':varsaffectedatwall,'allwalllabels':allwalllabels,'inedges':inedges,'triples':triples,'sortedwalllabels':sortedwalllabels}
-    return patternstart,patternremainder,inds,varnames,paramDict
+    origwallinds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = filterAllTriples(outedges,walldomains,varsaffectedatwall)
+    paramDict = {'allwalllabels':allwalllabels,'triples':triples,'sortedwalllabels':sortedwalllabels}
+    return patternstart,patternremainder,origwallinds,varnames,paramDict
 
 def preprocessJSON(basedir,cyclic=1):
     # read input files
@@ -73,8 +73,8 @@ def preprocessJSON(basedir,cyclic=1):
         sortedwalllabelslist.append(sa)
         tripleslist.append(t)
     paramDictlist=[]
-    for (oe,wd,wv,ie,aw,tp,sw) in zip(outedgeslist,walldomainslist,varsaffectedatwalllist,inedgeslist,allwalllabelslist,tripleslist,sortedwalllabelslist):
-        paramDict = {'walldomains':wd,'outedges':oe,'varsaffectedatwall':wv,'allwalllabels':aw,'inedges':ie,'triples':tp,'sortedwalllabels':sw}
+    for (aw,tp,sw) in zip(allwalllabelslist,tripleslist,sortedwalllabelslist):
+        paramDict = {'allwalllabels':aw,'triples':tp,'sortedwalllabels':sw}
         paramDictlist.append(paramDict)
     return patterns,wallindslist,splitparameterinds,paramDictlist
 
@@ -197,14 +197,14 @@ def filterWallProperties(interiorinds,wallproperties):
 
 def filterAllTriples(outedges,walldomains,varsaffectedatwall):
     # get indices of walls in nontrivial strongly connected components of the wall graph
-    wallinds=strongConnectWallNumbers(outedges)
+    origwallinds=strongConnectWallNumbers(outedges)
     # renumber the remaining walls and filter the wall properties
-    outedges=filterOutEdges(wallinds,outedges)
+    outedges=filterOutEdges(origwallinds,outedges)
     inedges=[tuple([j for j,o in enumerate(outedges) if node in o]) for node in range(len(outedges))]  
-    (walldomains,varsaffectedatwall)=filterWallProperties(wallinds,(walldomains,varsaffectedatwall))
+    (walldomains,varsaffectedatwall)=filterWallProperties(origwallinds,(walldomains,varsaffectedatwall))
     # create all possible wall labels for the remaining walls
     triples,sortedwalllabels,allwalllabels=WL.makeAllTriples(outedges,walldomains,varsaffectedatwall,inedges)
-    return wallinds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels
+    return origwallinds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels
 
 if __name__=='__main__':
     out=preprocessJSON('')

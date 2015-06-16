@@ -45,13 +45,10 @@ def matchPattern(pattern,origwallinds,paramDict,cyclic=1,showfirstwall=0):
     origwallinds: list of integers denoting the original wall number in the full wall graph. In the algorithm, walls are 
         referred to by the index of origwallinds, not the value. 
     paramDict keywords:
-        outedges: list of tuples of integers denoting a directed edge from the index wall to the tuple walls
-        inedges: 
-        walldomains: list of tuples of floats denoting the variable values at the index wall
-        varsaffectedatwall: list of integers reporting which variable is affected the index wall 
-        allwalllabels: list of lists of uniform-length words from the alphabet ('u','d','m','M'); describing the possible wall labels at each node; at MOST there is one 'm' or 'M' per string
-        sortedwalllabels:
-        triples: 
+        triples: list of tuples (previouswall,currentwall,nextwall) allowable from graph
+        allwalllabels: list of lists of uniform-length words from the alphabet ('u','d','m','M') with at most one of 
+            ['m','M'] in each word describing the possible wall labels at currentwall
+        sortedwalllabels: allwalllabels re-indexed according to previouswall
 
     cyclic=1 means only cyclic paths are sought. cyclic=0 means acyclic paths are acceptable.
 
