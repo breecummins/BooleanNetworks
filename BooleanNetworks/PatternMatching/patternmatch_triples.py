@@ -4,32 +4,19 @@ import preprocess as pp
 
 #THIS MODULE USES MEMORY INSTEAD OF CPU
 
-def repeatingLoop(match):
-    # see if the match has a repeating loop inside it
-    N=len(match)
-    if len(set(match)) == N:
-        return False
-    else:
-        for n in range(1,N/2+1):
-            if match[N-n:N] == match[N-2*n:N-n]:
-                return True
-        return False
-
-def recursePattern(startnode,match,matches,patterns,nextwall,pDict,lenabort=5):
+def recursePattern(firstwall,nextwall,match,matches,patterns,pDict,lenabort=5):
     if len(match) >= pDict['lenpattern'] and pDict['stop'] in pDict['allwalllabels'][match[-1]]: # Stop condition ensures that the whole pattern is in the match. For this to work, every word in the pattern must have exactly one 'm' or 'M' (pattern checked for this in the function sanityCheck). The algorithm excludes the insertion of intermediate extrema in the match. 
         matches.append(match)
         return matches
-    elif len(match)>lenabort*pDict['lenpattern']: # exclude long matches to avoid chaotic behavior
-        print "Aborting. Match is too long."
     else:
         for p,P in patterns:
-            for k,t in enumerate(pDict['triples'][startnode]):
+            for k,t in enumerate(pDict['triples'][firstwall]):
                 if t[1] == nextwall:
-                    labels=pDict['sortedwalllabels'][startnode][k]
+                    labels=pDict['sortedwalllabels'][firstwall][k]
                     if p in labels: # if we hit the next pattern element, reduce pattern by one
-                        matches=recursePattern(t[1],match+[t[1]],matches,patterns[1:],t[2],pDict)
-                    elif P in labels and not repeatingLoop(match+[t[1]]): # if we hit an intermediate node, call pattern without reduction provided there isn't a repeating loop 
-                        matches=recursePattern(t[1],match+[t[1]],matches,patterns,t[2],pDict)
+                        matches=recursePattern(t[1],t[2],match+[t[1]],matches,patterns[1:],pDict)
+                    elif P in labels: # if we hit an intermediate node, keep the same pattern
+                        matches=recursePattern(t[1],t[2],match+[t[1]],matches,patterns,pDict)
         return matches
 
 def sanityCheckPattern(pattern,cyclewarn=1):
@@ -62,12 +49,12 @@ def sanityCheckPattern(pattern,cyclewarn=1):
             return "None. Variable {} has an odd number of extrema in the pattern.".format(k)
         elif len(seq) > 2 and ( set(seq[::2])==set(['m','M']) or set(seq[1::2])==set(['m','M']) ):
             return "None. Variable {} has two identical extrema in a row in the pattern.".format(k)
-    # check for repeating pattern
-    for k in range(1,len(pattern)):
-        for j in range(len(pattern)):
-            if j+k <= len(pattern) and repeatingLoop(pattern[j:j+k]):
-                if cyclewarn:
-                    print "Warning: Pattern has repeating loop in it. Search may fail."
+    # # check for repeating pattern
+    # for k in range(1,len(pattern)):
+    #     for j in range(len(pattern)):
+    #         if j+k <= len(pattern) and repeatingLoop(pattern[j:j+k]):
+    #             if cyclewarn:
+    #                 print "Warning: Pattern has repeating loop in it. Search may fail."
     return "sane"  
 
 def matchCyclicPattern(pattern,origwallinds,paramDict,showfirstwall=0):
@@ -129,7 +116,7 @@ def matchCyclicPattern(pattern,origwallinds,paramDict,showfirstwall=0):
         if showfirstwall:
             print "First wall {}".format(origwallinds[w])
         sys.stdout.flush() # force print messages thus far
-        R = recursePattern(w,[w],[],patternParams,n,paramDict) # seek match starting with w, n
+        R = recursePattern(w,n,[w],[],patternParams,paramDict) # seek match starting with w, n
         results.extend([tuple(l) for l in R if l]) # pull out nonempty paths
     # now translate cyclic paths into original wall numbers; not guaranteed unique because not checking for identical paths that start at different nodes; also, sorting out acyclic paths, since walls may share a wall label
     results = [tuple([origwallinds[r] for r in l]) for l in list(set(results)) if l[0]==l[-1]]
