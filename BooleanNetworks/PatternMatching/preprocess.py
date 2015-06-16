@@ -8,7 +8,7 @@ def preprocess(basedir,cyclic=1):
     # read input files
     outedges,(walldomains,wallthresh),varnames,threshnames,(patternnames,patternmaxmin)=fp.parseAll(basedir+'outEdges.txt',basedir+'walls.txt',basedir+'variables.txt',basedir+'equations.txt',basedir+'patterns.txt')
     # put max/min patterns in terms of the alphabet u,m,M,d
-    patterns=constructPatterns(varnames,patternnames,patternmaxmin,cyclic=cyclic)
+    patterns=translatePatterns(varnames,patternnames,patternmaxmin,cyclic=cyclic)
     # record which variable is affected at each wall
     varsaffectedatwall=varsAtWalls(threshnames,walldomains,wallthresh,varnames)
     # filter out walls not involved in cycles and create wall labels for the filtered walls
@@ -58,7 +58,7 @@ def preprocessJSON(basedir,cyclic=1):
     outedgeslist=newoutedgeslist
     inedgeslist=[[tuple([j for j,o in enumerate(outedges) if node in o]) for node in range(len(outedges))] for outedges in outedgeslist]  
     # put max/min patterns in terms of the alphabet u,m,M,d
-    patterns=constructPatterns(varnames,patternnames,patternmaxmin,cyclic=cyclic)
+    patterns=translatePatterns(varnames,patternnames,patternmaxmin,cyclic=cyclic)
     # record which variable is affected at each wall
     varsaffectedatwalllist=[]
     for (wd,wt) in zip(walldomainslist,wallthreshlist):
@@ -78,7 +78,7 @@ def preprocessJSON(basedir,cyclic=1):
         paramDictlist.append(paramDict)
     return patterns,wallindslist,splitparameterinds,paramDictlist
 
-def constructPatterns(varnames,patternnames,patternmaxmin,cyclic=0):
+def translatePatterns(varnames,patternnames,patternmaxmin,cyclic=0):
     numvars=len(varnames)
     varinds=[[varnames.index(q) for q in p] for p in patternnames]
     patterns=[]
@@ -158,7 +158,7 @@ def constructPatternGenerator(sequence,varnames,cyclic=1):
     if sequence:
         patternnames=[[s.split()[::2][0] for s in sequence]]
         patternmaxmin=[[s.split()[1::2][0] for s in sequence]]
-        patterns=pp.constructPatterns(varnames,patternnames,patternmaxmin,cyclic=cyclic)
+        patterns=pp.translatePatterns(varnames,patternnames,patternmaxmin,cyclic=cyclic)
     else:
         patterns=[]
     return patterns
