@@ -4,6 +4,18 @@ from scipy.sparse.csgraph import connected_components
 import numpy as np
 import itertools
 
+def preprocess_dict(basedir,cyclic=1):
+    # read input files
+    outedges,(walldomains,wallthresh),varnames,threshnames,(patternnames,patternmaxmin)=fp.parseAll(basedir+'outEdges.txt',basedir+'walls.txt',basedir+'variables.txt',basedir+'equations.txt',basedir+'patterns.txt')
+    # put max/min patterns in terms of the alphabet u,m,M,d
+    patterns=translatePatterns(varnames,patternnames,patternmaxmin,cyclic=cyclic)
+    # record which variable is affected at each wall
+    varsaffectedatwall=varsAtWalls(threshnames,walldomains,wallthresh,varnames)
+    # make memory structure
+    N, walllabelsdict = makeDictOfWallLabels(outedges,walldomains,varsaffectedatwall)
+    paramDict = {'allwalllabels':allwalllabels,'triples':triples,'sortedwalllabels':sortedwalllabels}
+    return patterns,origwallinds,paramDict
+
 def preprocess(basedir,cyclic=1):
     # read input files
     outedges,(walldomains,wallthresh),varnames,threshnames,(patternnames,patternmaxmin)=fp.parseAll(basedir+'outEdges.txt',basedir+'walls.txt',basedir+'variables.txt',basedir+'equations.txt',basedir+'patterns.txt')

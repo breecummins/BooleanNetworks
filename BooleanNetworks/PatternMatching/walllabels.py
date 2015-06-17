@@ -272,4 +272,38 @@ def makeAllTriples(outedges,walldomains,varsaffectedatwall,inedges):
     # print collapsedsortedwalls
     return collapsedtriples,collapsedsortedwalls,allwalllabels
 
+def makeDictOfWallLabels(outedges,walldomains,varsaffectedatwall):
+    # Assumption: Walls must be numbered 0 to N-1
+    # make inedges
+    inedges=[tuple([j for j,o in enumerate(outedges) if node in o]) for node in range(len(outedges))]   
+    # construct the wall label for every permissible triple (in-edge, wall, out-edge)
+    walllabels=[]
+    for k,(ie,oe) in enumerate(zip(inedges,outedges)):
+        W=[]
+        for i,o in itertools.product(ie,oe):
+            pds=pathDependentStringConstruction(i,k,o,walldomains,outedges,varsaffectedatwall[k],inedges)
+            W.append(((i,k,o),pds))
+        walllabels.extend(W)
+    # collapse in-edge and wall into one index to use as key in dict to access out-edge and list of wall labels associated to triple
+    N=len(outedges)
+    walllabelsdict={}
+    for t,wl in walllabels:
+        ind=t[0]*N+t[1]
+        if ind in walllabelsdict.keys():
+            walllabelsdict[ind].append((t[2],wl))
+        else:
+            walllabelsdict[ind]=[(t[2],wl)]
+    # print walllabels
+    # print '\n'
+    # print walllabelsdict
+    return N,walllabelsdict
+
+
+
+if __name__=='__main__':
+    import testcases as tc
+    import preprocess as PP
+    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels= PP.filterAllTriples(*tc.test0())
+    N,wld=makeDictOfWallLabels(outedges,walldomains,varsaffectedatwall,inedges)
+
 
