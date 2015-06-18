@@ -4,9 +4,15 @@ import fileparsers as fp
 import testcases as tc
 
 def testme(showme=1):
+    test0(showme)
+    test1(showme)
+    test2(showme)
+    test3(showme)
+    test4(showme)
+    test5(showme)
+    test6(showme)
 
-    #################################
-
+def test0(showme=1):
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = PP.filterAllTriples(*tc.test0())
     paramDict = {'walldomains':walldomains,'outedges':outedges,'varsaffectedatwall':varsaffectedatwall,'allwalllabels':allwalllabels,'inedges':inedges,'triples':triples,'sortedwalllabels':sortedwalllabels}
 
@@ -22,8 +28,7 @@ def testme(showme=1):
     match = matchPattern(pattern,inds,paramDict,showfirstwall=0,)
     if showme: print 'None' in match
 
-    #################################
-
+def test1(showme=1):
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = PP.filterAllTriples(*tc.test1())
     paramDict = {'walldomains':walldomains,'outedges':outedges,'varsaffectedatwall':varsaffectedatwall,'allwalllabels':allwalllabels,'inedges':inedges,'triples':triples,'sortedwalllabels':sortedwalllabels}
 
@@ -39,8 +44,7 @@ def testme(showme=1):
     match = matchPattern(pattern,inds,paramDict,showfirstwall=0)
     if showme: print 'None' in match
 
-    #################################
-
+def test2(showme=1):
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = PP.filterAllTriples(*tc.test2())
     paramDict = {'walldomains':walldomains,'outedges':outedges,'varsaffectedatwall':varsaffectedatwall,'allwalllabels':allwalllabels,'inedges':inedges,'triples':triples,'sortedwalllabels':sortedwalllabels}
 
@@ -56,8 +60,7 @@ def testme(showme=1):
     match = matchPattern(pattern,inds,paramDict,showfirstwall=0)
     if showme: print 'None' in match
 
-    #################################
-
+def test3(showme=1):
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = PP.filterAllTriples(*tc.test3())
     paramDict = {'walldomains':walldomains,'outedges':outedges,'varsaffectedatwall':varsaffectedatwall,'allwalllabels':allwalllabels,'inedges':inedges,'triples':triples,'sortedwalllabels':sortedwalllabels}
     patternnames,patternmaxmin=fp.parsePatterns()
@@ -68,8 +71,7 @@ def testme(showme=1):
     match = matchPattern(patterns[1],inds,paramDict,showfirstwall=0)
     if showme: print 'None' in match
 
-    #################################
-
+def test4(showme=1):
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = PP.filterAllTriples(*tc.test4())
     paramDict = {'walldomains':walldomains,'outedges':outedges,'varsaffectedatwall':varsaffectedatwall,'allwalllabels':allwalllabels,'inedges':inedges,'triples':triples,'sortedwalllabels':sortedwalllabels}
     patternnames,patternmaxmin=fp.parsePatterns()
@@ -82,8 +84,7 @@ def testme(showme=1):
     match = matchPattern(pattern,inds,paramDict,showfirstwall=0)
     if showme: print 'None' in match
 
-    #################################
-
+def test5(showme=1):
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = PP.filterAllTriples(*tc.test5())
     paramDict = {'walldomains':walldomains,'outedges':outedges,'varsaffectedatwall':varsaffectedatwall,'allwalllabels':allwalllabels,'inedges':inedges,'triples':triples,'sortedwalllabels':sortedwalllabels}
     patternnames,patternmaxmin=fp.parsePatterns()
@@ -94,8 +95,7 @@ def testme(showme=1):
     match = matchPattern(patterns[1],inds,paramDict,showfirstwall=0)
     if showme: print 'None' in match
 
-    #################################
-
+def test6(showme=1):
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = PP.filterAllTriples(*tc.test6())
     paramDict = {'walldomains':walldomains,'outedges':outedges,'varsaffectedatwall':varsaffectedatwall,'allwalllabels':allwalllabels,'inedges':inedges,'triples':triples,'sortedwalllabels':sortedwalllabels}
     patternnames,patternmaxmin=fp.parsePatterns()

@@ -225,6 +225,18 @@ def getFirstAndNextWalls(firstpattern,triples,sortedwalllabels):
                 startwallpairs.append(t[1:])
     return list(set(startwallpairs))
 
+def getFirstAndNextWalls_Dict(firstpattern,numwalls,walllabelsdict):
+    # Given the first word in the pattern, find the nodes in the graph that have 
+    # this pattern for some path. Our searches will start at each of these nodes, 
+    # and proceed to the next nodes found in this algorithm.
+    startwallpairs=[]
+    for d in walllabelsdict.items():
+        previouswall,currentwall = divmod(d[0],numwalls)
+        for nextwall in d[1]:
+            if firstpattern in nextwall[1]:
+                startwallpairs.append((currentwall,nextwall[0]))
+    return list(set(startwallpairs))
+
 def makeAllTriples(outedges,walldomains,varsaffectedatwall,inedges):
     # step through every wall in the list 
     # construct the wall label for every permissible triple (in-edge, wall, out-edge)
@@ -281,7 +293,9 @@ def makeDictOfWallLabels(outedges,walldomains,varsaffectedatwall):
     for k,(ie,oe) in enumerate(zip(inedges,outedges)):
         W=[]
         for i,o in itertools.product(ie,oe):
+            # make wall labels for wall tuple (i,k,o)
             pds=pathDependentStringConstruction(i,k,o,walldomains,outedges,varsaffectedatwall[k],inedges)
+            # save tuple and list of wall labels
             W.append(((i,k,o),pds))
         walllabels.extend(W)
     # collapse in-edge and wall into one index to use as key in dict to access out-edge and list of wall labels associated to triple
@@ -304,6 +318,6 @@ if __name__=='__main__':
     import testcases as tc
     import preprocess as PP
     inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels= PP.filterAllTriples(*tc.test0())
-    N,wld=makeDictOfWallLabels(outedges,walldomains,varsaffectedatwall,inedges)
+    N,wld=makeDictOfWallLabels(outedges,walldomains,varsaffectedatwall)
 
 

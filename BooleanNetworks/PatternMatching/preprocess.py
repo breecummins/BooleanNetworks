@@ -6,6 +6,7 @@ import itertools
 
 def preprocess_dict(basedir,cyclic=1):
     # read input files
+    # FIXME: replace with new json parser
     outedges,(walldomains,wallthresh),varnames,threshnames,(patternnames,patternmaxmin)=fp.parseAll(basedir+'outEdges.txt',basedir+'walls.txt',basedir+'variables.txt',basedir+'equations.txt',basedir+'patterns.txt')
     # put max/min patterns in terms of the alphabet u,m,M,d
     patterns=translatePatterns(varnames,patternnames,patternmaxmin,cyclic=cyclic)
@@ -13,8 +14,8 @@ def preprocess_dict(basedir,cyclic=1):
     varsaffectedatwall=varsAtWalls(threshnames,walldomains,wallthresh,varnames)
     # make memory structure
     N, walllabelsdict = makeDictOfWallLabels(outedges,walldomains,varsaffectedatwall)
-    paramDict = {'allwalllabels':allwalllabels,'triples':triples,'sortedwalllabels':sortedwalllabels}
-    return patterns,origwallinds,paramDict
+    paramDict={'walllabels':walllabelsdict,'numwalls':N}
+    return patterns,paramDict
 
 def preprocess(basedir,cyclic=1):
     # read input files
@@ -90,6 +91,48 @@ def preprocessJSON(basedir,cyclic=1):
         paramDictlist.append(paramDict)
     return patterns,wallindslist,splitparameterinds,paramDictlist
 
+def preprocessJSON_Dict(basedir,cyclic=1):
+    # read input files
+    varnames,wallindslist,outedgeslist,walldomainslist,wallthreshlist,parameterinds=fp.parseJSON(basedir+'output.json')
+    threshnames=fp.parseEqns(basedir+'equations.txt')
+    patternnames, patternmaxmin=fp.parsePatterns(basedir+'patterns.txt')
+    # split according to Morse sets
+    Morseoutedges=[]
+    Morsewallinds=[]
+    Morsedomains=[]
+    Morsethresh=[]
+    splitparameterinds=[]
+    for oe,wi,wd,wt,pi in zip(outedgeslist,wallindslist,walldomainslist,wallthreshlist,parameterinds):
+        if oe not in Morseoutedges:
+            Morseoutedges.append(oe)
+            Morsewallinds.append(wi)
+            Morsedomains.append(wd)
+            Morsethresh.append(wt)
+            splitparameterinds.append([pi])
+        else:
+            splitparameterinds[Morseoutedges.index(oe)].append(pi)
+    outedgeslist=Morseoutedges
+    wallindslist=Morsewallinds
+    walldomainslist=Morsedomains
+    wallthreshlist=Morsethresh
+    # relabel wall numbers in outedges
+    newoutedgeslist=[]
+    for (wallinds,outedges) in zip(wallindslist,outedgeslist):
+        newoutedgeslist.append(filterOutEdgesJSON(wallinds,outedges))
+    outedgeslist=newoutedgeslist
+    # put max/min patterns in terms of the alphabet u,m,M,d
+    patterns=translatePatterns(varnames,patternnames,patternmaxmin,cyclic=cyclic)
+    # record which variable is affected at each wall
+    varsaffectedatwalllist=[]
+    for (wd,wt) in zip(walldomainslist,wallthreshlist):
+        varsaffectedatwalllist.append(varsAtWalls(threshnames,wd,wt,varnames))
+    # create wall labels
+    paramDictlist=[]
+    for (oe,wd,vw) in zip(outedgeslist,walldomainslist,varsaffectedatwalllist):
+        n,wl=WL.makeDictOfWallLabels(oe,wd,vw)
+        paramDictlist.append({'walllabels':wl,'numwalls':n})
+    return patterns,splitparameterinds,paramDictlist
+
 def translatePatterns(varnames,patternnames,patternmaxmin,cyclic=0):
     numvars=len(varnames)
     varinds=[[varnames.index(q) for q in p] for p in patternnames]
@@ -138,6 +181,7 @@ def translatePatterns(varnames,patternnames,patternmaxmin,cyclic=0):
                                 J+=1
                             pat[v][k] = 'd' if pat[v][K] in ['M','d'] or pat[v][J] in ['m','d'] else 'u'
                 pattern = [''.join([p[k] for p in pat]) for k in range(P)]
+                # if a cyclic pattern is desired, make sure first and last elements are the same
                 if cyclic and pattern[0] != pattern[-1]: 
                     pattern.append(pattern[0])
                 patterns.append(pattern)
