@@ -4,19 +4,6 @@ from scipy.sparse.csgraph import connected_components
 import numpy as np
 import itertools
 
-def preprocess_dict(basedir,cyclic=1):
-    # read input files
-    # FIXME: replace with new json parser
-    outedges,(walldomains,wallthresh),varnames,threshnames,(patternnames,patternmaxmin)=fp.parseAll(basedir+'outEdges.txt',basedir+'walls.txt',basedir+'variables.txt',basedir+'equations.txt',basedir+'patterns.txt')
-    # put max/min patterns in terms of the alphabet u,m,M,d
-    patterns=translatePatterns(varnames,patternnames,patternmaxmin,cyclic=cyclic)
-    # record which variable is affected at each wall
-    varsaffectedatwall=varsAtWalls(threshnames,walldomains,wallthresh,varnames)
-    # make memory structure
-    N, walllabelsdict = makeDictOfWallLabels(outedges,walldomains,varsaffectedatwall)
-    paramDict={'walllabels':walllabelsdict,'numwalls':N}
-    return patterns,paramDict
-
 def preprocess(basedir,cyclic=1):
     # read input files
     outedges,(walldomains,wallthresh),varnames,threshnames,(patternnames,patternmaxmin)=fp.parseAll(basedir+'outEdges.txt',basedir+'walls.txt',basedir+'variables.txt',basedir+'equations.txt',basedir+'patterns.txt')
@@ -24,10 +11,9 @@ def preprocess(basedir,cyclic=1):
     patterns=translatePatterns(varnames,patternnames,patternmaxmin,cyclic=cyclic)
     # record which variable is affected at each wall
     varsaffectedatwall=varsAtWalls(threshnames,walldomains,wallthresh,varnames)
-    # filter out walls not involved in cycles and create wall labels for the filtered walls
-    origwallinds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = filterAllTriples(outedges,walldomains,varsaffectedatwall)
-    paramDict = {'allwalllabels':allwalllabels,'triples':triples,'sortedwalllabels':sortedwalllabels}
-    return patterns,origwallinds,paramDict
+    # make wall labels
+    paramDict = WL.makeAllTriples(outedges,walldomains,varsaffectedatwall)
+    return patterns,paramDict
 
 def preprocessPatternGenerator(basedir,cyclic=1):
     # cyclic keyword is placeholder for the fact that this function produces only cyclic patterns
@@ -35,10 +21,9 @@ def preprocessPatternGenerator(basedir,cyclic=1):
     outedges,(walldomains,wallthresh),varnames,threshnames,(patternstart,patternremainder)=fp.parseAllPatternGenerator(basedir+'outEdges.txt',basedir+'walls.txt',basedir+'variables.txt',basedir+'equations.txt',basedir+'patterngenerator.txt')
     # record which variable is affected at each wall
     varsaffectedatwall=varsAtWalls(threshnames,walldomains,wallthresh,varnames)
-    # filter out walls not involved in cycles and create wall labels for the filtered walls
-    origwallinds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = filterAllTriples(outedges,walldomains,varsaffectedatwall)
-    paramDict = {'allwalllabels':allwalllabels,'triples':triples,'sortedwalllabels':sortedwalllabels}
-    return patternstart,patternremainder,origwallinds,varnames,paramDict
+    # make wall labels
+    paramDict = WL.makeAllTriples(outedges,walldomains,varsaffectedatwall)
+    return patternstart,patternremainder,varnames,paramDict
 
 def preprocessJSON(basedir,cyclic=1):
     # read input files
@@ -67,58 +52,7 @@ def preprocessJSON(basedir,cyclic=1):
     # relabel wall numbers in outedges
     newoutedgeslist=[]
     for (wallinds,outedges) in zip(wallindslist,outedgeslist):
-        newoutedgeslist.append(filterOutEdgesJSON(wallinds,outedges))
-    outedgeslist=newoutedgeslist
-    inedgeslist=[[tuple([j for j,o in enumerate(outedges) if node in o]) for node in range(len(outedges))] for outedges in outedgeslist]  
-    # put max/min patterns in terms of the alphabet u,m,M,d
-    patterns=translatePatterns(varnames,patternnames,patternmaxmin,cyclic=cyclic)
-    # record which variable is affected at each wall
-    varsaffectedatwalllist=[]
-    for (wd,wt) in zip(walldomainslist,wallthreshlist):
-        varsaffectedatwalllist.append(varsAtWalls(threshnames,wd,wt,varnames))
-    # create wall labels
-    allwalllabelslist=[]
-    tripleslist=[]
-    sortedwalllabelslist=[]
-    for (oe,wd,vw,ie) in zip(outedgeslist,walldomainslist,varsaffectedatwalllist,inedgeslist):
-        t,sa,a=WL.makeAllTriples(oe,wd,vw,ie)
-        allwalllabelslist.append(a)
-        sortedwalllabelslist.append(sa)
-        tripleslist.append(t)
-    paramDictlist=[]
-    for (aw,tp,sw) in zip(allwalllabelslist,tripleslist,sortedwalllabelslist):
-        paramDict = {'allwalllabels':aw,'triples':tp,'sortedwalllabels':sw}
-        paramDictlist.append(paramDict)
-    return patterns,wallindslist,splitparameterinds,paramDictlist
-
-def preprocessJSON_Dict(basedir,cyclic=1):
-    # read input files
-    varnames,wallindslist,outedgeslist,walldomainslist,wallthreshlist,parameterinds=fp.parseJSON(basedir+'output.json')
-    threshnames=fp.parseEqns(basedir+'equations.txt')
-    patternnames, patternmaxmin=fp.parsePatterns(basedir+'patterns.txt')
-    # split according to Morse sets
-    Morseoutedges=[]
-    Morsewallinds=[]
-    Morsedomains=[]
-    Morsethresh=[]
-    splitparameterinds=[]
-    for oe,wi,wd,wt,pi in zip(outedgeslist,wallindslist,walldomainslist,wallthreshlist,parameterinds):
-        if oe not in Morseoutedges:
-            Morseoutedges.append(oe)
-            Morsewallinds.append(wi)
-            Morsedomains.append(wd)
-            Morsethresh.append(wt)
-            splitparameterinds.append([pi])
-        else:
-            splitparameterinds[Morseoutedges.index(oe)].append(pi)
-    outedgeslist=Morseoutedges
-    wallindslist=Morsewallinds
-    walldomainslist=Morsedomains
-    wallthreshlist=Morsethresh
-    # relabel wall numbers in outedges
-    newoutedgeslist=[]
-    for (wallinds,outedges) in zip(wallindslist,outedgeslist):
-        newoutedgeslist.append(filterOutEdgesJSON(wallinds,outedges))
+        newoutedgeslist.append([tuple([wallinds.index(j) for j in o]) for o in outedges])
     outedgeslist=newoutedgeslist
     # put max/min patterns in terms of the alphabet u,m,M,d
     patterns=translatePatterns(varnames,patternnames,patternmaxmin,cyclic=cyclic)
@@ -129,8 +63,7 @@ def preprocessJSON_Dict(basedir,cyclic=1):
     # create wall labels
     paramDictlist=[]
     for (oe,wd,vw) in zip(outedgeslist,walldomainslist,varsaffectedatwalllist):
-        n,wl=WL.makeDictOfWallLabels(oe,wd,vw)
-        paramDictlist.append({'walllabels':wl,'numwalls':n})
+        paramDictlist.append(WL.makeAllTriples(oe,wd,vw))
     return patterns,splitparameterinds,paramDictlist
 
 def translatePatterns(varnames,patternnames,patternmaxmin,cyclic=0):
@@ -228,39 +161,6 @@ def varsAtWalls(threshnames,walldomains,wallthresh,varnames):
         if k>-1 and w[k]-int(w[k])<0.25 and 0<w[k]<len(varsaffectedatthresh[k])+1:
             varsaffectedatwall[j]=varsaffectedatthresh[k][int(w[k]-1)]
     return varsaffectedatwall
-
-def strongConnect(outedges):
-    adjacencymatrix=np.zeros((len(outedges),len(outedges)))
-    for i,o in enumerate(outedges):
-        for j in o:
-            adjacencymatrix[i,j]=1
-    N,components=connected_components(adjacencymatrix,directed=True,connection="strong")
-    return list(components)
-
-def strongConnectWallNumbers(outedges):
-    components=strongConnect(outedges)
-    return [k for k,c in enumerate(components) if components.count(c)>1]
-
-def filterOutEdges(wallinds,outedges):
-    return [tuple([wallinds.index(j) for j in outedges[k] if j in wallinds]) for k in wallinds]
-
-def filterOutEdgesJSON(wallinds,outedges):
-    return [tuple([wallinds.index(j) for j in o]) for o in outedges]
-
-def filterWallProperties(interiorinds,wallproperties):
-    # strip filtered walls from associated wall properties
-    return [[p for i,p in enumerate(wp) if i in interiorinds] for wp in wallproperties]
-
-def filterAllTriples(outedges,walldomains,varsaffectedatwall):
-    # get indices of walls in nontrivial strongly connected components of the wall graph
-    origwallinds=strongConnectWallNumbers(outedges)
-    # renumber the remaining walls and filter the wall properties
-    outedges=filterOutEdges(origwallinds,outedges)
-    inedges=[tuple([j for j,o in enumerate(outedges) if node in o]) for node in range(len(outedges))]  
-    (walldomains,varsaffectedatwall)=filterWallProperties(origwallinds,(walldomains,varsaffectedatwall))
-    # create all possible wall labels for the remaining walls
-    triples,sortedwalllabels,allwalllabels=WL.makeAllTriples(outedges,walldomains,varsaffectedatwall,inedges)
-    return origwallinds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels
 
 if __name__=='__main__':
     out=preprocessJSON('')

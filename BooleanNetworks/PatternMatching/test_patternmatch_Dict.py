@@ -1,6 +1,6 @@
 from patternmatch import matchPattern_Dict, matchPattern
 import fileparsers as fp
-import testcases_Dict as tc
+import testcases as tc
 import walllabels as WL
 import preprocess as PP
 

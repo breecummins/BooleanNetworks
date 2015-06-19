@@ -2,6 +2,7 @@ from patternmatch import matchPattern
 import preprocess as PP
 import fileparsers as fp
 import testcases as tc
+import walllabels as WL
 
 def testme(showme=1):
     test0(showme)
@@ -13,112 +14,104 @@ def testme(showme=1):
     test6(showme)
 
 def test0(showme=1):
-    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = PP.filterAllTriples(*tc.test0())
-    paramDict = {'walldomains':walldomains,'outedges':outedges,'varsaffectedatwall':varsaffectedatwall,'allwalllabels':allwalllabels,'inedges':inedges,'triples':triples,'sortedwalllabels':sortedwalllabels}
+    paramDict = WL.makeAllTriples(*tc.test0())
 
     pattern=['md','um','Mu','dM','md']
-    match = matchPattern(pattern,inds,paramDict,showfirstwall=0)
-    if showme: print match==[(3, 5, 10, 13, 11, 6, 3), (8, 10, 13, 11, 8)]
+    match = matchPattern(pattern,paramDict,cyclic=1,showfirstwall=0)
+    if showme: print match==[(0, 1, 4, 6, 5, 2, 0), (3, 4, 6, 5, 3)]
 
     pattern=['um','md'] #intermediate extrema
-    match = matchPattern(pattern,inds,paramDict,showfirstwall=0)
+    match = matchPattern(pattern,paramDict,cyclic=0,showfirstwall=0)
     if showme: print 'None' in match
 
-    pattern=['ud','um','Mu'] # only exists as acyclic path, no associated cycle
-    match = matchPattern(pattern,inds,paramDict,showfirstwall=0,)
-    if showme: print 'None' in match
+    pattern=['ud','um','Mu'] # acyclic 
+    match = matchPattern(pattern,paramDict,cyclic=0,showfirstwall=0,)
+    if showme: print match==[(1,4,6)]
 
 def test1(showme=1):
-    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = PP.filterAllTriples(*tc.test1())
-    paramDict = {'walldomains':walldomains,'outedges':outedges,'varsaffectedatwall':varsaffectedatwall,'allwalllabels':allwalllabels,'inedges':inedges,'triples':triples,'sortedwalllabels':sortedwalllabels}
+    paramDict = WL.makeAllTriples(*tc.test1())
 
     pattern=['md','um','Mu','dM','md']
-    match = matchPattern(pattern,inds,paramDict,showfirstwall=0)
-    if showme: print match==[(8, 10, 13, 11, 8)]
+    match = matchPattern(pattern,paramDict,cyclic=1,showfirstwall=0)
+    if showme: print match==[(0, 1, 3, 2, 0)]
 
     pattern=['md','um','Mu','dM','Md'] # 'Md' DNE in graph
-    match = matchPattern(pattern,inds,paramDict,showfirstwall=0)
+    match = matchPattern(pattern,paramDict,cyclic=0,showfirstwall=0)
     if showme: print 'None' in match 
 
     pattern=['md','Mu','dM','md'] # intermediate extrema
-    match = matchPattern(pattern,inds,paramDict,showfirstwall=0)
+    match = matchPattern(pattern,paramDict,cyclic=1,showfirstwall=0)
     if showme: print 'None' in match
 
 def test2(showme=1):
-    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = PP.filterAllTriples(*tc.test2())
-    paramDict = {'walldomains':walldomains,'outedges':outedges,'varsaffectedatwall':varsaffectedatwall,'allwalllabels':allwalllabels,'inedges':inedges,'triples':triples,'sortedwalllabels':sortedwalllabels}
+    paramDict = WL.makeAllTriples(*tc.test2())
 
     pattern=['dM','md','um','Mu','dM']
-    match = matchPattern(pattern,inds,paramDict,showfirstwall=0)
-    if showme: print match==[(6,3,5,8,6),(6,3,5,10,13,11,6)]
+    match = matchPattern(pattern,paramDict,cyclic=1,showfirstwall=0)
+    if showme: print match==[(2,0,1,3,2),(2,0,1,4,6,5,2)]
 
     pattern=['Mu','dM','md','um','Mu']
-    match = matchPattern(pattern,inds,paramDict,showfirstwall=0)
-    if showme: print match==[(8,6,3,5,8),(13,11,6,3,5,10,13)]
+    match = matchPattern(pattern,paramDict,cyclic=1,showfirstwall=0)
+    if showme: print match==[(3,2,0,1,3),(6,5,2,0,1,4,6)]
 
     pattern=['um','Mu'] #acyclic
-    match = matchPattern(pattern,inds,paramDict,showfirstwall=0)
-    if showme: print 'None' in match
+    match = matchPattern(pattern,paramDict,cyclic=0,showfirstwall=0)
+    if showme: print match==[(1,4,6),(1,3)]
 
 def test3(showme=1):
-    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = PP.filterAllTriples(*tc.test3())
-    paramDict = {'walldomains':walldomains,'outedges':outedges,'varsaffectedatwall':varsaffectedatwall,'allwalllabels':allwalllabels,'inedges':inedges,'triples':triples,'sortedwalllabels':sortedwalllabels}
+    paramDict = WL.makeAllTriples(*tc.test3())
     patternnames,patternmaxmin=fp.parsePatterns()
     varnames=fp.parseVars()
     patterns=PP.translatePatterns(varnames,patternnames,patternmaxmin,cyclic=1)
-    match = matchPattern(patterns[0],inds,paramDict,showfirstwall=0)
-    if showme: print match==[(0,4,9,10,6,3,0)]
-    match = matchPattern(patterns[1],inds,paramDict,showfirstwall=0)
+    match = matchPattern(patterns[0],paramDict,cyclic=1,showfirstwall=0)
+    if showme: print match==[(0,2,4,5,3,1,0)]
+    match = matchPattern(patterns[1],paramDict,cyclic=1,showfirstwall=0)
     if showme: print 'None' in match
 
 def test4(showme=1):
-    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = PP.filterAllTriples(*tc.test4())
-    paramDict = {'walldomains':walldomains,'outedges':outedges,'varsaffectedatwall':varsaffectedatwall,'allwalllabels':allwalllabels,'inedges':inedges,'triples':triples,'sortedwalllabels':sortedwalllabels}
+    paramDict = WL.makeAllTriples(*tc.test4())
     patternnames,patternmaxmin=fp.parsePatterns()
 
     pattern=['md','um','Mu','dM','md']
-    match = matchPattern(pattern,inds,paramDict,showfirstwall=0)
-    if showme: print match==[(6,5,7,10,11,9,6),(6,8,11,9,6)]
+    match = matchPattern(pattern,paramDict,cyclic=1,showfirstwall=0)
+    if showme: print match==[(1,0,2,5,6,4,1),(1,3,6,4,1)]
 
     pattern=['mdu','umu','Muu','dMu','mdu']
-    match = matchPattern(pattern,inds,paramDict,showfirstwall=0)
+    match = matchPattern(pattern,paramDict,cyclic=1,showfirstwall=0)
     if showme: print 'None' in match
 
 def test5(showme=1):
-    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = PP.filterAllTriples(*tc.test5())
-    paramDict = {'walldomains':walldomains,'outedges':outedges,'varsaffectedatwall':varsaffectedatwall,'allwalllabels':allwalllabels,'inedges':inedges,'triples':triples,'sortedwalllabels':sortedwalllabels}
+    paramDict = WL.makeAllTriples(*tc.test5())
     patternnames,patternmaxmin=fp.parsePatterns()
     varnames=fp.parseVars()
     patterns=PP.translatePatterns(varnames,patternnames,patternmaxmin,cyclic=1)
-    match = matchPattern(patterns[0],inds,paramDict,showfirstwall=0)
-    if showme: print match==[(8,13,15,18,19,12,4,1,8),(8,16,19,12,4,1,8),(0,7,15,18,19,12,4,1,0)]
-    match = matchPattern(patterns[1],inds,paramDict,showfirstwall=0)
+    match = matchPattern(patterns[0],paramDict,cyclic=1,showfirstwall=0)
+    if showme: print match==[(4,6,7,9,10,5,2,1,4),(4,8,10,5,2,1,4),(0,3,7,9,10,5,2,1,0)]
+    match = matchPattern(patterns[1],paramDict,cyclic=1,showfirstwall=0)
     if showme: print 'None' in match
 
 def test6(showme=1):
-    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = PP.filterAllTriples(*tc.test6())
-    paramDict = {'walldomains':walldomains,'outedges':outedges,'varsaffectedatwall':varsaffectedatwall,'allwalllabels':allwalllabels,'inedges':inedges,'triples':triples,'sortedwalllabels':sortedwalllabels}
+    paramDict = WL.makeAllTriples(*tc.test6())
     patternnames,patternmaxmin=fp.parsePatterns()
     varnames=fp.parseVars()
     patterns=PP.translatePatterns(varnames,patternnames,patternmaxmin,cyclic=1)
-    solutions=[[(4, 24, 17, 7, 23, 14, 4), (4, 8, 26, 19, 11, 7, 23, 14, 4), (4, 8, 26, 10, 17, 7, 23, 14, 4), (4, 8, 18, 27, 11, 7, 23, 14, 4)],[(16,9,27,11,7,23,14,4,16)],[(25,9,27,11,25)],None,[(5,9,27,11,7,23,5)],None]
+    solutions=[[(0, 13, 9, 2, 12, 7, 0), (0, 3, 15, 11, 6, 2, 12, 7, 0), (0, 3, 15, 5, 9, 2, 12, 7, 0), (0, 3, 10, 16, 6, 2, 12, 7, 0)],[(8,4,16,6,2,12,7,0,8)],[(14,4,16,6,14)],None,[(1,4,16,6,2,12,1)],None]
     for p,s in zip(patterns,solutions):
-        match = matchPattern(p,inds,paramDict,showfirstwall=0)
+        match = matchPattern(p,paramDict,cyclic=1,showfirstwall=0)
         if s:
             if showme: print match==s
         else:
             if showme: print 'None' in match and 'Pattern' in match
 
 def testtiming(iterates=500):
-    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels = PP.filterAllTriples(*tc.test6())
-    paramDict = {'walldomains':walldomains,'outedges':outedges,'varsaffectedatwall':varsaffectedatwall,'allwalllabels':allwalllabels,'inedges':inedges,'triples':triples,'sortedwalllabels':sortedwalllabels}
+    paramDict = WL.makeAllTriples(*tc.test6())
     patternnames,patternmaxmin=fp.parsePatterns()
     varnames=fp.parseVars()
     patterns=PP.translatePatterns(varnames,patternnames,patternmaxmin,cyclic=1)
-    solutions=[[(4, 24, 17, 7, 23, 14, 4), (4, 8, 26, 19, 11, 7, 23, 14, 4), (4, 8, 26, 10, 17, 7, 23, 14, 4), (4, 8, 18, 27, 11, 7, 23, 14, 4)],[(16,9,27,11,7,23,14,4,16)],[(25,9,27,11,25)],None,[(5,9,27,11,7,23,5)],None]
+    solutions=[[(0, 13, 9, 2, 12, 7, 0), (0, 3, 15, 11, 6, 2, 12, 7, 0), (0, 3, 15, 5, 9, 2, 12, 7, 0), (0, 3, 10, 16, 6, 2, 12, 7, 0)],[(8,4,16,6,2,12,7,0,8)],[(14,4,16,6,14)],None,[(1,4,16,6,2,12,1)],None]
     for _ in range(iterates):
         for p in patterns:
-            match = matchPattern(p,inds,paramDict,showfirstwall=0)
+            match = matchPattern(p,paramDict,cyclic=1,showfirstwall=0)
 
 if __name__=='__main__':
     testme()
