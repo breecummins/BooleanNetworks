@@ -2,28 +2,18 @@ import sys,itertools
 import walllabels as WL
 import preprocess as pp
 
-def recursePattern(previouswall,currentwall,match,matches,patterns,pDict):
+def recursePattern(previouswall,currentwall,match,matches,pattern,pDict):
     # THIS FUNCTION USES MEMORY INSTEAD OF CPU; walllabels_previous and walllabels_current are 
     # different indexings of the same list. dict algorithm has only one memory structure, but
     # is currently slower for the size of problems that we have.
-    # print patterns
-    # print match
-    if len(match) >= pDict['lenpattern'] and pDict['stop'] in pDict['walllabels_current'][match[-1]] and ((pDict['cyclic'] and match[0]==match[-1]) or not pDict['cyclic']) and pDict['stop'] in pDict['walllabels_current'][match[-1]]: 
-        if match not in matches:  
-            matches.append(match)
+    if len(pattern) == 0 and pDict['stop'] in pDict['walllabels_current'][match[-1]]: 
+        matches.append(match)
         return matches
     else:
-        for p,P in patterns:
-            print p, P, previouswall, currentwall
-            for k,t in enumerate(pDict['triples'][previouswall]):
-                if t[1] == currentwall:
-                    labels=pDict['walllabels_previous'][previouswall][k]
-                    # print labels
-                    if p in labels: # if we hit the next pattern element, reduce pattern by one
-                        matches=recursePattern(t[1],t[2],match+[t[1]],matches,patterns[1:],pDict)
-                    if P in labels: # if we hit an intermediate node, keep the same pattern
-                        print t, labels
-                        matches=recursePattern(t[1],t[2],match+[t[1]],matches,patterns,pDict)
+        for p in pattern:
+            for triple,labels in zip(pDict['triples'][previouswall],pDict['walllabels_previous'][previouswall]):
+                if triple[1] == currentwall and p in labels: 
+                    matches=recursePattern(triple[1],triple[2],match+[triple[1]],matches,pattern[1:],pDict)
         return matches
 
 def matchPattern(pattern,paramDict,cyclic=1,showfirstwall=0):
@@ -61,14 +51,16 @@ def matchPattern(pattern,paramDict,cyclic=1,showfirstwall=0):
     See functions beginning with "call" below for example calls of this function.
 
     '''
-    print pattern
+    # print pattern
     # check for empty patterns
     if not pattern:
         return "None. Pattern is empty."
     # check if any word in pattern is not a wall label (it's pointless to search in that case)
-    awl = [a for l in paramDict['walllabels_current'] for a in l]
-    if not set(pattern).issubset(awl):
+    flatlabels = [a for l in paramDict['walllabels_current'] for a in l]
+    if not set(pattern).issubset(flatlabels):
         return "None. No results found. Pattern contains an element that is not a wall label."
+    # make all possible patterns associated with pattern using intermediate nodes
+    patterngenerator=pp.makeCombinatorialPatternsFromIntermediateNodes(pattern,flatlabels)
     # find all possible starting nodes for a matching path
     startwallpairs=WL.getFirstAndNextWalls(pattern[0],paramDict['triples'],paramDict['walllabels_previous'])
     firstwalls,nextwalls=zip(*startwallpairs)
@@ -76,9 +68,7 @@ def matchPattern(pattern,paramDict,cyclic=1,showfirstwall=0):
     # return trivial length one patterns
     if len(pattern)==1:
         return firstwalls
-    # pre-cache intermediate nodes that may exist in the wall graph
-    intermediatenodes=[p.replace('m','d').replace('M','u')  if set(p).intersection(['m','M']) else '' for p in pattern[1:]] 
-    patternParams = zip(pattern[1:],intermediatenodes)
+    # add parameters for stopping criteria
     paramDict['stop'] = pattern[-1]
     paramDict['lenpattern'] = len(pattern)
     paramDict['cyclic'] = cyclic
@@ -86,16 +76,20 @@ def matchPattern(pattern,paramDict,cyclic=1,showfirstwall=0):
     results=[]
     if showfirstwall:
         print "All first walls {}".format(firstwalls)
-    for w,n in startwallpairs:
-        # print (w,n)
-        if showfirstwall:
-            print "First wall {}".format(w)
-        sys.stdout.flush() # force print messages thus far
-        R = recursePattern(w,n,[w],[],patternParams,paramDict) # seek match starting with w, n
-        # print R
-        results.extend([tuple(l) for l in R if l]) # pull out nonempty paths
+    for pg in patterngenerator:
+        pat = [word for l in pg for word in l]
+        for w,n in startwallpairs:
+            if showfirstwall:
+                print "First wall {} for pattern {}".format(w,pat)
+            sys.stdout.flush() # force print messages thus far
+            R = recursePattern(w,n,[w],[],pat[1:],paramDict) # seek match starting with w, n
+            results.extend([tuple(l) for l in R if l]) # pull out nonempty paths
     #paths not guaranteed unique so use set()
-    return list(set(results)) or "None. No results found."
+    results=list(set(results)) 
+    if cyclic:
+        # sort out acyclic paths, since walls may share a wall label
+        results = [l for l in results if l[0]==l[-1]]
+    return results or "None. No results found."
 
 def callPatternMatch(basedir='',message='',cyclic=1):
     # basedir must contain the files outEdges.txt, walls.txt, patterns.txt, variables.txt, and 

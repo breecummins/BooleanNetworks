@@ -1,24 +1,24 @@
-from patternmatch import matchPattern
+from patternmatch_existence import matchPattern
 import preprocess as PP
 import fileparsers as fp
 import testcases as tc
 import walllabels as WL
 
 def testme(showme=1):
-    # test0(showme)
-    # test1(showme)
-    # test2(showme)
+    test0(showme)
+    test1(showme)
+    test2(showme)
     test3(showme)
-    # test4(showme)
-    # test5(showme)
-    # test6(showme)
+    test4(showme)
+    test5(showme)
+    test6(showme)
 
 def test0(showme=1):
     paramDict = WL.makeAllTriples(*tc.test0())
 
     pattern=['md','um','Mu','dM','md']
     match = matchPattern(pattern,paramDict,cyclic=1,showfirstwall=0)
-    if showme: print match==[(0, 1, 4, 6, 5, 2, 0), (3, 4, 6, 5, 3)]
+    if showme: print match==(0, 1, 4, 6, 5, 2, 0)
 
     pattern=['um','md'] #intermediate extrema
     match = matchPattern(pattern,paramDict,cyclic=0,showfirstwall=0)
@@ -26,14 +26,14 @@ def test0(showme=1):
 
     pattern=['ud','um','Mu'] # acyclic 
     match = matchPattern(pattern,paramDict,cyclic=0,showfirstwall=0,)
-    if showme: print match==[(1,4,6)]
+    if showme: print match==(1,4,6)
 
 def test1(showme=1):
     paramDict = WL.makeAllTriples(*tc.test1())
 
     pattern=['md','um','Mu','dM','md']
     match = matchPattern(pattern,paramDict,cyclic=1,showfirstwall=0)
-    if showme: print match==[(0, 1, 3, 2, 0)]
+    if showme: print match==(0, 1, 3, 2, 0)
 
     pattern=['md','um','Mu','dM','Md'] # 'Md' DNE in graph
     match = matchPattern(pattern,paramDict,cyclic=0,showfirstwall=0)
@@ -48,15 +48,15 @@ def test2(showme=1):
 
     pattern=['dM','md','um','Mu','dM']
     match = matchPattern(pattern,paramDict,cyclic=1,showfirstwall=0)
-    if showme: print match==[(2,0,1,3,2),(2,0,1,4,6,5,2)]
+    if showme: print match==(2,0,1,3,2)
 
     pattern=['Mu','dM','md','um','Mu']
     match = matchPattern(pattern,paramDict,cyclic=1,showfirstwall=0)
-    if showme: print match==[(3,2,0,1,3),(6,5,2,0,1,4,6)]
+    if showme: print match==(3,2,0,1,3)
 
     pattern=['um','Mu'] #acyclic
     match = matchPattern(pattern,paramDict,cyclic=0,showfirstwall=0)
-    if showme: print match==[(1,4,6),(1,3)]
+    if showme: print match==(1,3)
 
 def test3(showme=1):
     paramDict = WL.makeAllTriples(*tc.test3())
@@ -64,9 +64,9 @@ def test3(showme=1):
     varnames=fp.parseVars()
     patterns=PP.translatePatterns(varnames,patternnames,patternmaxmin,cyclic=1)
     match = matchPattern(patterns[0],paramDict,cyclic=1,showfirstwall=0)
-    # if showme: print match==[(0,2,4,5,3,1,0)]
-    # match = matchPattern(patterns[1],paramDict,cyclic=1,showfirstwall=0)
-    # if showme: print 'None' in match
+    if showme: print match==(0,2,4,5,3,1,0)
+    match = matchPattern(patterns[1],paramDict,cyclic=1,showfirstwall=0)
+    if showme: print 'None' in match
 
 def test4(showme=1):
     paramDict = WL.makeAllTriples(*tc.test4())
@@ -74,7 +74,7 @@ def test4(showme=1):
 
     pattern=['md','um','Mu','dM','md']
     match = matchPattern(pattern,paramDict,cyclic=1,showfirstwall=0)
-    if showme: print match==[(1,0,2,5,6,4,1),(1,3,6,4,1)]
+    if showme: print match==(1,0,2,5,6,4,1)
 
     pattern=['mdu','umu','Muu','dMu','mdu']
     match = matchPattern(pattern,paramDict,cyclic=1,showfirstwall=0)
@@ -86,7 +86,7 @@ def test5(showme=1):
     varnames=fp.parseVars()
     patterns=PP.translatePatterns(varnames,patternnames,patternmaxmin,cyclic=1)
     match = matchPattern(patterns[0],paramDict,cyclic=1,showfirstwall=0)
-    if showme: print match==[(4, 8, 10, 5, 2, 1, 4), (0, 3, 7, 9, 10, 5, 2, 1, 0), (3, 7, 9, 10, 5, 2, 1, 0, 3), (4, 6, 7, 9, 10, 5, 2, 1, 4)]
+    if showme: print match==(3, 7, 9, 10, 5, 2, 1, 0, 3)
     match = matchPattern(patterns[1],paramDict,cyclic=1,showfirstwall=0)
     if showme: print 'None' in match
 
@@ -95,7 +95,7 @@ def test6(showme=1):
     patternnames,patternmaxmin=fp.parsePatterns()
     varnames=fp.parseVars()
     patterns=PP.translatePatterns(varnames,patternnames,patternmaxmin,cyclic=1)
-    solutions=[[(0, 13, 9, 2, 12, 7, 0), (0, 3, 15, 11, 6, 2, 12, 7, 0), (0, 3, 15, 5, 9, 2, 12, 7, 0), (0, 3, 10, 16, 6, 2, 12, 7, 0)],[(8,4,16,6,2,12,7,0,8)],[(14,4,16,6,14)],None,[(1,4,16,6,2,12,1)],None]
+    solutions=[(0, 3, 10, 16, 6, 2, 12, 7, 0),(8,4,16,6,2,12,7,0,8),(14,4,16,6,14),None,(1,4,16,6,2,12,1),None]
     for p,s in zip(patterns,solutions):
         match = matchPattern(p,paramDict,cyclic=1,showfirstwall=0)
         if s:

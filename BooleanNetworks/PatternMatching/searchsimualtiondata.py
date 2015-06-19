@@ -1,5 +1,5 @@
 import os, itertools
-from patternmatch import callPatternMatch, callPatternMatchJSON, callPatternMatchJSONWriteFile, callPatternMatchJSONWriteFile_Dict
+from patternmatch import callPatternMatch, callPatternMatchJSON, callPatternMatchJSONWriteFile
 
 def simdata_5D_Cycle1():
     basedir=os.path.expanduser('~/ProjectData/DatabaseSimulations/5D_Cycle_1_MGCC_14419_INCC_200/')  
@@ -58,7 +58,7 @@ def simdata_4D_Cycle1_Haase():
     for p in patterns:
         f.write(' '.join(p)+'\n')
     f.close()
-    callPatternMatchJSONWriteFile_Dict(basedir,'4D Cycle 1, MGCC 1286, INCC 56')
+    callPatternMatchJSONWriteFile(basedir,'4D Cycle 1, MGCC 1286, INCC 56')
 
 def makeParamSubGraphKonstantin():
     # one-off code

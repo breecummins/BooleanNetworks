@@ -162,6 +162,21 @@ def varsAtWalls(threshnames,walldomains,wallthresh,varnames):
             varsaffectedatwall[j]=varsaffectedatthresh[k][int(w[k]-1)]
     return varsaffectedatwall
 
+def makeCombinatorialPatternsFromIntermediateNodes(pattern,flatwalllabels):
+    intermediatenodes=[p.replace('m','d').replace('M','u')  if set(p).intersection(['m','M']) else '' for p in pattern[1:]]
+    counts= [flatwalllabels.count(i) for i in intermediatenodes] 
+    intermediatenodeslist = [[[i]*n for n in range(c+1)] for i,c in zip(intermediatenodes,counts)]
+    productlist=[]
+    for k in range(len(pattern)-1):
+        productlist.append([[pattern[k]]])
+        productlist.append(intermediatenodeslist[k])
+    productlist.append([[pattern[-1]]])
+    productlist=[p if p else [[]] for p in productlist]
+    patterngenerator=itertools.product(*productlist)
+    return patterngenerator
+        
+
+
 if __name__=='__main__':
     out=preprocessJSON('')
     for o in out:
