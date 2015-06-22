@@ -5,13 +5,13 @@ import testcases as tc
 import walllabels as WL
 
 def testme(showme=1):
-    # test0(showme)
-    # test1(showme)
-    # test2(showme)
+    test0(showme)
+    test1(showme)
+    test2(showme)
     test3(showme)
-    # test4(showme)
-    # test5(showme)
-    # test6(showme)
+    test4(showme)
+    test5(showme)
+    test6(showme)
 
 def test0(showme=1):
     paramDict = WL.makeAllTriples(*tc.test0())
@@ -64,9 +64,9 @@ def test3(showme=1):
     varnames=fp.parseVars()
     patterns=PP.translatePatterns(varnames,patternnames,patternmaxmin,cyclic=1)
     match = matchPattern(patterns[0],paramDict,cyclic=1,showfirstwall=0)
-    # if showme: print match==[(0,2,4,5,3,1,0)]
-    # match = matchPattern(patterns[1],paramDict,cyclic=1,showfirstwall=0)
-    # if showme: print 'None' in match
+    if showme: print match==[(0,2,4,5,3,1,0)]
+    match = matchPattern(patterns[1],paramDict,cyclic=1,showfirstwall=0)
+    if showme: print 'None' in match
 
 def test4(showme=1):
     paramDict = WL.makeAllTriples(*tc.test4())
