@@ -7,8 +7,7 @@ def recursePattern(previouswall,currentwall,match,matches,patterns,pDict):
     # different indexings of the same list. dict algorithm has only one memory structure, but
     # is currently slower for the size of problems that we have.
     if len(patterns)==0:
-        if pDict['stop'] in pDict['walllabels_current'][match[-1]] and ((pDict['cyclic'] and match[0]==match[-1]) or not pDict['cyclic']) and pDict['stop'] in pDict['walllabels_current'][match[-1]]: 
-            # print match
+        if pDict['stop'] in pDict['walllabels_current'][match[-1]] and ((pDict['cyclic'] and match[0]==match[-1]) or not pDict['cyclic']): 
             matches.append(match)
         return matches
     else:
