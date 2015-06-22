@@ -4,18 +4,20 @@ import preprocess as pp
 
 def recursePattern(previouswall,currentwall,match,patterns,pDict):
     # Throwing an error is a hacky kludge. I haven't been able to figure out how to fix it.
-    if len(patterns)==0 and len(match) >= pDict['lenpattern'] and ((pDict['cyclic'] and match[0]==match[-1]) or not pDict['cyclic']) and pDict['stop'] in pDict['walllabels_current'][match[-1]]: 
-        raise ValueError(str(match))
+    if len(patterns)==0:
+        if pDict['stop'] in pDict['walllabels_current'][match[-1]] and ((pDict['cyclic'] and match[0]==match[-1]) or not pDict['cyclic']) and pDict['stop'] in pDict['walllabels_current'][match[-1]]: 
+            raise ValueError(str(match))
+        else:
+            return []
     else:
-        for p,P in patterns:
-            for k,t in enumerate(pDict['triples'][previouswall]):
-                if t[1] == currentwall:
-                    labels=pDict['walllabels_previous'][previouswall][k]
-                    # print labels
-                    if p in labels: # if we hit the next pattern element, reduce pattern by one
-                        recursePattern(t[1],t[2],match+[t[1]],patterns[1:],pDict)
-                    if P in labels: # if we hit an intermediate node, keep the same pattern
-                        recursePattern(t[1],t[2],match+[t[1]],patterns,pDict)
+        extremum,intermediate = patterns[0]
+        for k,t in enumerate(pDict['triples'][previouswall]):
+            if t[1] == currentwall:
+                labels=pDict['walllabels_previous'][previouswall][k]
+                if extremum in labels: # if we hit the next pattern element, reduce pattern by one
+                    recursePattern(t[1],t[2],match+[t[1]],patterns[1:],pDict)
+                if intermediate in labels: # if we hit an intermediate node, keep the same pattern
+                    recursePattern(t[1],t[2],match+[t[1]],patterns,pDict)
         return []
 
 def matchPattern(pattern,paramDict,cyclic=1,showfirstwall=0):
