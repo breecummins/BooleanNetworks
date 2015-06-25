@@ -175,9 +175,24 @@ def makeCombinatorialPatternsFromIntermediateNodes(pattern,flatwalllabels):
     patterngenerator=itertools.product(*productlist)
     return patterngenerator
         
+def makeWallGraphFromDomainGraph(domgraph,cells):
+    domedges=[(k,d) for k,e in enumerate(domgraph) for d in e]
+    wallgraph=[(k,j) for k,edge1 in enumerate(domedges) for j,edge2 in enumerate(domedges) if edge1[1]==edge2[0]]
+    outedges=[[] for _ in range(len(domedges))]
+    for e in wallgraph:
+        outedges[e[0]].append(e[1])
+    wallthresh=[]
+    walldomains=[]
+    for de in domedges:
+        c0=cells[de[0]]
+        c1=cells[de[1]]
+        location=[False if c0[k]==c1[k] else: True for k in range(len(c0))]
+        if sum(location) != 1:
+            raise RunTimeError("The domain graph has an edge between nonadjacent domains. Aborting.")
+        wallthresh.append(location.index(True))
+        walldomains.append([mean(c0[k]+c1[k]) for k in range(len(c0))]) #should this be a tuple?
+    return outedges,wallthresh,walldomains
 
 
 if __name__=='__main__':
-    out=preprocessJSON('')
-    for o in out:
-        print o
+    print makeWallGraphFromDomainGraph([[1],[2],[5,3],[4],[5],[0]])
