@@ -11,6 +11,8 @@ def testme():
     test4()
     test5()
     test6()
+    test7()
+    test8()
 
 def test0():
     varnames=['X','Z']
@@ -69,6 +71,22 @@ def test6():
     patterns=PP.translatePatterns(varnames,patternnames,patternmaxmin,cyclic=1)
     print patterns==[['umu','Muu','duM','dMd','mdd','udm','umu'],['uuM','uum','Muu','duM','dMd','mdd','udm','umu','uuM'],['mud','uum','Muu','duM','mud'],['mdd','udm','Mdu','ddM','mdd'],['umd','uum','Muu','duM','dMd','mdd','umd'],['dmd','dum','muu','uuM','uMd','Mdd','dmd']]
 
+def test7():
+    tc.test7()
+    varnames,threshnames,domgraph,cells=fp.parseNewJSONFormat()
+    outedges,wallthresh,walldomains=PP.makeWallGraphFromDomainGraph(domgraph,cells)
+    print outedges==[(1,),(2,),(3,),(4,),(5,),(0,)]
+    print wallthresh==[1,2,0,1,2,0]
+    print walldomains==[(0.5,1,1.5),(0.5,1.5,1),(1,1.5,0.5),(1.5,1,0.5),(1.5,0.5,1),(1,0.5,1.5)]
+
+
+def test8():
+    tc.test8()
+    varnames,threshnames,domgraph,cells=fp.parseNewJSONFormat()
+    outedges,wallthresh,walldomains=PP.makeWallGraphFromDomainGraph(domgraph,cells)
+    print outedges == [(1,),(2,3),(6,),(4,),(5,),(6,),(0,)]
+    print wallthresh == [2,3,2,3,2,3,3]
+    print walldomains == [(0.5,1.5,3,0.5,1.5),(0.5,1.5,3.5,1,1.5),(0.5,1.5,3,1.5,1.5),(0.5,1.5,3.5,2,1.5),(0.5,1.5,3,2.5,1.5),(0.5,1.5,2.5,2,1.5),(0.5,1.5,2.5,1,1.5)]
 
 if __name__=='__main__':
 	testme()

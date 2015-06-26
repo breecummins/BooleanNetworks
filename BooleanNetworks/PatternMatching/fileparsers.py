@@ -99,12 +99,10 @@ def parseJSON(fname='output.json'):
     return varnames,wallindslist,outedgeslist,walldomainslist,varatthreshlist,parameterinds
 
 def parseNewJSONFormat(fname='dsgrn_output.json'):
-    parsed = json.loads(fname)
-    N = len(parsed["network"])
+    parsed = json.load(open(fname),strict=False)
     varnames = [ x[0] for x in parsed["network"] ]
-    threshord = [ [parsed["network"][i][2][j] for j in parsed["parameter"][i][2]] for i in range(N) ]
-    graph = parsed["graph"]
-    cells = parsed["cells"]
+    threshnames = [ [parsed["network"][i][2][j] for j in parsed["parameter"][i][2]] for i in range(len(parsed["network"])) ]
+    return varnames,threshnames,parsed["graph"],parsed["cells"]
 
 if __name__=='__main__':
     # print parseVars("/Users/bcummins/ProjectData/DatabaseSimulations/5D_cycle_1/MGCC_14419/variables.txt")

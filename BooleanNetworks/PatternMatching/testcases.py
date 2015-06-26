@@ -1,3 +1,6 @@
+from subprocess import call
+import os
+
 def test0():
     # X : X(~Z) : X Z
     # Z : X : X
@@ -102,3 +105,13 @@ def test6():
     f.write('X1 : (X1)(~X3) : X1 X2 X3\n X2 : X1 : X3\n X3 : (X1)(~X2) : X1')
     f.close()
     return outedges,walldomains,varsaffectedatwall
+
+def test7():
+    # dsgrn output, repressilator example like test 3
+    call(["dsgrn network "+os.path.expanduser("~/GIT/DSGRN/networks/3D_Example.txt")+" analyze morseset 0 13 >dsgrn_output.json"],shell=True)
+    f=open('patterns.txt','w')
+    f.write('Z min, X min, Y min, Z max, X max, Y max\n X max, Y max, Z max, X min, Y min, Z min')
+
+def test8():
+       # dsgrn output, 5D Cycle
+       call(["dsgrn network "+os.path.expanduser("~/GIT/DSGRN/networks/5D_Cycle.txt")+" analyze morseset 3 847328 >dsgrn_output.json"],shell=True)

@@ -66,6 +66,20 @@ def preprocessJSON(basedir,cyclic=1):
         paramDictlist.append(WL.makeAllTriples(oe,wd,vw))
     return patterns,splitparameterinds,paramDictlist
 
+def preprocess_JSON_Shaun_format(basedir,cyclic=1):
+    # read input files; basedir should have dsgrn_output.json and patterns.txt
+    varnames,threshnames,domgraph,cells=parseNewJSONFormat(basedir+'dsgrn_output.json')
+    patternnames,patternmaxmin=fp.parsePatterns(basedir+'patterns.txt')
+    # put max/min patterns in terms of the alphabet u,m,M,d
+    patterns=translatePatterns(varnames,patternnames,patternmaxmin,cyclic=cyclic)
+    # translate domain graph into wall graph
+    outedges,wallthresh,walldomains=makeWallGraphFromDomainGraph(domgraph,cells)    
+    # record which variable is affected at each wall
+    varsaffectedatwall=varsAtWalls(threshnames,walldomains,wallthresh,varnames)
+    # make wall labels
+    paramDict = WL.makeAllTriples(outedges,walldomains,varsaffectedatwall)
+    return patterns, paramDict
+
 def translatePatterns(varnames,patternnames,patternmaxmin,cyclic=0):
     numvars=len(varnames)
     varinds=[[varnames.index(q) for q in p] for p in patternnames]
@@ -181,16 +195,18 @@ def makeWallGraphFromDomainGraph(domgraph,cells):
     outedges=[[] for _ in range(len(domedges))]
     for e in wallgraph:
         outedges[e[0]].append(e[1])
+    outedges=[tuple(o) for o in outedges]
     wallthresh=[]
     walldomains=[]
     for de in domedges:
         c0=cells[de[0]]
         c1=cells[de[1]]
-        location=[False if c0[k]==c1[k] else: True for k in range(len(c0))]
+        n=len(c0)
+        location=[False if c0[k]==c1[k] else True for k in range(n)]
         if sum(location) != 1:
             raise RunTimeError("The domain graph has an edge between nonadjacent domains. Aborting.")
         wallthresh.append(location.index(True))
-        walldomains.append([mean(c0[k]+c1[k]) for k in range(len(c0))]) #should this be a tuple?
+        walldomains.append(tuple([sum(c0[k]+c1[k])/4.0 for k in range(n)])) 
     return outedges,wallthresh,walldomains
 
 
