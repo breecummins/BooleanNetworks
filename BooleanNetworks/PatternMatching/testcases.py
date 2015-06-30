@@ -110,7 +110,7 @@ def test7():
     # dsgrn output, repressilator example like test 3
     call(["dsgrn network "+os.path.expanduser("~/GIT/DSGRN/networks/3D_Example.txt")+" analyze morseset 0 13 >dsgrn_output.json"],shell=True)
     f=open('patterns.txt','w')
-    f.write('Z min, X min, Y min, Z max, X max, Y max\n X max, Y max, Z max, X min, Y min, Z min')
+    f.write('Z min, X min, Y min, Z max, X max, Y max\n X max, Y max, Z max, X min, Y min, Z min\n X min, Y max, Z min, X max, Y min, Z max\n X max, Y min, Z max, X min, Y max, Z min')
 
 def test8():
        # dsgrn output, 5D Cycle

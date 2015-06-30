@@ -68,14 +68,14 @@ def preprocessJSON(basedir,cyclic=1):
 
 def preprocess_JSON_Shaun_format(basedir,cyclic=1):
     # read input files; basedir should have dsgrn_output.json and patterns.txt
-    varnames,threshnames,domgraph,cells=parseNewJSONFormat(basedir+'dsgrn_output.json')
+    varnames,threshnames,domgraph,cells=fp.parseNewJSONFormat(basedir+'dsgrn_output.json')
     patternnames,patternmaxmin=fp.parsePatterns(basedir+'patterns.txt')
     # put max/min patterns in terms of the alphabet u,m,M,d
     patterns=translatePatterns(varnames,patternnames,patternmaxmin,cyclic=cyclic)
     # translate domain graph into wall graph
     outedges,wallthresh,walldomains=makeWallGraphFromDomainGraph(domgraph,cells)    
     # record which variable is affected at each wall
-    varsaffectedatwall=varsAtWalls(threshnames,walldomains,wallthresh,varnames)
+    varsaffectedatwall=varsAtWalls(zip(varnames,threshnames),walldomains,wallthresh,varnames)
     # make wall labels
     paramDict = WL.makeAllTriples(outedges,walldomains,varsaffectedatwall)
     return patterns, paramDict

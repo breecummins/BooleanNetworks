@@ -12,6 +12,7 @@ def testme(showme=1):
     test4(showme)
     test5(showme)
     test6(showme)
+    test7(showme)
 
 def test0(showme=1):
     paramDict = WL.makeAllTriples(*tc.test0())
@@ -102,6 +103,18 @@ def test6(showme=1):
             if showme: print match==s
         else:
             if showme: print 'None' in match and 'Pattern' in match
+
+def test7(showme=1):
+    tc.test7()
+    patterns,paramDict = PP.preprocess_JSON_Shaun_format("",cyclic=1)
+    solutions=[None,None,[(1,2,3,4,5,0,1)],[(4,5,0,1,2,3,4)]]
+    for p,s in zip(patterns,solutions):
+        match = matchPattern(p,paramDict,cyclic=1,showfirstwall=0)
+        if s:
+            if showme: print match==s
+        else:
+            if showme: print 'None' in match and 'Pattern' in match
+
 
 def testtiming(iterates=500):
     paramDict = WL.makeAllTriples(*tc.test6())

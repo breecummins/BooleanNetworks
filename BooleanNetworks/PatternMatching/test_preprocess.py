@@ -75,9 +75,11 @@ def test7():
     tc.test7()
     varnames,threshnames,domgraph,cells=fp.parseNewJSONFormat()
     outedges,wallthresh,walldomains=PP.makeWallGraphFromDomainGraph(domgraph,cells)
+    varsaffectedatwall=PP.varsAtWalls(zip(varnames,threshnames),walldomains,wallthresh,varnames)
     print outedges==[(1,),(2,),(3,),(4,),(5,),(0,)]
     print wallthresh==[1,2,0,1,2,0]
     print walldomains==[(0.5,1,1.5),(0.5,1.5,1),(1,1.5,0.5),(1.5,1,0.5),(1.5,0.5,1),(1,0.5,1.5)]
+    print varsaffectedatwall==[2,0,1,2,0,1]
 
 
 def test8():
