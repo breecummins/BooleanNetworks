@@ -185,3 +185,19 @@ def callPatternMatchWithPatternGeneratorWriteFile(patternstart,patternremainder,
                 f.write("Results: {}".format(match)+'\n')
     f.close()
 
+def call_PatternMatch_ShaunFormat_WriteFile(basedir='',message='',cyclic=1):
+    if message:
+        print "\n"
+        print "-"*len(message)
+        print message
+        print "-"*len(message)
+        print "\n"
+    print "Preprocessing..."
+    patterns,paramDict = pp.preprocess_JSON_Shaun_format("",cyclic=1)
+    f=open(basedir+'results.txt','w',0)
+    for pattern in patterns:
+        match=matchPattern(pattern,paramDict,cyclic=cyclic,showfirstwall=0)
+        if 'None' not in match:
+            f.write("Pattern: {}".format(pattern)+'\n')
+            f.write("Results: {}".format(match)+'\n')
+    f.close()

@@ -203,8 +203,10 @@ def makeWallGraphFromDomainGraph(domgraph,cells):
         c1=cells[de[1]]
         n=len(c0)
         location=[False if c0[k]==c1[k] else True for k in range(n)]
-        if sum(location) != 1:
+        if sum(location) > 1:
             raise RunTimeError("The domain graph has an edge between nonadjacent domains. Aborting.")
+        elif sum(location)==0:
+            raise RunTimeError("The domain graph has a self-loop. Aborting.")
         wallthresh.append(location.index(True))
         walldomains.append(tuple([sum(c0[k]+c1[k])/4.0 for k in range(n)])) 
     return outedges,wallthresh,walldomains
