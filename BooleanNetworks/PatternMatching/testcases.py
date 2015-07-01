@@ -113,5 +113,7 @@ def test7():
     f.write('Z min, X min, Y min, Z max, X max, Y max\n X max, Y max, Z max, X min, Y min, Z min\n X min, Y max, Z min, X max, Y min, Z max\n X max, Y min, Z max, X min, Y max, Z min')
 
 def test8():
-       # dsgrn output, 5D Cycle
-       call(["dsgrn network "+os.path.expanduser("~/GIT/DSGRN/networks/5D_Cycle.txt")+" analyze morseset 3 847328 >dsgrn_output.json"],shell=True)
+    # dsgrn output, 5D Cycle
+    call(["dsgrn network "+os.path.expanduser("~/GIT/DSGRN/networks/5D_Cycle.txt")+" analyze morseset 3 847328 >dsgrn_output.json"],shell=True)
+    f=open('patterns.txt','w')
+    f.write('X3 max, X4 max, X3 min, X4 min\n X3 max, X4 min, X3 min, X4 max')
