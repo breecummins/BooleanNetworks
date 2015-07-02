@@ -273,7 +273,6 @@ def makeAllTriples(outedges,walldomains,varsaffectedatwall):
     paramDict={'triples':collapsedtriples,'walllabels_previous':collapsedsortedwalls,'walllabels_current':allwalllabels}
     return paramDict
 
-
 if __name__=='__main__':
     import testcases as tc
     import preprocess as PP
