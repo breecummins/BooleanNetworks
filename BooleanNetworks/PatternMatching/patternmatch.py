@@ -1,5 +1,5 @@
-import sys,itertools
-import walllabels as WL
+import itertools
+import walllabels as wl
 import preprocess as pp
 
 def recursePattern(currentwall,match,matches,patterns,pDict):
@@ -22,7 +22,26 @@ def recursePattern(currentwall,match,matches,patterns,pDict):
                     matches=recursePattern(t[2],match+[t[1]],matches,patterns,pDict)
         return matches
 
-def matchPattern(pattern,paramDict,cyclic=1,showfirstwall=0):
+def recursePattern_firstmatchonly(currentwall,match,patterns,pDict):
+    # Throwing an error is a hacky kludge. I haven't been able to figure out how to fix it.
+    lastwall=match[-1]
+    if len(patterns)==0:
+        if pDict['stop'] in pDict['walllabels_current'][lastwall] and ((pDict['cyclic'] and match[0]==lastwall) or not pDict['cyclic']): 
+            raise ValueError(str([tuple(match)]))
+        else:
+            return []
+    else:
+        extremum,intermediate = patterns[0]
+        for k,t in enumerate(pDict['triples'][lastwall]):
+            if t[1] == currentwall:
+                labels=pDict['walllabels_previous'][lastwall][k]
+                if extremum in labels: # if we hit the next pattern element, reduce pattern by one
+                    recursePattern_firstmatchonly(t[2],match+[t[1]],patterns[1:],pDict)
+                if intermediate in labels: # if we hit an intermediate node, keep the same pattern
+                    recursePattern_firstmatchonly(t[2],match+[t[1]],patterns,pDict)
+        return []
+
+def matchPattern(pattern,paramDict,cyclic=1,findallmatches=1):
     '''
     This function finds paths in a directed graph that are consistent with a target pattern. The nodes
     of the directed graph are called walls, and each node is associated with a wall label (in walldomains)
@@ -52,7 +71,7 @@ def matchPattern(pattern,paramDict,cyclic=1,showfirstwall=0):
 
     cyclic=1 means only cyclic paths are sought. cyclic=0 means acyclic paths are acceptable.
 
-    showfirstwall=1 prints informative messages for the user for tracking the progress of the code on long, slow simulations.
+    findallmatches=1 means that a list of matches will be returned. If findallmatches=0, the search aborts after finding and returning a single match.
 
     See functions beginning with "call" below for example calls of this function.
 
@@ -61,12 +80,11 @@ def matchPattern(pattern,paramDict,cyclic=1,showfirstwall=0):
     if not pattern:
         return "None. Pattern is empty."
     # check if any word in pattern is not a wall label (it's pointless to search in that case)
-    # awl = [b for l in paramDict['walllabels_previous'] for a in l for b in a]
-    awl = [a for l in paramDict['walllabels_current'] for a in l]
-    if not set(pattern).issubset(awl):
+    flatlabels = [a for l in paramDict['walllabels_current'] for a in l]
+    if not set(pattern).issubset(flatlabels):
         return "None. No results found. Pattern contains an element that is not a wall label."
     # find all possible starting nodes for a matching path
-    startwallpairs=WL.getFirstAndNextWalls(pattern[0],paramDict['triples'],paramDict['walllabels_previous'])
+    startwallpairs=wl.getFirstAndNextWalls(pattern[0],paramDict['triples'],paramDict['walllabels_previous'])
     firstwalls,nextwalls=zip(*startwallpairs)
     # return trivial length one patterns
     if len(pattern)==1:
@@ -78,128 +96,39 @@ def matchPattern(pattern,paramDict,cyclic=1,showfirstwall=0):
     paramDict['stop'] = pattern[-1]
     paramDict['cyclic'] = cyclic
     # find matches
-    results=[]
-    if showfirstwall:
-        print "All first walls {}".format(firstwalls)
-    for w,n in startwallpairs:
-        if showfirstwall:
-            print "First wall {}".format(w)
-        sys.stdout.flush() # force print messages thus far
-        matches = recursePattern(n,[w],[],patternParams,paramDict) # seek match starting with w, n
-        results.extend(matches) 
-    # paths not guaranteed unique so use set()
-    return list(set(results)) or "None. No results found."
+    if findallmatches:
+        results=[]
+        for w,n in startwallpairs:
+            matches = recursePattern(n,[w],[],patternParams,paramDict) # seek match starting with w, n
+            results.extend(matches) 
+        # paths not guaranteed unique so use set()
+        return list(set(results)) or "None. No results found."
+    else:
+        for w,n in startwallpairs:
+            try:
+                match = recursePattern_firstmatchonly(n,[w],patternParams,paramDict) # seek match starting with w, n
+            except ValueError as v:
+                match=eval(v.args[0])
+            if match:
+                break
+        return match or "None. No results found."
 
-def callPatternMatch(basedir='',message='',cyclic=1):
-    # basedir must contain the files outEdges.txt, walls.txt, patterns.txt, variables.txt, and 
-    # equations.txt.
-    # output printed to screen
-    if message:
-        print "\n"
-        print "-"*len(message)
-        print message
-        print "-"*len(message)
-        print "\n"
-    print "Preprocessing..."
-    Patterns,paramDict=pp.preprocess(basedir,cyclic) 
-    for pattern in Patterns:
-        print "\n"
-        print '-'*25
-        print "Pattern: {}".format(pattern)
-        match=matchPattern(pattern,paramDict,cyclic=cyclic,showfirstwall=1)
-        print "Results: {}".format(match)
-        print '-'*25
 
-def callPatternMatchJSON(basedir='',message='',cyclic=1):
-    # basedir must contain the files output.json, patterns.txt, and equations.txt.
+def callPatternMatch(fname='dsgrn_output.json',pname='patterns.txt',rname='results.txt',cyclic=1,findallmatches=1, printtoscreen=0,writetofile=1):
     # output printed to screen
-    if message:
-        print "\n"
-        print "-"*len(message)
-        print message
-        print "-"*len(message)
-        print "\n"
     print "Preprocessing..."
-    Patterns,parameterinds,paramDictlist=pp.preprocessJSON(basedir,cyclic)
-    param=1
-    for paramDict in paramDictlist: 
-        print "\n"
-        print '-'*50
-        print "Morse set {} of {}".format(param,len(paramDictlist))
-        print "Parameters={}".format(parameterinds[param-1])
-        print '-'*50
-        param+=1
-        for pattern in Patterns:
+    patterns,paramDict=pp.preprocess(fname,pname,cyclic) 
+    print "Searching..."
+    if writetofile: f=open(rname,'w',0)
+    for pattern in patterns:
+        matches=matchPattern(pattern,paramDict,cyclic=cyclic,findallmatches=findallmatches)
+        if printtoscreen:
             print "\n"
             print '-'*25
             print "Pattern: {}".format(pattern)
-            match=matchPattern(pattern,paramDict,cyclic=cyclic,showfirstwall=1)
-            print "Results: {}".format(match)
+            print "Results: {}".format(matches)
             print '-'*25
-
-def callPatternMatchJSONWriteFile(basedir='',message='',cyclic=1):
-    # basedir must contain the files output.json, patterns.txt, and equations.txt.
-    # positive results saved to file; negative results not recorded
-    if message:
-        print "\n"
-        print "-"*len(message)
-        print message
-        print "-"*len(message)
-        print "\n"
-    print "Preprocessing..."
-    Patterns,parameterinds,paramDictlist=pp.preprocessJSON(basedir,cyclic)
-    param=1
-    f=open(basedir+'results.txt','w',0)
-    for paramDict in paramDictlist: 
-        print "\n"
-        print "Morse set {} of {}".format(param,len(paramDictlist))
-        print "Parameters={}".format(parameterinds[param-1])
-        for pattern in Patterns:
-            match=matchPattern(pattern,paramDict,cyclic=cyclic,showfirstwall=0)
-            if 'None' not in match:
-                f.write('\n'+"Parameters={}".format(parameterinds[param-1])+'\n')
-                f.write("Pattern: {}".format(pattern)+'\n')
-                f.write("Results: {}".format(match)+'\n')
-        param+=1
-    f.close()
-
-def callPatternMatchWithPatternGeneratorWriteFile(patternstart,patternremainder,basedir='',message='',cyclic=1):
-    # basedir must contain the files outEdges.txt, walls.txt, variables.txt, patterngenerator.txt,
-    # and equations.txt.
-    # use when patterns.txt would take too much memory
-    # positive results saved to file; negative results not recorded
-    if message:
-        print "\n"
-        print "-"*len(message)
-        print message
-        print "-"*len(message)
-        print "\n"
-    print "Preprocessing..."
-    patternstart,patternremainder,varnames,paramDict=pp.preprocessPatternGenerator(basedir) 
-    f=open(basedir+'results.txt','w',0)
-    for r in itertools.permutations(patternremainder):
-        patterns=pp.constructPatternGenerator(patternstart+list(r),varnames)
-        for pattern in patterns:
-            match=matchPattern(pattern,paramDict,cyclic=cyclic,showfirstwall=0)
-            if 'None' not in match:
-                f.write('\n'+"Parameters={}".format(parameterinds[param-1])+'\n')
-                f.write("Pattern: {}".format(pattern)+'\n')
-                f.write("Results: {}".format(match)+'\n')
-    f.close()
-
-def call_PatternMatch_ShaunFormat_WriteFile(basedir='',message='',cyclic=1):
-    if message:
-        print "\n"
-        print "-"*len(message)
-        print message
-        print "-"*len(message)
-        print "\n"
-    print "Preprocessing..."
-    patterns,paramDict = pp.preprocess_JSON_Shaun_format("",cyclic=1)
-    f=open(basedir+'results.txt','w',0)
-    for pattern in patterns:
-        match=matchPattern(pattern,paramDict,cyclic=cyclic,showfirstwall=0)
-        if 'None' not in match:
+        if writetofile and 'None' not in matches:
             f.write("Pattern: {}".format(pattern)+'\n')
-            f.write("Results: {}".format(match)+'\n')
-    f.close()
+            f.write("Results: {}".format(matches)+'\n')
+    if writetofile: f.close()

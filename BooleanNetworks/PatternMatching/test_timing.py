@@ -12,7 +12,7 @@ def testtiming(iterates=5000):
     patterns=PP.translatePatterns(varnames,patternnames,patternmaxmin,cyclic=1)
     for _ in range(iterates):
         for p in patterns:
-            match = matchPattern(p,paramDict,cyclic=1,showfirstwall=0)
+            match = matchPattern(p,paramDict,cyclic=1,findallmatches=1)
 
 if __name__=='__main__':
     runctx('testtiming()',globals(),locals())

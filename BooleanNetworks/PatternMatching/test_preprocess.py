@@ -36,17 +36,14 @@ def test2():
     print patterns==[['Mu','mu','uM']]
 
 def test3():
-    outedges,walldomains,varsaffectedatwall=tc.test3()
-    varnames=['X','Y','Z']
+    outedges,walldomains,varsaffectedatwall,varnames,threshnames=tc.test3()
     patternnames=[['X','Z','Y','X','Y','Z'],['Z','X','Y','Y','X','Z']]
     patternmaxmin=[['min','max','min','max','max','min'],['max','min','min','max','max','min']]
     patterns=PP.translatePatterns(varnames,patternnames,patternmaxmin,cyclic=1)
     print patterns==[['mdu','udM','umd','Mud','dMd','ddm','mdu'],['ddM','mdd','umd','uMd','Mdd','ddm','ddM']]
-    varnames=fp.parseVars()
     patternnames,patternmaxmin=fp.parsePatterns()
     print PP.translatePatterns(varnames,patternnames,patternmaxmin,cyclic=1)==[['udm','Mdu','dmu','duM','mud','uMd','udm'],['dum','muu','uMu','umu','uuM','Mud','dum']]
     wallthresh=[1,0,2,2,0,1]
-    threshnames=fp.parseEqns()
     print PP.varsAtWalls(threshnames,walldomains,wallthresh,varnames)==varsaffectedatwall
 
 
@@ -58,24 +55,22 @@ def test4():
     print patterns==[['md','um','Mu','dM','md'],['Md','md','um','uM','Md']]
 
 def test5():
-    _=tc.test5()
+    outedges,walldomains,varsaffectedatwall,varnames,threshnames=tc.test5()
     patternnames,patternmaxmin=fp.parsePatterns()
-    varnames=fp.parseVars()
     patterns=PP.translatePatterns(varnames,patternnames,patternmaxmin,cyclic=1)
     print patterns==[['mdd','umd','uum','Muu','dMu','ddM','mdd'],['mdd','umd','Mud','dum','dMu','ddM','mdd']]
 
 def test6():
-    _=tc.test6()
+    outedges,walldomains,varsaffectedatwall,varnames,threshnames=tc.test6()
     patternnames,patternmaxmin=fp.parsePatterns()
-    varnames=fp.parseVars()
     patterns=PP.translatePatterns(varnames,patternnames,patternmaxmin,cyclic=1)
     print patterns==[['umu','Muu','duM','dMd','mdd','udm','umu'],['uuM','uum','Muu','duM','dMd','mdd','udm','umu','uuM'],['mud','uum','Muu','duM','mud'],['mdd','udm','Mdu','ddM','mdd'],['umd','uum','Muu','duM','dMd','mdd','umd'],['dmd','dum','muu','uuM','uMd','Mdd','dmd']]
 
 def test7():
     tc.test7()
-    varnames,threshnames,domgraph,cells=fp.parseNewJSONFormat()
+    varnames,threshnames,domgraph,cells=fp.parseJSONFormat()
     outedges,wallthresh,walldomains=PP.makeWallGraphFromDomainGraph(domgraph,cells)
-    varsaffectedatwall=PP.varsAtWalls(zip(varnames,threshnames),walldomains,wallthresh,varnames)
+    varsaffectedatwall=PP.varsAtWalls(threshnames,walldomains,wallthresh,varnames)
     print outedges==[(1,),(2,),(3,),(4,),(5,),(0,)]
     print wallthresh==[1,2,0,1,2,0]
     print walldomains==[(0.5,1,1.5),(0.5,1.5,1),(1,1.5,0.5),(1.5,1,0.5),(1.5,0.5,1),(1,0.5,1.5)]
@@ -84,9 +79,9 @@ def test7():
 
 def test8():
     tc.test8()
-    varnames,threshnames,domgraph,cells=fp.parseNewJSONFormat()
+    varnames,threshnames,domgraph,cells=fp.parseJSONFormat()
     outedges,wallthresh,walldomains=PP.makeWallGraphFromDomainGraph(domgraph,cells)
-    varsaffectedatwall=PP.varsAtWalls(zip(varnames,threshnames),walldomains,wallthresh,varnames)
+    varsaffectedatwall=PP.varsAtWalls(threshnames,walldomains,wallthresh,varnames)
     print outedges == [(1,),(2,3),(6,),(4,),(5,),(6,),(0,)]
     print wallthresh == [2,3,2,3,2,3,3]
     print walldomains == [(0.5,1.5,3,0.5,1.5),(0.5,1.5,3.5,1,1.5),(0.5,1.5,3,1.5,1.5),(0.5,1.5,3.5,2,1.5),(0.5,1.5,3,2.5,1.5),(0.5,1.5,2.5,2,1.5),(0.5,1.5,2.5,1,1.5)]

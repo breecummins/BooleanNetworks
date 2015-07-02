@@ -47,16 +47,12 @@ def test3():
     walldomains=[(1.5,1,0.5),(1,1.5,0.5),(1.5,0.5,1),(0.5,1.5,1),(1,0.5,1.5),(0.5,1,1.5)]
     outedges=[(2,),(0,),(4,),(1,),(5,),(3,)]
     varsaffectedatwall=[2,1,0,0,1,2]
+    varnames=['X','Y','Z']
+    threshnames=[['Y'],['Z'],['X']]
     f=open('patterns.txt','w')
     f.write('Z min, X max, Y min, Z max, X min, Y max\n Z min, X min, Y max, Y min, Z max, X max')
     f.close()
-    f=open('variables.txt','w')
-    f.write('0 X\n 1 Y\n 2 Z')
-    f.close()
-    f=open('equations.txt','w')
-    f.write('X : ~Z : Y\n Y : ~X : Z\n Z : ~Y : X')
-    f.close()
-    return outedges,walldomains,varsaffectedatwall
+    return outedges,walldomains,varsaffectedatwall,varnames,threshnames
 
 def test4():
     # X1 : (X1)(~X2) : X1 X2
@@ -78,13 +74,9 @@ def test5():
     f=open('patterns.txt','w')
     f.write('X1 min, X2 min, X3 min, X1 max, X2 max, X3 max\n X1 min, X2 min, X1 max, X3 min, X2 max, X3 max')
     f.close()
-    f=open('variables.txt','w')
-    f.write('0 X1\n 1 X2\n 2 X3')
-    f.close()
-    f=open('equations.txt','w')
-    f.write('X1 : (X2)(~X3) : X2\n X2 : X1 : X1 X3\n X3 : X2 : X1')
-    f.close()
-    return outedges,walldomains,varsaffectedatwall
+    varnames=['X1','X2','X3']
+    threshnames=[['X2'],['X1','X3'],['X1']]
+    return outedges,walldomains,varsaffectedatwall,varnames,threshnames
 
 def test6():
     # X1 : (X1)(~X3) : X1 X2 X3
@@ -97,13 +89,9 @@ def test6():
     f=open('patterns.txt','w')
     f.write('X2 min, X1 max, X3 max, X2 max, X1 min, X3 min, X2 min\n X3 max, X3 min, X1 max, X3 max, X2 max, X1 min, X3 min, X2 min\n X1 min, X3 min, X1 max, X3 max\n X2 min, X3 min, X1 max, X3 max, X2 max, X1 min\n X2 min, X3 min, X1 min, X3 max, X2 max, X1 max')
     f.close()
-    f=open('variables.txt','w')
-    f.write('0 X1\n 1 X2\n 2 X3')
-    f.close()
-    f=open('equations.txt','w')
-    f.write('X1 : (X1)(~X3) : X1 X2 X3\n X2 : X1 : X3\n X3 : (X1)(~X2) : X1')
-    f.close()
-    return outedges,walldomains,varsaffectedatwall
+    varnames=['X1','X2','X3']
+    threshnames=[['X1','X2','X3'],['X3'],['X1']]
+    return outedges,walldomains,varsaffectedatwall,varnames,threshnames
 
 def test7():
     # dsgrn output, repressilator example like test 3
@@ -114,7 +102,7 @@ def test7():
 
 def test8():
     # dsgrn output, 5D Cycle
-    call(["dsgrn network networks/5D_Cycle.txt analyze morseset 3 847328 >dsgrn_output.json"],shell=True)
+    subprocess.call(["dsgrn network networks/5D_Cycle.txt analyze morseset 3 847328 >dsgrn_output.json"],shell=True)
     f=open('patterns.txt','w')
     f.write('X3 max, X4 max, X3 min, X4 min\n X3 max, X4 min, X3 min, X4 max')
     f.close()
