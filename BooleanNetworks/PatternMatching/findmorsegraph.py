@@ -56,8 +56,15 @@ def irange(start, stop=None, step=1):
 
 if __name__=='__main__':
     # print scan("networks/6D_TwoWayForcing.txt",46656,exists_FC,True)
-    print scan("networks/6D_OneWayForcing.txt",5832,exists_FC,False)
-
+    # print scan("networks/6D_OneWayForcing.txt",5832,exists_FC,False)
+    from cProfile import runctx
+    # runctx('scan("networks/6D_OneWayForcing.txt",5832,exists_FC,False)',globals(),locals())
+    print('check_output')
+    runctx('for _ in range(1000): subprocess.check_output(["ls"],shell=True)',globals(),locals())
+    print('check_output + dsgrn')
+    runctx('for p in range(1000): subprocess.check_output(["dsgrn network networks/6D_OneWayForcing.txt morsegraph json "+str(p)],shell=True)',globals(),locals())
+    print('check_output + dsgrn + json')
+    runctx('for p in range(1000): json.loads(subprocess.check_output(["dsgrn network networks/6D_OneWayForcing.txt morsegraph json "+str(p)],shell=True))',globals(),locals())
 
 
 

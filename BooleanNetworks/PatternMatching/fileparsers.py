@@ -20,4 +20,4 @@ if __name__=='__main__':
     # print parseVars("/Users/bcummins/ProjectData/DatabaseSimulations/5D_cycle_1/MGCC_14419/variables.txt")
     # print parsePatterns()
     # print parseEqns("/Users/bcummins/ProjectData/DatabaseSimulations/5D_cycle_1/MGCC_14419/equations.txt")
-    parseJSON()
+    parseJSON() #pragma: no cover

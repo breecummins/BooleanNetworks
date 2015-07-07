@@ -25,10 +25,6 @@ def getChars(Z,previouswall,currentwall,nextwall,outedges,walldomains,varatwall,
     # we find all possible behaviors of the variable at the current wall given the
     # trajectory defined by the previous and next walls.
     #
-    # this algorithm works but is heinous to read; the only way I saw to make it shorter
-    # is to do unnecessary calculations. This is important to avoid since the function
-    # is inside a recursive call.
-    #
     q,p,w,n=Z
     if p<w<n:
         chars = ['u']
@@ -274,9 +270,9 @@ def makeAllTriples(outedges,walldomains,varsaffectedatwall):
     return paramDict
 
 if __name__=='__main__':
-    import testcases as tc
-    import preprocess as PP
-    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels= PP.filterAllTriples(*tc.test0())
-    N,wld=makeDictOfWallLabels(outedges,walldomains,varsaffectedatwall)
+    import testcases as tc #pragma: no cover
+    import preprocess as PP #pragma: no cover
+    inds,outedges,walldomains,varsaffectedatwall,allwalllabels,inedges,triples,sortedwalllabels= PP.filterAllTriples(*tc.test0()) #pragma: no cover
+    N,wld=makeDictOfWallLabels(outedges,walldomains,varsaffectedatwall) #pragma: no cover
 
 

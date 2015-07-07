@@ -1,7 +1,5 @@
 import walllabels as WL
 import fileparsers as fp
-from scipy.sparse.csgraph import connected_components
-import numpy as np
 import itertools
 
 def preprocess(fname='dsgrn_output.json',pname='patterns.txt',cyclic=1):
@@ -106,4 +104,4 @@ def makeWallGraphFromDomainGraph(domgraph,cells):
 
 
 if __name__=='__main__':
-    print makeWallGraphFromDomainGraph([[1],[2],[5,3],[4],[5],[0]])
+    print makeWallGraphFromDomainGraph([[1],[2],[5,3],[4],[5],[0]]) #pragma: no cover
