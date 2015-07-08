@@ -222,51 +222,37 @@ def getFirstAndNextWalls(firstpattern,triples,sortedwalllabels):
     return list(set(startwallpairs))
 
 def makeAllTriples(outedges,walldomains,varsaffectedatwall):
-    # step through every wall in the list 
     # make inedges
     inedges=[tuple([j for j,o in enumerate(outedges) if node in o]) for node in range(len(outedges))]   
-    # construct the wall label for every permissible triple (in-edge, wall, out-edge)
-    allwalllabels=[]
-    triples=[]
-    # trip2=[]
+    # make every triple and the list of associated wall labels
+    unfoldedtriples=[]
     unfoldedwalllabels=[]
     for k,(ie,oe) in enumerate(zip(inedges,outedges)):
-        wl=[]
-        uwl=[]
-        t=[]
-        # t2=[]
+        uw=[]
+        ut=[]
         for i,o in itertools.product(ie,oe):
+            # construct the wall label for every permissible triple (in-edge, wall, out-edge)
             pds=pathDependentStringConstruction(i,k,o,walldomains,outedges,varsaffectedatwall[k],inedges)
-            wl.extend(pds)
-            # t2.extend((i,k,o))
-            uwl.append(pds)
-            t.append((i,k,o))
-        allwalllabels.append(wl)
-        # trip2.append(t2)
-        unfoldedwalllabels.extend(uwl)
-        triples.extend(t)
+            uw.append(pds)
+            ut.append((i,k,o))
+        unfoldedwalllabels.extend(uw)
+        unfoldedtriples.extend(ut)
     # now sort the triples and make a sorted wall label list too
-    sorttriples=sorted(zip(triples,range(len(triples))))
-    triples,sortedinds=zip(*sorttriples)
+    sort_by_inedge=sorted(zip(unfoldedtriples,range(len(unfoldedtriples))))
+    sortedtriples,sortedinds=map(list,zip(*sort_by_inedge))
     sortedwalllabels=[unfoldedwalllabels[j] for j in sortedinds]
-    collapsedtriples=[]
-    collapsedsortedwalls=[]
-    i=0   
-    t = triples[0] 
-    for m in range(len(allwalllabels)): 
-        ct=[]      
-        cw=[] 
-        while t[0]==m:
-            ct.append(t)
-            cw.append(sortedwalllabels[i])
-            i+=1
-            if i <len(triples):
-                t = triples[i] 
-            else:
-                t=[-1]
-        collapsedtriples.append(ct)
-        collapsedsortedwalls.append(cw)
-    paramDict={'triples':collapsedtriples,'walllabels_previous':collapsedsortedwalls,'walllabels_current':allwalllabels}
+    # make a list of triples grouped by incoming edge, make associated list of lists of wall labels
+    foldedtriples=[]
+    foldedwalllabels=[]
+    for m in range(len(outedges)): 
+        ft=[]      
+        fw=[] 
+        while sortedtriples and sortedtriples[0][0]==m:
+            ft.append(sortedtriples.pop(0))
+            fw.append(sortedwalllabels.pop(0))
+        foldedtriples.append(ft)
+        foldedwalllabels.append(fw)
+    paramDict={'triples':foldedtriples,'walllabels':foldedwalllabels}
     return paramDict
 
 if __name__=='__main__':

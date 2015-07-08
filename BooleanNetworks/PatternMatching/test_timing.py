@@ -1,15 +1,15 @@
 from patternmatch import matchPattern
-import preprocess as PP
+import preprocess as pp
 import fileparsers as fp
 import testcases as tc
-import walllabels as WL
+import walllabels as wl
 from cProfile import runctx
 
 def testtiming(iterates=5000):
-    paramDict = WL.makeAllTriples(*tc.test6())
+    outedges,walldomains,varsaffectedatwall,varnames,threshnames=tc.test6()
+    paramDict = wl.makeAllTriples(outedges,walldomains,varsaffectedatwall)
     patternnames,patternmaxmin=fp.parsePatterns()
-    varnames=fp.parseVars()
-    patterns=PP.translatePatterns(varnames,patternnames,patternmaxmin,cyclic=1)
+    patterns=pp.translatePatterns(varnames,patternnames,patternmaxmin,cyclic=1)
     for _ in range(iterates):
         for p in patterns:
             match = matchPattern(p,paramDict,cyclic=1,findallmatches=1)

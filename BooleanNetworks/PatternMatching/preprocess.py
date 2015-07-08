@@ -1,4 +1,4 @@
-import walllabels as WL
+import walllabels as wl
 import fileparsers as fp
 import itertools
 
@@ -13,7 +13,7 @@ def preprocess(fname='dsgrn_output.json',pname='patterns.txt',cyclic=1):
     # record which variable is affected at each wall
     varsaffectedatwall=varsAtWalls(threshnames,walldomains,wallthresh,varnames)
     # make wall labels
-    paramDict = WL.makeAllTriples(outedges,walldomains,varsaffectedatwall)
+    paramDict = wl.makeAllTriples(outedges,walldomains,varsaffectedatwall)
     return patterns, paramDict
 
 def translatePatterns(varnames,patternnames,patternmaxmin,cyclic=0):
@@ -37,7 +37,7 @@ def translatePatterns(varnames,patternnames,patternmaxmin,cyclic=0):
             if set(seq[::2])==set(['m','M']) or set(seq[1::2])==set(['m','M']):
                 print "Pattern {} is not consistent; not including in search. Every variable must alternate maxima and minima.".format(zip(patternnames,patternmaxmin))
                 good_pattern=0
-        # if the pattern meets the criterion, proceed with transalation
+        # if the pattern meets the criterion, proceed with translation
         # first build a set of template patterns if there are missing variables in the pattern (these could either be 'u' or 'd')
         if good_pattern:
             missingvars=sorted(list(set(range(numvars)).difference(set(pvars))))
@@ -98,8 +98,9 @@ def makeWallGraphFromDomainGraph(domgraph,cells):
             raise RunTimeError("The domain graph has an edge between nonadjacent domains. Aborting.")
         elif sum(location)==0:
             raise RunTimeError("The domain graph has a self-loop. Aborting.")
-        wallthresh.append(location.index(True))
-        walldomains.append(tuple([sum(c0[k]+c1[k])/4.0 for k in range(n)])) 
+        else:
+            wallthresh.append(location.index(True))
+            walldomains.append(tuple([sum(c0[k]+c1[k])/4.0 for k in range(n)])) 
     return outedges,wallthresh,walldomains
 
 

@@ -3,22 +3,19 @@ import walllabels as wl
 import preprocess as pp
 
 def recursePattern(currentwall,match,matches,patterns,pDict):
-    # THIS FUNCTION USES MEMORY INSTEAD OF CPU; walllabels_previous and walllabels_current are 
-    # different indexings of the same list. dict algorithm has only one memory structure, but
-    # is currently slower for the size of problems that we have.
     lastwall=match[-1]
     if len(patterns)==0:
-        if pDict['stop'] in pDict['walllabels_current'][lastwall] and ((pDict['cyclic'] and match[0]==lastwall) or not pDict['cyclic']): 
+        if (pDict['cyclic'] and match[0]==lastwall) or not pDict['cyclic']: 
             matches.append(tuple(match))
         return matches
     else:
         extremum,intermediate = patterns[0]
         for k,t in enumerate(pDict['triples'][lastwall]):
             if t[1] == currentwall:
-                labels=pDict['walllabels_previous'][lastwall][k]
-                if extremum in labels: # if we hit the next pattern element, reduce pattern by one
+                labels=pDict['walllabels'][lastwall][k]
+                if extremum in labels: # extrema = reduce pattern by one
                     matches=recursePattern(t[2],match+[t[1]],matches,patterns[1:],pDict)
-                if intermediate in labels: # if we hit an intermediate node, keep the same pattern
+                if intermediate in labels: # intermediate = same pattern
                     matches=recursePattern(t[2],match+[t[1]],matches,patterns,pDict)
         return matches
 
@@ -26,7 +23,7 @@ def recursePattern_firstmatchonly(currentwall,match,patterns,pDict):
     # Throwing an error is a hacky kludge. I haven't been able to figure out how to fix it.
     lastwall=match[-1]
     if len(patterns)==0:
-        if pDict['stop'] in pDict['walllabels_current'][lastwall] and ((pDict['cyclic'] and match[0]==lastwall) or not pDict['cyclic']): 
+        if (pDict['cyclic'] and match[0]==lastwall) or not pDict['cyclic']: 
             raise ValueError(str([tuple(match)]))
         else:
             return []
@@ -34,10 +31,10 @@ def recursePattern_firstmatchonly(currentwall,match,patterns,pDict):
         extremum,intermediate = patterns[0]
         for k,t in enumerate(pDict['triples'][lastwall]):
             if t[1] == currentwall:
-                labels=pDict['walllabels_previous'][lastwall][k]
-                if extremum in labels: # if we hit the next pattern element, reduce pattern by one
+                labels=pDict['walllabels'][lastwall][k]
+                if extremum in labels: # extrema = reduce pattern by one
                     recursePattern_firstmatchonly(t[2],match+[t[1]],patterns[1:],pDict)
-                if intermediate in labels: # if we hit an intermediate node, keep the same pattern
+                if intermediate in labels: # intermediate = same pattern
                     recursePattern_firstmatchonly(t[2],match+[t[1]],patterns,pDict)
         return []
 
@@ -64,10 +61,11 @@ def matchPattern(pattern,paramDict,cyclic=1,findallmatches=1):
 
     pattern: list of uniform-length words from the alphabet ('u','d','m','M'); exactly one 'm' or 'M' REQUIRED per string
     paramDict keywords:
-        triples: list of tuples (previouswall,currentwall,nextwall) allowable from graph
-        walllabels_current: list of lists of uniform-length words from the alphabet ('u','d','m','M') with at most one of 
-            ['m','M'] in each word describing the possible wall labels at currentwall
-        walllabels_previous: walllabels_current re-indexed according to previouswall
+        triples: list of lists of tuples (previouswall,currentwall,nextwall) allowable from graph. triples[i]
+        is the list of tuples (i,currentwall,nextwall).
+        walllabels: list of lists of lists of uniform-length words from the alphabet ('u','d','m','M') with 
+        at most one of ['m','M'] in each word. walllabels[i] means the list of lists of wall labels associated with
+        the list of triples (i,currentwall,nextwall).
 
     cyclic=1 means only cyclic paths are sought. cyclic=0 means acyclic paths are acceptable.
 
@@ -80,33 +78,32 @@ def matchPattern(pattern,paramDict,cyclic=1,findallmatches=1):
     if not pattern:
         return "None. Pattern is empty."
     # check if any word in pattern is not a wall label (it's pointless to search in that case)
-    flatlabels = [a for l in paramDict['walllabels_current'] for a in l]
+    flatlabels = set([a for l in paramDict['walllabels'] for b in l for a in b])
     if not set(pattern).issubset(flatlabels):
         return "None. No results found. Pattern contains an element that is not a wall label."
     # find all possible starting nodes for a matching path
-    startwallpairs=wl.getFirstAndNextWalls(pattern[0],paramDict['triples'],paramDict['walllabels_previous'])
+    startwallpairs=wl.getFirstAndNextWalls(pattern[0],paramDict['triples'],paramDict['walllabels'])
     firstwalls,nextwalls=zip(*startwallpairs)
     # return trivial length one patterns
     if len(pattern)==1:
         return firstwalls
     # pre-cache intermediate nodes that may exist in the wall graph
     intermediatenodes=[p.replace('m','d').replace('M','u')  if set(p).intersection(['m','M']) else '' for p in pattern[1:]] 
-    patternParams = zip(pattern[1:],intermediatenodes)
+    patterns = zip(pattern[1:],intermediatenodes)
     # record stopping criterion
-    paramDict['stop'] = pattern[-1]
     paramDict['cyclic'] = cyclic
-    # find matches
-    if findallmatches:
+    # seek results
+    if findallmatches: # find every path that matches the pattern
         results=[]
         for w,n in startwallpairs:
-            matches = recursePattern(n,[w],[],patternParams,paramDict) # seek match starting with w, n
+            matches = recursePattern(n,[w],[],patterns,paramDict) # seek match starting with w, n
             results.extend(matches) 
         # paths not guaranteed unique so use set()
         return list(set(results)) or "None. No results found."
-    else:
+    else: # find the first path that matches the pattern and quit 
         for w,n in startwallpairs:
             try:
-                match = recursePattern_firstmatchonly(n,[w],patternParams,paramDict) # seek match starting with w, n
+                match = recursePattern_firstmatchonly(n,[w],patterns,paramDict) # seek match starting with w, n
             except ValueError as v:
                 match=eval(v.args[0])
             if match:
