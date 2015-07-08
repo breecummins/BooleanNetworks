@@ -10,13 +10,12 @@ def recursePattern(currentwall,match,matches,patterns,pDict):
         return matches
     else:
         extremum,intermediate = patterns[0]
-        for k,t in enumerate(pDict['triples'][lastwall]):
-            if t[1] == currentwall:
-                labels=pDict['walllabels'][lastwall][k]
+        for triple,labels in zip(pDict['triples'][lastwall],pDict['walllabels'][lastwall]):
+            if triple[1] == currentwall:
                 if extremum in labels: # extrema = reduce pattern by one
-                    matches=recursePattern(t[2],match+[t[1]],matches,patterns[1:],pDict)
+                    matches=recursePattern(triple[2],match+[currentwall],matches,patterns[1:],pDict)
                 if intermediate in labels: # intermediate = same pattern
-                    matches=recursePattern(t[2],match+[t[1]],matches,patterns,pDict)
+                    matches=recursePattern(triple[2],match+[currentwall],matches,patterns,pDict)
         return matches
 
 def recursePattern_firstmatchonly(currentwall,match,patterns,pDict):
@@ -29,13 +28,12 @@ def recursePattern_firstmatchonly(currentwall,match,patterns,pDict):
             return []
     else:
         extremum,intermediate = patterns[0]
-        for k,t in enumerate(pDict['triples'][lastwall]):
-            if t[1] == currentwall:
-                labels=pDict['walllabels'][lastwall][k]
+        for triple,labels in zip(pDict['triples'][lastwall],pDict['walllabels'][lastwall]):
+            if triple[1] == currentwall:
                 if extremum in labels: # extrema = reduce pattern by one
-                    recursePattern_firstmatchonly(t[2],match+[t[1]],patterns[1:],pDict)
+                    recursePattern_firstmatchonly(triple[2],match+[currentwall],patterns[1:],pDict)
                 if intermediate in labels: # intermediate = same pattern
-                    recursePattern_firstmatchonly(t[2],match+[t[1]],patterns,pDict)
+                    recursePattern_firstmatchonly(triple[2],match+[currentwall],patterns,pDict)
         return []
 
 def matchPattern(pattern,paramDict,cyclic=1,findallmatches=1):
