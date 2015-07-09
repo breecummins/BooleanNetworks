@@ -1,8 +1,18 @@
 import itertools
-import walllabels as wl
 import preprocess as pp
 
+def pathInitializer(firstpattern,wallinfo):
+    # Given the first word in the pattern, find the nodes in the graph that have 
+    # this pattern for some path. 
+    startwallpairs=[]
+    for (lastwall,currentwall), list_of_labels in wallinfo.iteritems():
+        for (nextwall,labels) in list_of_labels:
+            if firstpattern in labels:
+                startwallpairs.append((currentwall,nextwall))
+    return list(set(startwallpairs))
+
 def recursePattern(lastwall,currentwall,match,matches,patterns,wallinfo,cyclic):
+    # Core algorithm for pattern matching.
     if len(patterns)==0:
         if (cyclic and match[0]==lastwall) or not cyclic: 
             matches.append(tuple(match))
@@ -16,7 +26,7 @@ def recursePattern(lastwall,currentwall,match,matches,patterns,wallinfo,cyclic):
     return matches
 
 def recursePatternOneMatch(lastwall,currentwall,match,patterns,wallinfo,cyclic):
-    # Throwing an error is a hacky kludge. I haven't been able to figure out how to fix it.
+    # Stop after one match by throwing an error. Return the match in the error text (this is a hack).
     if len(patterns)==0:
         if (cyclic and match[0]==lastwall) or not cyclic: 
             raise ValueError(str([tuple(match)]))
@@ -61,7 +71,7 @@ def matchPattern(pattern,wallinfo,cyclic=1,findallmatches=1):
     findallmatches:
         findallmatches=1 (default) returns all matches. findallmatches=0 returns the first match. 
 
-    See functions beginning with "call" below for example calls of this function.
+    See callPatternMatch below for an example call of this function.
 
     '''
     # check for empty patterns
@@ -72,11 +82,10 @@ def matchPattern(pattern,wallinfo,cyclic=1,findallmatches=1):
     if not set(pattern).issubset(flatlabels):
         return "None. No results found. Pattern contains an element that is not a wall label."
     # find all possible starting nodes for a matching path
-    startwallpairs=wl.getFirstAndNextWalls(pattern[0],wallinfo)
-    firstwalls,nextwalls=zip(*startwallpairs)
+    startwallpairs=pathInitializer(pattern[0],wallinfo)
     # return trivial length one patterns
     if len(pattern)==1:
-        return firstwalls
+        return [s[0] for s in startwallpairs]
     # pre-cache intermediate nodes that may exist in the wall graph
     intermediatenodes=[p.replace('m','d').replace('M','u') for p in pattern[1:]] 
     patterns = zip(pattern[1:],intermediatenodes)
@@ -99,7 +108,6 @@ def matchPattern(pattern,wallinfo,cyclic=1,findallmatches=1):
         return match or "None. No results found."
 
 def callPatternMatch(fname='dsgrn_output.json',pname='patterns.txt',rname='results.txt',cyclic=1,findallmatches=1, printtoscreen=0,writetofile=1):
-    # output printed to screen
     print "Preprocessing..."
     patterns,wallinfo=pp.preprocess(fname,pname,cyclic) 
     print "Searching..."

@@ -78,9 +78,9 @@ def pathDependentLabelConstruction(triple,inandoutedges,walldomains,varatwall):
     walllabels=['']
     # for every variable find allowable letters for triple
     for varind in range(len(walldomains[0])): 
-        # try simple algorithm first
         isvaratwall = varind==varatwall
         varvalues=tuple([walldomains[k][varind] for k in triple])
+        # try simple algorithm first
         chars=getChars(isvaratwall,varvalues) 
         if chars:
             # simple algorithm worked, skip complex algorithm
@@ -95,20 +95,8 @@ def pathDependentLabelConstruction(triple,inandoutedges,walldomains,varatwall):
         walllabels=[l+c for l in walllabels for c in chars]
     return walllabels
 
-def getFirstAndNextWalls(firstpattern,wallinfo):
-    # Given the first word in the pattern, find the nodes in the graph that have 
-    # this pattern for some path. Our searches will start at each of these nodes, 
-    # and proceed to the next nodes found in this algorithm.
-    startwallpairs=[]
-    for (lastwall,currentwall), list_of_labels in wallinfo.iteritems():
-        for (nextwall,labels) in list_of_labels:
-            if firstpattern in labels:
-                startwallpairs.append((currentwall,nextwall))
-    return list(set(startwallpairs))
-
-
 def makeWallInfo(outedges,walldomains,varsaffectedatwall):
-    # make inedges
+    # This function creates the dictionary used in the core recursive call for the pattern matching.
     inedges=[tuple([j for j,o in enumerate(outedges) if node in o]) for node in range(len(outedges))]   
     # make every triple and the list of associated wall labels; store in dict indexed by (inedge,wall)
     wallinfo={}
@@ -121,10 +109,12 @@ def makeWallInfo(outedges,walldomains,varsaffectedatwall):
             pdlc=pathDependentLabelConstruction(triple,inandoutedges,walldomains,varatwall)
             key=triple[:-1]
             value=(triple[-1],pdlc)
+            # If the key already exists, append to its list. Otherwise start the list.
             if key in wallinfo:
                 wallinfo[key].append(value)
             else:
                 wallinfo[key]=[value]
     return wallinfo
+
 
 
