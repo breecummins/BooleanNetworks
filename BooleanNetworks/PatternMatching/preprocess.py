@@ -103,6 +103,3 @@ def makeWallGraphFromDomainGraph(domgraph,cells):
             walldomains.append(tuple([sum(c0[k]+c1[k])/4.0 for k in range(n)])) 
     return outedges,wallthresh,walldomains
 
-
-if __name__=='__main__':
-    print makeWallGraphFromDomainGraph([[1],[2],[5,3],[4],[5],[0]]) #pragma: no cover

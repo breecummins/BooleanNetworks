@@ -1,4 +1,3 @@
-import itertools
 import preprocess as pp
 
 def pathInitializer(firstpattern,wallinfo):
@@ -76,27 +75,26 @@ def matchPattern(pattern,wallinfo,cyclic=1,findallmatches=1):
     '''
     # check for empty patterns
     if not pattern:
-        return "None. Pattern is empty."
+        return "None, no results found. Pattern is empty."
     # check if any word in pattern is not a wall label (it's pointless to search in that case)
     flatlabels = set([w for _,list_of_labels in wallinfo.iteritems() for (_,labels) in list_of_labels for w in labels])
     if not set(pattern).issubset(flatlabels):
-        return "None. No results found. Pattern contains an element that is not a wall label."
+        return "None, no results found. Pattern contains an element that is not a wall label."
     # find all possible starting nodes for a matching path
     startwallpairs=pathInitializer(pattern[0],wallinfo)
     # return trivial length one patterns
     if len(pattern)==1:
         return [s[0] for s in startwallpairs]
-    # pre-cache intermediate nodes that may exist in the wall graph
+    # compute intermediate nodes that may exist in the wall graph
     intermediatenodes=[p.replace('m','d').replace('M','u') for p in pattern[1:]] 
     patterns = zip(pattern[1:],intermediatenodes)
-   # seek results
+    # seek results
     if findallmatches: # find every path that matches the pattern
         results=[]
         for w,n in startwallpairs:
             matches = recursePattern(w,n,[w],[],patterns,wallinfo,cyclic) # seek match starting with w, n
             results.extend(matches) 
-        # paths not guaranteed unique so use set()
-        return list(set(results)) or "None. No results found."
+        return list(set(results)) or "None, no results found."
     else: # find the first path that matches the pattern and quit 
         for w,n in startwallpairs:
             try:
@@ -107,7 +105,7 @@ def matchPattern(pattern,wallinfo,cyclic=1,findallmatches=1):
                 break
         return match or "None. No results found."
 
-def callPatternMatch(fname='dsgrn_output.json',pname='patterns.txt',rname='results.txt',cyclic=1,findallmatches=1, printtoscreen=0,writetofile=1):
+def callPatternMatch(fname='dsgrn_output.json',pname='patterns.txt',rname='results.txt',cyclic=1,findallmatches=1, printtoscreen=0,writetofile=1): # pragma: no cover
     print "Preprocessing..."
     patterns,wallinfo=pp.preprocess(fname,pname,cyclic) 
     print "Searching..."

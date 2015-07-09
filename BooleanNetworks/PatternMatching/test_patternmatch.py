@@ -141,8 +141,8 @@ def test8(showme=1,findallmatches=1):
     for p,s in zip(patterns,solutions):
         match = matchPattern(p,wallinfo,cyclic=1,findallmatches=findallmatches)
         if s:
-            if showme and findallmatches: print match==s
-            if showme and not findallmatches: print match==[s[0]]
+            if showme and findallmatches: print set(match)==set(s)
+            if showme and not findallmatches: print match[0] in s
         else:
             if showme: print 'None' in match and 'Pattern' in match
 

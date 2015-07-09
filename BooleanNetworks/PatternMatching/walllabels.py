@@ -1,5 +1,4 @@
 import itertools
-import sys
 
 def getChars(isvaratwall,(p,c,n)):
     chars=[]
@@ -106,9 +105,9 @@ def makeWallInfo(outedges,walldomains,varsaffectedatwall):
             triple=(previouswall,currentwall,nextwall)
             inandoutedges=(outedges[previouswall],inedges[currentwall],outedges[currentwall],inedges[nextwall])
             varatwall=varsaffectedatwall[currentwall]
-            pdlc=pathDependentLabelConstruction(triple,inandoutedges,walldomains,varatwall)
-            key=triple[:-1]
-            value=(triple[-1],pdlc)
+            labels=pathDependentLabelConstruction(triple,inandoutedges,walldomains,varatwall)
+            key=(previouswall,currentwall)
+            value=(nextwall,labels)
             # If the key already exists, append to its list. Otherwise start the list.
             if key in wallinfo:
                 wallinfo[key].append(value)
