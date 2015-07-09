@@ -19,7 +19,7 @@ def infoFromWalls(q,wallval,walls,num_walls,walldomains):
         GT,LT=False,False
     return GT,LT
 
-def getChars(Z,previouswall,currentwall,nextwall,outedges,walldomains,varatwall,inedges):
+def getChars(Z,(previouswall,currentwall,nextwall),inedges,outedges,walldomains,varatwall):
     # Z contains the variable index and the values of variable at the previous, 
     # current, and next walls respectively. Given the graph labeled with walldomains, 
     # we find all possible behaviors of the variable at the current wall given the
@@ -196,32 +196,21 @@ def getChars(Z,previouswall,currentwall,nextwall,outedges,walldomains,varatwall,
                     chars=['d','M','u','m']
     return chars
 
-def pathDependentStringConstruction(previouswall,wall,nextwall,walldomains,outedges,varatwall,inedges):
+def pathDependentLabelConstruction((previouswall,wall,nextwall),inedges,outedges,walldomains,varatwall):
     # make a label for 'wall' that depends on where the path came from and where it's going
     if wall==nextwall: #if at steady state, do not label
         return []
     walllabels=['']
     Z=zip(range(len(walldomains[0])),walldomains[previouswall],walldomains[wall],walldomains[nextwall])
     for z in Z:
-        chars=getChars(z,previouswall,wall,nextwall,outedges,walldomains,varatwall,inedges)
+        chars=getChars(z,(previouswall,wall,nextwall),inedges,outedges,walldomains,varatwall)
         if chars:
             walllabels=[l+c for l in walllabels for c in chars]
         else:
             return []
     return walllabels
 
-def getFirstAndNextWalls(firstpattern,triples,sortedwalllabels):
-    # Given the first word in the pattern, find the nodes in the graph that have 
-    # this pattern for some path. Our searches will start at each of these nodes, 
-    # and proceed to the next nodes found in this algorithm.
-    startwallpairs=[]
-    for k,l in enumerate(triples):
-        for j,t in enumerate(l):
-            if firstpattern in sortedwalllabels[k][j]:
-                startwallpairs.append(t[1:])
-    return list(set(startwallpairs))
-
-def getFirstAndNextWalls2(firstpattern,wallinfo):
+def getFirstAndNextWalls(firstpattern,wallinfo):
     # Given the first word in the pattern, find the nodes in the graph that have 
     # this pattern for some path. Our searches will start at each of these nodes, 
     # and proceed to the next nodes found in this algorithm.
@@ -232,63 +221,24 @@ def getFirstAndNextWalls2(firstpattern,wallinfo):
                 startwallpairs.append((currentwall,nextwall))
     return list(set(startwallpairs))
 
-def makeAllTriples(outedges,walldomains,varsaffectedatwall):
-    # make inedges
-    inedges=[tuple([j for j,o in enumerate(outedges) if node in o]) for node in range(len(outedges))]   
-    # make every triple and the list of associated wall labels
-    unfoldedtriples=[]
-    unfoldedwalllabels=[]
-    for k,(ie,oe) in enumerate(zip(inedges,outedges)):
-        uw=[]
-        ut=[]
-        for i,o in itertools.product(ie,oe):
-            # construct the wall label for every permissible triple (in-edge, wall, out-edge)
-            pds=pathDependentStringConstruction(i,k,o,walldomains,outedges,varsaffectedatwall[k],inedges)
-            uw.append(pds)
-            ut.append((i,k,o))
-        unfoldedwalllabels.extend(uw)
-        unfoldedtriples.extend(ut)
-    # now sort the triples and make a sorted wall label list too
-    sort_by_inedge=sorted(zip(unfoldedtriples,range(len(unfoldedtriples))))
-    sortedtriples,sortedinds=map(list,zip(*sort_by_inedge))
-    sortedwalllabels=[unfoldedwalllabels[j] for j in sortedinds]
-    # make a list of triples grouped by incoming edge, make associated list of lists of wall labels
-    foldedtriples=[]
-    foldedwalllabels=[]
-    for m in range(len(outedges)): 
-        ft=[]      
-        fw=[] 
-        while sortedtriples and sortedtriples[0][0]==m:
-            ft.append(sortedtriples.pop(0))
-            fw.append(sortedwalllabels.pop(0))
-        foldedtriples.append(ft)
-        foldedwalllabels.append(fw)
-    paramDict={'triples':foldedtriples,'walllabels':foldedwalllabels}
-    return paramDict
 
-def makeAllTriples2(outedges,walldomains,varsaffectedatwall):
+def makeWallInfo(outedges,walldomains,varsaffectedatwall):
     # make inedges
     inedges=[tuple([j for j,o in enumerate(outedges) if node in o]) for node in range(len(outedges))]   
-    # make every triple and the list of associated wall labels
-    triples=[]
-    walllabels=[]
-    for k,(ie,oe) in enumerate(zip(inedges,outedges)):
-        w,t=[],[]
-        for i,o in itertools.product(ie,oe):
-            # construct the wall label for every permissible triple (in-edge, wall, out-edge)
-            pds=pathDependentStringConstruction(i,k,o,walldomains,outedges,varsaffectedatwall[k],inedges)
-            w.append(pds)
-            t.append((i,k,o))
-        walllabels.extend(w)
-        triples.extend(t)
-    paramDict={}
-    for t,w in zip(triples,walllabels):
-        key=t[:-1]
-        if key in paramDict:
-            paramDict[key].append((t[-1],w))
-        else:
-            paramDict[key]=[(t[-1],w)]
-    return paramDict
+    # make every triple and the list of associated wall labels; store in dict indexed by (inedge,wall)
+    wallinfo={}
+    for wall,(ie,oe) in enumerate(zip(inedges,outedges)):
+       for inedge,outedge in itertools.product(ie,oe):
+            # construct the wall label for every permissible triple (inedge, wall, outedge)
+            triple=(inedge,wall,outedge)
+            pdlc=pathDependentLabelConstruction(triple,inedges,outedges,walldomains,varsaffectedatwall[wall])
+            key=triple[:-1]
+            value=(triple[-1],pdlc)
+            if key in wallinfo:
+                wallinfo[key].append(value)
+            else:
+                wallinfo[key]=[value]
+    return wallinfo
 
 if __name__=='__main__':
     import testcases as tc #pragma: no cover
