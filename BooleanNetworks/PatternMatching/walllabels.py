@@ -221,6 +221,17 @@ def getFirstAndNextWalls(firstpattern,triples,sortedwalllabels):
                 startwallpairs.append(t[1:])
     return list(set(startwallpairs))
 
+def getFirstAndNextWalls2(firstpattern,wallinfo):
+    # Given the first word in the pattern, find the nodes in the graph that have 
+    # this pattern for some path. Our searches will start at each of these nodes, 
+    # and proceed to the next nodes found in this algorithm.
+    startwallpairs=[]
+    for (lastwall,currentwall), list_of_labels in wallinfo.iteritems():
+        for (nextwall,labels) in list_of_labels:
+            if firstpattern in labels:
+                startwallpairs.append((currentwall,nextwall))
+    return list(set(startwallpairs))
+
 def makeAllTriples(outedges,walldomains,varsaffectedatwall):
     # make inedges
     inedges=[tuple([j for j,o in enumerate(outedges) if node in o]) for node in range(len(outedges))]   
@@ -253,6 +264,30 @@ def makeAllTriples(outedges,walldomains,varsaffectedatwall):
         foldedtriples.append(ft)
         foldedwalllabels.append(fw)
     paramDict={'triples':foldedtriples,'walllabels':foldedwalllabels}
+    return paramDict
+
+def makeAllTriples2(outedges,walldomains,varsaffectedatwall):
+    # make inedges
+    inedges=[tuple([j for j,o in enumerate(outedges) if node in o]) for node in range(len(outedges))]   
+    # make every triple and the list of associated wall labels
+    triples=[]
+    walllabels=[]
+    for k,(ie,oe) in enumerate(zip(inedges,outedges)):
+        w,t=[],[]
+        for i,o in itertools.product(ie,oe):
+            # construct the wall label for every permissible triple (in-edge, wall, out-edge)
+            pds=pathDependentStringConstruction(i,k,o,walldomains,outedges,varsaffectedatwall[k],inedges)
+            w.append(pds)
+            t.append((i,k,o))
+        walllabels.extend(w)
+        triples.extend(t)
+    paramDict={}
+    for t,w in zip(triples,walllabels):
+        key=t[:-1]
+        if key in paramDict:
+            paramDict[key].append((t[-1],w))
+        else:
+            paramDict[key]=[(t[-1],w)]
     return paramDict
 
 if __name__=='__main__':

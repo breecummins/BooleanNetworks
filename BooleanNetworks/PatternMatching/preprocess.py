@@ -16,6 +16,20 @@ def preprocess(fname='dsgrn_output.json',pname='patterns.txt',cyclic=1):
     paramDict = wl.makeAllTriples(outedges,walldomains,varsaffectedatwall)
     return patterns, paramDict
 
+def preprocess2(fname='dsgrn_output.json',pname='patterns.txt',cyclic=1):
+    # read input files; basedir should have dsgrn_output.json and patterns.txt
+    varnames,threshnames,domgraph,cells=fp.parseJSONFormat(fname)
+    patternnames,patternmaxmin=fp.parsePatterns(pname)
+    # put max/min patterns in terms of the alphabet u,m,M,d
+    patterns=translatePatterns(varnames,patternnames,patternmaxmin,cyclic=cyclic)
+    # translate domain graph into wall graph
+    outedges,wallthresh,walldomains=makeWallGraphFromDomainGraph(domgraph,cells)    
+    # record which variable is affected at each wall
+    varsaffectedatwall=varsAtWalls(threshnames,walldomains,wallthresh,varnames)
+    # make wall labels
+    paramDict = wl.makeAllTriples2(outedges,walldomains,varsaffectedatwall)
+    return patterns, paramDict
+
 def translatePatterns(varnames,patternnames,patternmaxmin,cyclic=0):
     numvars=len(varnames)
     varinds=[[varnames.index(q) for q in p] for p in patternnames]

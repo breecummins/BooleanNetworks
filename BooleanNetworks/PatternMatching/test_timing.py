@@ -1,13 +1,13 @@
-from patternmatch import matchPattern
+from patternmatch import matchPattern2 as matchPattern
 import preprocess as pp
 import fileparsers as fp
 import testcases as tc
-import walllabels as wl
+from walllabels import makeAllTriples2 as makeAllTriples
 from cProfile import runctx
 
 def testtiming(iterates=5000):
     outedges,walldomains,varsaffectedatwall,varnames,threshnames=tc.test6()
-    paramDict = wl.makeAllTriples(outedges,walldomains,varsaffectedatwall)
+    paramDict = makeAllTriples(outedges,walldomains,varsaffectedatwall)
     patternnames,patternmaxmin=fp.parsePatterns()
     patterns=pp.translatePatterns(varnames,patternnames,patternmaxmin,cyclic=1)
     for _ in range(iterates):
