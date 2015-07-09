@@ -3,21 +3,36 @@ import sys
 
 def infoFromWalls(q,wallval,walls,num_walls,walldomains):
     if num_walls>1:
-        gt=True
-        lt=True
-        nz=False
+        greaterthan=True
+        lessthan=True
+        nonzero=False
         for k in walls:
             d=wallval-walldomains[k][q]
             if d>0:
-                nz=True
-                lt=False
+                nonzero=True
+                lessthan=False
             elif d<0:
-                nz=True
-                gt=False
-        GT,LT=gt*nz,lt*nz
+                nonzero=True
+                greaterthan=False
+        GT,LT=greaterthan*nonzero,lessthan*nonzero
     else:
         GT,LT=False,False
     return GT,LT
+
+def infoFromWalls2(varind,varval,wallinds,walldomains):
+    # We want the difference between the value at the current wall, varval,
+    # and the value at all adjacent walls to have the same sign (or zero,
+    # but not all can be zero).
+    # return isgreaterthan, islessthan 
+    signs = [cmp(varval - walldomains[k][varind],0) for k in wallinds]
+    if set([-1,1]).issubset(signs):
+        return False,False
+    elif set([1]).issubset(signs):
+        return True,False
+    elif set([-1]).issubset(signs):
+        return False,True
+    else:
+        return False,False
 
 def getChars(Z,(previouswall,currentwall,nextwall),inedges,outedges,walldomains,varatwall):
     # Z contains the variable index and the values of variable at the previous, 
@@ -196,6 +211,80 @@ def getChars(Z,(previouswall,currentwall,nextwall),inedges,outedges,walldomains,
                     chars=['d','M','u','m']
     return chars
 
+def getChars2(isvaratwall,(p,c,n)):
+    chars=[]
+    if p<c<n:
+        chars = ['u']
+    elif p>c>n:
+        chars = ['d']
+    elif isvaratwall: # extrema allowed
+        if p<c>n:
+            chars=['M'] 
+        elif p>c<n:
+            chars=['m']
+    elif not isvaratwall: # extrema not allowed
+        if p<c>n or p>c<n:
+            raise RunTimeError('Debug: Extrema are not allowed for variables that are not affected at threshold.')
+        elif p<c==n or p==c<n:
+            chars = ['u']
+        elif p>c==n or p==c>n:
+            chars = ['d']
+    return chars
+
+def getAdditionalWallInfo(varind,(prevval,currval,nextval),(prev_out,curr_in,curr_out,next_in),walldomains):
+    prev_gt_out,prev_lt_out=infoFromWalls2(varind,prevval,prev_out,walldomains)
+    curr_gt_in,curr_lt_in=infoFromWalls2(varind,currval,curr_in,walldomains)
+    curr_gt_out,curr_lt_out=infoFromWalls2(varind,currval,curr_out,walldomains)
+    next_gt_in,next_lt_in=infoFromWalls2(varind,nextval,next_in,walldomains)
+    return prev_gt_out,prev_lt_out,curr_gt_in,curr_lt_in,curr_gt_out,curr_lt_out,next_gt_in,next_lt_in
+
+def getCharsExtrema(prev_gt_out,prev_lt_out,curr_gt_in,curr_lt_in,curr_gt_out,curr_lt_out,next_gt_in,next_lt_in):
+    if (prev_gt_out or curr_lt_in) and (next_gt_in or curr_lt_out):
+        chars=['m'] 
+    elif (prev_lt_out or curr_gt_in) and (next_lt_in or curr_gt_out):
+        chars=['M'] 
+    elif prev_gt_out or curr_lt_in:  
+        chars=['m','d']
+    elif next_lt_in or curr_gt_out:
+        chars=['M','d']
+    elif prev_lt_out or curr_gt_in:
+        chars=['M','u']
+    elif next_gt_in or curr_lt_out:
+        chars=['m','u']
+    else:
+        chars=['M','m','d','u']
+    return chars
+
+def getCharsNoExtrema(prev_gt_out,prev_lt_out,curr_gt_in,curr_lt_in,curr_gt_out,curr_lt_out,next_gt_in,next_lt_in):
+    if ( (prev_gt_out or curr_lt_in) and (next_gt_in or curr_lt_out) ) or ( (prev_lt_out or curr_gt_in) and (next_lt_in or curr_gt_out) ):
+        raise RunTimeError('Debug: Extrema are not allowed for variables that are not affected at threshold.')
+    elif prev_gt_out or curr_lt_in or next_lt_in or curr_gt_out:
+        chars=['d']
+    elif prev_lt_out or curr_gt_in or next_gt_in or curr_lt_out:
+        chars=['u']
+    else:
+        chars=['d','u']
+    return chars
+
+def pathDependentLabelConstruction2(triple,inandoutedges,walldomains,varatwall):
+    # make a label for 'wall' that depends on where the path came from and where it's going
+    if triple[1]==triple[2]: #if at steady state, do not label
+        raise RunTimeError('Debug: Wall has a self-loop.')
+    walllabels=['']
+    for varind in range(len(walldomains[0])): # for every variable find allowable letters for (prev,curr,next)
+        isvaratwall = varind==varatwall
+        varvalues=tuple([walldomains[k][varind] for k in triple])
+        chars=getChars2(isvaratwall,varvalues) #simple algorithm
+        if chars:
+            pass            
+        elif isvaratwall:
+            chars=getCharsExtrema(*getAdditionalWallInfo(varind,varvalues,inandoutedges,walldomains))
+        else:
+            chars=getCharsNoExtrema(*getAdditionalWallInfo(varind,varvalues,inandoutedges,walldomains))
+        walllabels=[l+c for l in walllabels for c in chars]
+    return walllabels
+
+
 def pathDependentLabelConstruction((previouswall,wall,nextwall),inedges,outedges,walldomains,varatwall):
     # make a label for 'wall' that depends on where the path came from and where it's going
     if wall==nextwall: #if at steady state, do not label
@@ -227,11 +316,14 @@ def makeWallInfo(outedges,walldomains,varsaffectedatwall):
     inedges=[tuple([j for j,o in enumerate(outedges) if node in o]) for node in range(len(outedges))]   
     # make every triple and the list of associated wall labels; store in dict indexed by (inedge,wall)
     wallinfo={}
-    for wall,(ie,oe) in enumerate(zip(inedges,outedges)):
-       for inedge,outedge in itertools.product(ie,oe):
-            # construct the wall label for every permissible triple (inedge, wall, outedge)
-            triple=(inedge,wall,outedge)
-            pdlc=pathDependentLabelConstruction(triple,inedges,outedges,walldomains,varsaffectedatwall[wall])
+    for currentwall,(ie,oe) in enumerate(zip(inedges,outedges)):
+       for previouswall,nextwall in itertools.product(ie,oe):
+            # construct the wall label for every permissible triple
+            triple=(previouswall,currentwall,nextwall)
+            inandoutedges=(outedges[previouswall],inedges[currentwall],outedges[currentwall],inedges[nextwall])
+            varatwall=varsaffectedatwall[currentwall]
+            pdlc=pathDependentLabelConstruction2(triple,inandoutedges,walldomains,varatwall)
+            # pdlc=pathDependentLabelConstruction(triple,inedges,outedges,walldomains,varatwall)
             key=triple[:-1]
             value=(triple[-1],pdlc)
             if key in wallinfo:

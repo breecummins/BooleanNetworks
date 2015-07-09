@@ -31,7 +31,7 @@ def test0(showme=1,findallmatches=1):
 
     pattern=['md','um','Mu','dM','md']
     match = matchPattern(pattern,wallinfo,cyclic=1,findallmatches=findallmatches)
-    if showme and findallmatches: print match==[(0, 1, 4, 6, 5, 2, 0), (3, 4, 6, 5, 3)]
+    if showme and findallmatches: print set(match)==set([(0, 1, 4, 6, 5, 2, 0), (3, 4, 6, 5, 3)])
     if showme and not findallmatches: print match[0] in [(0, 1, 4, 6, 5, 2, 0), (3, 4, 6, 5, 3)]
 
     pattern=['um','md'] #intermediate extrema
@@ -62,17 +62,17 @@ def test2(showme=1,findallmatches=1):
 
     pattern=['dM','md','um','Mu','dM']
     match = matchPattern(pattern,wallinfo,cyclic=1,findallmatches=findallmatches)
-    if showme and findallmatches: print match==[(2,0,1,3,2),(2,0,1,4,6,5,2)]
+    if showme and findallmatches: print set(match)==set([(2,0,1,3,2),(2,0,1,4,6,5,2)])
     if showme and not findallmatches: print match[0] in [(2,0,1,3,2),(2,0,1,4,6,5,2)]
 
     pattern=['Mu','dM','md','um','Mu']
     match = matchPattern(pattern,wallinfo,cyclic=1,findallmatches=findallmatches)
-    if showme and findallmatches: print match==[(3,2,0,1,3),(6,5,2,0,1,4,6)]
+    if showme and findallmatches: print set(match)==set([(3,2,0,1,3),(6,5,2,0,1,4,6)])
     if showme and not findallmatches: print match[0] in [(3,2,0,1,3),(6,5,2,0,1,4,6)] 
 
     pattern=['um','Mu'] #acyclic
     match = matchPattern(pattern,wallinfo,cyclic=0,findallmatches=findallmatches)
-    if showme and findallmatches: print match==[(1,4,6),(1,3)]
+    if showme and findallmatches: print set(match)==set([(1,4,6),(1,3)])
     if showme and not findallmatches: print match[0] in [(1,4,6),(1,3)]
 
 def test3(showme=1,findallmatches=1):
@@ -91,7 +91,7 @@ def test4(showme=1,findallmatches=1):
 
     pattern=['md','um','Mu','dM','md']
     match = matchPattern(pattern,wallinfo,cyclic=1,findallmatches=findallmatches)
-    if showme and findallmatches: print match==[(1,0,2,5,6,4,1),(1,3,6,4,1)]
+    if showme and findallmatches: print set(match)==set([(1,0,2,5,6,4,1),(1,3,6,4,1)])
     if showme and not findallmatches: print match[0] in [(1,0,2,5,6,4,1),(1,3,6,4,1)]
 
     pattern=['mdu','umu','Muu','dMu','mdu']
@@ -104,7 +104,7 @@ def test5(showme=1,findallmatches=1):
     patternnames,patternmaxmin=fp.parsePatterns()
     patterns=pp.translatePatterns(varnames,patternnames,patternmaxmin,cyclic=1)
     match = matchPattern(patterns[0],wallinfo,cyclic=1,findallmatches=findallmatches)
-    if showme and findallmatches: print match==[(4, 8, 10, 5, 2, 1, 4), (0, 3, 7, 9, 10, 5, 2, 1, 0), (3, 7, 9, 10, 5, 2, 1, 0, 3), (4, 6, 7, 9, 10, 5, 2, 1, 4)]
+    if showme and findallmatches: print set(match)==set([(4, 8, 10, 5, 2, 1, 4), (0, 3, 7, 9, 10, 5, 2, 1, 0), (3, 7, 9, 10, 5, 2, 1, 0, 3), (4, 6, 7, 9, 10, 5, 2, 1, 4)])
     if showme and not findallmatches: print match[0] in [(4, 8, 10, 5, 2, 1, 4), (0, 3, 7, 9, 10, 5, 2, 1, 0), (3, 7, 9, 10, 5, 2, 1, 0, 3), (4, 6, 7, 9, 10, 5, 2, 1, 4)]
     match = matchPattern(patterns[1],wallinfo,cyclic=1,findallmatches=findallmatches)
     if showme: print 'None' in match
@@ -118,7 +118,7 @@ def test6(showme=1,findallmatches=1):
     for p,s in zip(patterns,solutions):
         match = matchPattern(p,wallinfo,cyclic=1,findallmatches=findallmatches)
         if s:
-            if showme and findallmatches: print match==s
+            if showme and findallmatches: print set(match)==set(s)
             if showme and not findallmatches: print match[0] in s
         else:
             if showme: print 'None' in match and 'Pattern' in match
