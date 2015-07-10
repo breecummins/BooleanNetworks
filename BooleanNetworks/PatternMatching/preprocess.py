@@ -69,6 +69,86 @@ def translatePatterns(varnames,patternnames,patternmaxmin,cyclic=0):
                     pattern.append(pattern[0])
                 patterns.append(pattern)
     return patterns
+
+def translatePatterns2(varnames,patternnames,patternmaxmin,cyclic=0): 
+    #number of variables in the system (may be fewer in the pattern)
+    numvars=len(varnames)
+    # translate names into indices and 'max', 'min' into 'M','m'
+    patterninds=[[varnames.index(n) for n in pn] for pn in patternnames]
+    patternextrema=[['M' if e=='max' else 'm' for e in extrema] for extrema in patternmaxmin]
+    # check that each pattern is consistent
+    patternnames,patternmaxmin=checkPatternConsistency(numvars,patterninds,patternextrema) 
+    # alter pattern if needed to make cyclic
+    if cyclic:
+        patternnames,patternmaxmin=makeCyclicPatterns(patterninds,patternextrema)
+    # loop over each provided pattern and save the result
+    list_of_patterns=[]
+    for inds,extrema in zip(patterninds,patternextrema):
+        pattern=fillExtrema(numvars,inds,extrema)
+        missingvars=set(range(len(varnames))).difference(set(inds))
+        if missingvars:
+            patterns=fillMissingVariables(missingvars,pattern)
+        else:
+            patterns=[pattern]
+        list_of_patterns.append(patterns)
+    return list_of_patterns
+
+def checkPatternConsistency(numvars,patterninds,patternextrema):
+    consistent_inds=[]
+    consistent_extrema=[]
+    for inds,extrema in zip(patterninds,patternextrema):
+        if isGoodPattern(numvars,inds,extrema):
+            consistent_inds.append(inds)
+            consistent_extrema.append(extrema)
+    return consistent_inds,consistent_extrema
+
+def isGoodPattern(numvars,inds,extrema):
+    pattern=zip(inds,extrema)
+    for k in range(numvars):
+        record_maxmin=filter(None,[extremum if k==ind else None for ind,extremum in pattern])
+        if set(record_maxmin[::2])==set(['m','M']) or set(record_maxmin[1::2])==set(['m','M']):
+            print "Pattern {} is not consistent; removing from search. Every variable must alternate maxima and minima.".format(pattern)
+            return False
+    return True
+
+def makeCyclicPatterns(patterninds,patternextrema):
+    cyclic_inds=[]
+    cyclic_extrema=[]
+    for inds,extrema in zip(patterninds,patternextrema):
+        if inds[0] != inds[-1] or extrema[0] != extrema[-1]:
+            inds.append(inds[0])
+            extrema.append(extrema[0])
+        cyclic_inds.append(inds)
+        cyclic_extrema.append(extrema)
+    return cyclic_inds,cyclic_extrema
+
+def fillExtrema(numvars,inds,extrema):
+    # for each variable k, record the sequence of extrema 
+    extrema_for_each_var = [''.join([extremum if k == ind else '0' for ind,extremum in zip(inds,extrema)]) for k in range(numvars)]
+    # use locations of extrema to fill in blanks; for example, M 0 0 m 0 --> M d d m u, by inspection of extrema  
+    filled_in_sequence_for_each_var=[]
+    for sequence in extrema_for_each_var:
+        filled_in_sequence=[]
+        for k,s in enumerate(sequence):
+            if s!='0':
+                filled_in_sequence.append(s)
+            else:
+                K=k
+                while sequence[K]=='0' and K>0:
+                    K-=1
+                J=k
+                while sequence[J]=='0' and J<len(sequence)-1:
+                    J+=1
+                direction = 'd' if sequence[K] in ['M','d'] or sequence[J] in ['m','d'] else 'u'
+                filled_in_sequence.append(direction)
+        filled_in_sequence_for_each_var.append(filled_in_sequence)
+    # knit the individual variable sequences into the words of the pattern
+    pattern = [''.join([seq[k] for seq in filled_in_sequence_for_each_var]) for k in range(len(sequence))]
+    return pattern
+        
+
+def fillMissingVariables():
+    pass
  
 def varsAtWalls(threshnames,walldomains,wallthresh,varnames):
     varsaffectedatthresh=[]
@@ -93,7 +173,7 @@ def makeWallGraphFromDomainGraph(domgraph,cells):
         c0=cells[de[0]]
         c1=cells[de[1]]
         n=len(c0)
-        location=[False if c0[k]==c1[k] else True for k in range(n)]
+        location=[True if c0[k]!=c1[k] else False for k in range(n)]
         if sum(location) > 1:
             raise RunTimeError("The domain graph has an edge between nonadjacent domains. Aborting.")
         elif sum(location)==0:
@@ -102,4 +182,3 @@ def makeWallGraphFromDomainGraph(domgraph,cells):
             wallthresh.append(location.index(True))
             walldomains.append(tuple([sum(c0[k]+c1[k])/4.0 for k in range(n)])) 
     return outedges,wallthresh,walldomains
-

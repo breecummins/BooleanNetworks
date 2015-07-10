@@ -12,72 +12,63 @@ def testme():
 
 def test0():
     outedges,walldomains,varsaffectedatwall=tc.test0()
-    inedges=[tuple([j for j,o in enumerate(outedges) if node in o]) for node in range(len(outedges))]   
     wallinfo = wl.makeWallInfo(outedges,walldomains,varsaffectedatwall)
-    print set(wl.getFirstAndNextWalls('md',wallinfo['triples'],wallinfo['walllabels']))==set([(0,1),(3,4)])    
-    print set(wl.getFirstAndNextWalls('um',wallinfo['triples'],wallinfo['walllabels']))==set([(4,6)])    
-    print set(wl.getFirstAndNextWalls('ud',wallinfo['triples'],wallinfo['walllabels']))==set([(1,4)])    
-    print set(wl.getFirstAndNextWalls('uM',wallinfo['triples'],wallinfo['walllabels']))==set([])    
-    print wl.pathDependentLabelConstruction(3,4,6,walldomains, outedges,varsaffectedatwall[4],inedges)==['um']
-    print wl.pathDependentLabelConstruction(1,4,6,walldomains,outedges,varsaffectedatwall[4],inedges)==['um']
-    print wl.infoFromWalls(0,walldomains[4][0],[1,3],2,walldomains)==(True,False)
+    print wallinfo[(3,4)]==[(6,('um',))]
+    print wallinfo[(1,4)]==[(6,('um',))]
+    print set(wallinfo[(6,5)])==set([(2,('dM',)),(3,('dM',))])
+    print wl.infoFromWalls(0,walldomains[4][0],[1,3],walldomains)==(True,False)
 
 def test1():
     outedges,walldomains,varsaffectedatwall=tc.test1()
-    inedges=[tuple([j for j,o in enumerate(outedges) if node in o]) for node in range(len(outedges))]   
     wallinfo = wl.makeWallInfo(outedges,walldomains,varsaffectedatwall)
-    print set(wl.getFirstAndNextWalls('dd',wallinfo['triples'],wallinfo['walllabels']))==set([])    
-    print set(wl.getFirstAndNextWalls('md',wallinfo['triples'],wallinfo['walllabels']))==set([(0,1)])    
-    print set(wl.getFirstAndNextWalls('dM',wallinfo['triples'],wallinfo['walllabels']))==set([(2,0)])    
-    print wl.pathDependentLabelConstruction(0,1,3,walldomains, outedges,varsaffectedatwall[1],inedges)==['um']
-    print wl.pathDependentLabelConstruction(3,2,1,walldomains,outedges,varsaffectedatwall[2],inedges)==['dM']    
-    print wl.infoFromWalls(1,walldomains[2][1],[3],2,walldomains)==(True,False)
+    print wallinfo[(0,1)]==[(3,('um',))]
+    print wallinfo[(1,3)]==[(2,('Mu',))]
+    print wallinfo[(3,2)]==[(0,('dM',))]
+    print wallinfo[(2,0)]==[(1,('md',))]
+    print wl.infoFromWalls(1,walldomains[2][1],[3],walldomains)==(True,False)
 
 def test2():
     outedges,walldomains,varsaffectedatwall=tc.test2()
-    inedges=[tuple([j for j,o in enumerate(outedges) if node in o]) for node in range(len(outedges))]   
     wallinfo = wl.makeWallInfo(outedges,walldomains,varsaffectedatwall)
-    print set(wl.getFirstAndNextWalls('Mu',wallinfo['triples'],wallinfo['walllabels']))==set([(3,2),(6,5)])    
-    print set(wl.getFirstAndNextWalls('md',wallinfo['triples'],wallinfo['walllabels']))==set([(0,1)])    
-    print set(wl.getFirstAndNextWalls('uM',wallinfo['triples'],wallinfo['walllabels']))==set([])    
-    print wl.pathDependentLabelConstruction(0,1,3,walldomains, outedges,varsaffectedatwall[1],inedges)==['um']
-    print wl.pathDependentLabelConstruction(3,2,0,walldomains,outedges,varsaffectedatwall[2],inedges)==['dM']
-    print wl.pathDependentLabelConstruction(1,4,6,walldomains,outedges,varsaffectedatwall[4],inedges)==['uu']    
-    print wl.infoFromWalls(1,walldomains[1][1],[3,4],2,walldomains)==(False,True)
+    print set(wallinfo[(0,1)])==set([(3,('um',)),(4,('um',))])
+    print wallinfo[(3,2)]==[(0,('dM',))]
+    print wallinfo[(1,4)]==[(6,('uu',))]
+    print wl.infoFromWalls(1,walldomains[1][1],[3,4],walldomains)==(False,True)
 
 def test3():
     outedges,walldomains,varsaffectedatwall,varnames,threshnames=tc.test3()
-    inedges=[tuple([j for j,o in enumerate(outedges) if node in o]) for node in range(len(outedges))]   
     wallinfo = wl.makeWallInfo(outedges,walldomains,varsaffectedatwall)
-    print set(wl.getFirstAndNextWalls('Muu',wallinfo['triples'],wallinfo['walllabels']))==set([])    
-    print set(wl.getFirstAndNextWalls('ddm',wallinfo['triples'],wallinfo['walllabels']))==set([])    
-    print set(wl.getFirstAndNextWalls('uMd',wallinfo['triples'],wallinfo['walllabels']))==set([(1,0)])    
-    print set(wl.getFirstAndNextWalls('dmu',wallinfo['triples'],wallinfo['walllabels']))==set([(4,5)])    
-    print wl.pathDependentLabelConstruction(0,2,4,walldomains, outedges,varsaffectedatwall[2],inedges)==['ddu','Mdu']
-    print wl.pathDependentLabelConstruction(3,1,0,walldomains, outedges,varsaffectedatwall[1],inedges)==['udd','uMd']
-    print wl.pathDependentLabelConstruction(4,5,3,walldomains,outedges,varsaffectedatwall[5],inedges)==['dud','duM']    
-    print wl.pathDependentLabelConstruction(2,4,5,walldomains,outedges,varsaffectedatwall[4],inedges)==['duu','dmu']    
-    print wl.infoFromWalls(1,walldomains[0][1],[1],2,walldomains)==(False,True)
+    print set(wallinfo[(0,2)][0][1])==set(('ddu','Mdu'))
+    print set(wallinfo[(3,1)][0][1])==set(('udd','uMd'))
+    print set(wallinfo[(4,5)][0][1])==set(('dud','duM'))
+    print set(wallinfo[(2,4)][0][1])==set(('duu','dmu'))
+    print wl.infoFromWalls(1,walldomains[0][1],[1],walldomains)==(False,True)
 
 def test4():
     outedges,walldomains,varsaffectedatwall=tc.test4()
-    inedges=[tuple([j for j,o in enumerate(outedges) if node in o]) for node in range(len(outedges))]   
     wallinfo = wl.makeWallInfo(outedges,walldomains,varsaffectedatwall)
-    print set(wl.getFirstAndNextWalls('um',wallinfo['triples'],wallinfo['walllabels']))==set([(2,5),(3,6)])    
-    print set(wl.getFirstAndNextWalls('dd',wallinfo['triples'],wallinfo['walllabels']))==set([])    
-    print wl.pathDependentLabelConstruction(4,1,3,walldomains, outedges,varsaffectedatwall[1],inedges)==['md']
-    print wl.pathDependentLabelConstruction(4,1,0,walldomains, outedges,varsaffectedatwall[1],inedges)==['md']
-    print wl.pathDependentLabelConstruction(5,6,4,walldomains, outedges,varsaffectedatwall[6],inedges)==['Mu']
+    print set(wallinfo[(4,1)])==set([(0,('md',)),(3,('md',))])
+    print wallinfo[(5,6)]==[(4,('Mu',))]
+    print wallinfo[(3,6)]==[(4,('Mu',))]
 
 def test5():
     outedges,walldomains,varsaffectedatwall,varnames,threshnames=tc.test5()
     wallinfo = wl.makeWallInfo(outedges,walldomains,varsaffectedatwall)
-    print set(wl.getFirstAndNextWalls('mdd',wallinfo['triples'],wallinfo['walllabels']))==set([(0,3),(3,7),(4,8),(4,6)])
-    print set(wl.getFirstAndNextWalls('umd',wallinfo['triples'],wallinfo['walllabels']))==set([(7,9),(8,10)])
+    print set(wallinfo[(1,0)][0][1])==set(('ddd','mdd','udd','Mdd'))
+    print set( [ wallinfo[(2,1)][k][0] for k in [0,1] ]  )==set([0,4])
+    print set( wallinfo[(2,1)][0][1]  )==set(('ddd','ddM'))
+    print set( wallinfo[(2,1)][1][1]  )==set(('ddd','ddM'))
+    print set(wallinfo[(1,4)])==set([(6,('mdd','udd')),(8,('mdd','udd'))])
 
 def test6():
     outedges,walldomains,varsaffectedatwall,varnames,threshnames=tc.test6()
     wallinfo = wl.makeWallInfo(outedges,walldomains,varsaffectedatwall)
+    print set(wallinfo[(7,0)])==set([(3,('umu',)),(8,('umu',)),(13,('umu',))])
+    print set(wallinfo[(3,15)])==set([(5,('Muu',)),(11,('Muu',))])
+    print wallinfo[(4,16)]==[(6,('Muu',))]
+    print wallinfo[(10,16)]==[(6,('Muu',))]
+    print wallinfo[(0,13)]==[(9,('Muu',))]
+
 
 if __name__=='__main__':
     testme()

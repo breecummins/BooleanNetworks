@@ -1,22 +1,22 @@
 import itertools
 
-def getChars(isvaratwall,(p,c,n)):
-    chars=[]
-    if p<c<n:
+def getChars(isvaratwall,(prev,curr,next)):
+    chars=None
+    if prev<curr<next:
         chars = ['u']
-    elif p>c>n:
+    elif prev>curr>next:
         chars = ['d']
     elif isvaratwall: # extrema allowed
-        if p<c>n:
+        if prev<curr>next:
             chars=['M'] 
-        elif p>c<n:
+        elif prev>curr<next:
             chars=['m']
     elif not isvaratwall: # extrema not allowed
-        if p<c>n or p>c<n:
+        if prev<curr>next or prev>curr<next:
             raise RunTimeError('Debug: Extrema are not allowed for variables that are not affected at threshold.')
-        elif p<c==n or p==c<n:
+        elif prev<curr==next or prev==curr<next:
             chars = ['u']
-        elif p>c==n or p==c>n:
+        elif prev>curr==next or prev==curr>next:
             chars = ['d']
     return chars
 
@@ -81,18 +81,17 @@ def pathDependentLabelConstruction(triple,inandoutedges,walldomains,varatwall):
         varvalues=tuple([walldomains[k][varind] for k in triple])
         # try simple algorithm first
         chars=getChars(isvaratwall,varvalues) 
-        if chars:
-            # simple algorithm worked, skip complex algorithm
-            pass            
-        elif isvaratwall:
-            # use extra information to get the characters when extrema are allowed
-            chars=getCharsExtrema(*getAdditionalWallInfo(varind,varvalues,inandoutedges,walldomains))
-        else:
-            # use extra information to get the characters when extrema are not allowed
-            chars=getCharsNoExtrema(*getAdditionalWallInfo(varind,varvalues,inandoutedges,walldomains))
+        if chars is None:
+            # now try complex algorithm
+            if isvaratwall:
+                # use extra information to get the characters when extrema are allowed
+                chars=getCharsExtrema(*getAdditionalWallInfo(varind,varvalues,inandoutedges,walldomains))
+            else:
+                # use extra information to get the characters when extrema are not allowed
+                chars=getCharsNoExtrema(*getAdditionalWallInfo(varind,varvalues,inandoutedges,walldomains))
         # make every combination of characters in the growing labels
         walllabels=[l+c for l in walllabels for c in chars]
-    return walllabels
+    return tuple(walllabels)
 
 def makeWallInfo(outedges,walldomains,varsaffectedatwall):
     # This function creates the dictionary used in the core recursive call for the pattern matching.
@@ -106,6 +105,7 @@ def makeWallInfo(outedges,walldomains,varsaffectedatwall):
             inandoutedges=(outedges[previouswall],inedges[currentwall],outedges[currentwall],inedges[nextwall])
             varatwall=varsaffectedatwall[currentwall]
             labels=pathDependentLabelConstruction(triple,inandoutedges,walldomains,varatwall)
+            # Put the result in the dictionary.
             key=(previouswall,currentwall)
             value=(nextwall,labels)
             # If the key already exists, append to its list. Otherwise start the list.
