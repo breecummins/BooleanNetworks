@@ -124,25 +124,23 @@ def makeCyclicPatterns(patterninds,patternextrema):
 
 def fillExtrema(numvars,inds,extrema):
     # for each variable k, record the sequence of extrema 
-    extrema_for_each_var = [''.join([extremum if k == ind else '0' for ind,extremum in zip(inds,extrema)]) for k in range(numvars)]
-    # use locations of extrema to fill in blanks; for example, M 0 0 m 0 --> M d d m u, by inspection of extrema  
+    extrema_for_each_var = [[extremum if k == ind else '0' for ind,extremum in zip(inds,extrema)] for k in range(numvars)]
+    # use locations of extrema to fill in blanks; for example, 'M00m0' --> 'Mddmu', by inspection of extrema 
+    # ('Mddmu' = max down down min up)
     filled_in_sequence_for_each_var=[]
     for sequence in extrema_for_each_var:
-        filled_in_sequence=[]
         for k,s in enumerate(sequence):
-            if s!='0':
-                filled_in_sequence.append(s)
-            else:
-                K=k
+            if s=='0':
+                J,K=k,k
                 while sequence[K]=='0' and K>0:
                     K-=1
-                J=k
                 while sequence[J]=='0' and J<len(sequence)-1:
                     J+=1
-                direction = 'd' if sequence[K] in ['M','d'] or sequence[J] in ['m','d'] else 'u'
-                filled_in_sequence.append(direction)
-        filled_in_sequence_for_each_var.append(filled_in_sequence)
+                direction = 'd' if sequence[K] in ['M','d'] or sequence[J] in ['m','d'] else 'u' if sequence[K] in ['m','u'] or sequence[J] in ['M','u'] else '0'
+                sequence[k]=direction
+        filled_in_sequence_for_each_var.append(sequence)
     # knit the individual variable sequences into the words of the pattern
+    # for example, ['uuMd','dmuu','Mddm'] --> ['udM','umd','Mud','dum']
     pattern = [''.join([seq[k] for seq in filled_in_sequence_for_each_var]) for k in range(len(sequence))]
     return pattern
         
