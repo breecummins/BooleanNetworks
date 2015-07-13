@@ -114,7 +114,7 @@ def recursePattern(lastwall,currentwall,match,matches,pattern,wallinfo,cyclic):
     return matches
 
 def recursePatternOneMatch(lastwall,currentwall,match,pattern,wallinfo,cyclic):
-    # Stop after one match by throwing an error. Return the match in the error text (this is a hack).
+    # Stop after one match by throwing an error. Return the match as a string in the error text.
     if len(pattern)==0:
         if (cyclic and match[0]==lastwall) or not cyclic: 
             raise ValueError(str([tuple(match)]))
