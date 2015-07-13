@@ -1,5 +1,50 @@
 import itertools
 
+def makeWallInfo(outedges,walldomains,varsaffectedatwall):
+    # This function creates the dictionary used in the core recursive call for the pattern matching.
+    inedges=[tuple([j for j,o in enumerate(outedges) if node in o]) for node in range(len(outedges))]   
+    # make every triple and the list of associated wall labels; store in dict indexed by (inedge,wall)
+    wallinfo={}
+    for currentwall,(ie,oe) in enumerate(zip(inedges,outedges)):
+       for previouswall,nextwall in itertools.product(ie,oe):
+            # construct the wall label for every permissible triple
+            triple=(previouswall,currentwall,nextwall)
+            inandoutedges=(outedges[previouswall],inedges[currentwall],outedges[currentwall],inedges[nextwall])
+            varatwall=varsaffectedatwall[currentwall]
+            labels=pathDependentLabelConstruction(triple,inandoutedges,walldomains,varatwall)
+            # Put the result in the dictionary.
+            key=(previouswall,currentwall)
+            value=(nextwall,labels)
+            # If the key already exists, append to its list. Otherwise start the list.
+            if key in wallinfo:
+                wallinfo[key].append(value)
+            else:
+                wallinfo[key]=[value]
+    return wallinfo
+
+def pathDependentLabelConstruction(triple,inandoutedges,walldomains,varatwall):
+    # make a label for the given triple
+    if triple[1]==triple[2]: # can't handle steady states
+        raise RunTimeError('Debug: Wall has a self-loop.')
+    walllabels=['']
+    # for every variable find allowable letters for triple
+    for varind in range(len(walldomains[0])): 
+        isvaratwall = varind==varatwall
+        varvalues=tuple([walldomains[k][varind] for k in triple])
+        # try simple algorithm first
+        chars=getChars(isvaratwall,varvalues) 
+        if chars is None:
+            # now try complex algorithm
+            if isvaratwall:
+                # use extra information to get the characters when extrema are allowed
+                chars=getCharsExtrema(*getAdditionalWallInfo(varind,varvalues,inandoutedges,walldomains))
+            else:
+                # use extra information to get the characters when extrema are not allowed
+                chars=getCharsNoExtrema(*getAdditionalWallInfo(varind,varvalues,inandoutedges,walldomains))
+        # make every combination of characters in the growing labels
+        walllabels=[l+c for l in walllabels for c in chars]
+    return tuple(walllabels)
+
 def getChars(isvaratwall,(prev,curr,next)):
     chars=None
     if prev<curr<next:
@@ -70,50 +115,6 @@ def getCharsNoExtrema(prev_gt_out,prev_lt_out,curr_gt_in,curr_lt_in,curr_gt_out,
         chars=['d','u']
     return chars
 
-def pathDependentLabelConstruction(triple,inandoutedges,walldomains,varatwall):
-    # make a label for the given triple
-    if triple[1]==triple[2]: # can't handle steady states
-        raise RunTimeError('Debug: Wall has a self-loop.')
-    walllabels=['']
-    # for every variable find allowable letters for triple
-    for varind in range(len(walldomains[0])): 
-        isvaratwall = varind==varatwall
-        varvalues=tuple([walldomains[k][varind] for k in triple])
-        # try simple algorithm first
-        chars=getChars(isvaratwall,varvalues) 
-        if chars is None:
-            # now try complex algorithm
-            if isvaratwall:
-                # use extra information to get the characters when extrema are allowed
-                chars=getCharsExtrema(*getAdditionalWallInfo(varind,varvalues,inandoutedges,walldomains))
-            else:
-                # use extra information to get the characters when extrema are not allowed
-                chars=getCharsNoExtrema(*getAdditionalWallInfo(varind,varvalues,inandoutedges,walldomains))
-        # make every combination of characters in the growing labels
-        walllabels=[l+c for l in walllabels for c in chars]
-    return tuple(walllabels)
-
-def makeWallInfo(outedges,walldomains,varsaffectedatwall):
-    # This function creates the dictionary used in the core recursive call for the pattern matching.
-    inedges=[tuple([j for j,o in enumerate(outedges) if node in o]) for node in range(len(outedges))]   
-    # make every triple and the list of associated wall labels; store in dict indexed by (inedge,wall)
-    wallinfo={}
-    for currentwall,(ie,oe) in enumerate(zip(inedges,outedges)):
-       for previouswall,nextwall in itertools.product(ie,oe):
-            # construct the wall label for every permissible triple
-            triple=(previouswall,currentwall,nextwall)
-            inandoutedges=(outedges[previouswall],inedges[currentwall],outedges[currentwall],inedges[nextwall])
-            varatwall=varsaffectedatwall[currentwall]
-            labels=pathDependentLabelConstruction(triple,inandoutedges,walldomains,varatwall)
-            # Put the result in the dictionary.
-            key=(previouswall,currentwall)
-            value=(nextwall,labels)
-            # If the key already exists, append to its list. Otherwise start the list.
-            if key in wallinfo:
-                wallinfo[key].append(value)
-            else:
-                wallinfo[key]=[value]
-    return wallinfo
 
 
 
