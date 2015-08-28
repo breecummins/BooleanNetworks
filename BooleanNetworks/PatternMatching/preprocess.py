@@ -1,3 +1,25 @@
+# The MIT License (MIT)
+
+# Copyright (c) 2015 Breschine Cummins
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
 import walllabels as wl
 import fileparsers as fp
 import itertools
@@ -5,7 +27,7 @@ import itertools
 def preprocess(fname='dsgrn_output.json',pname='patterns.txt',cyclic=1):
     # read input files; basedir should have dsgrn_output.json and patterns.txt
     varnames,threshnames,domgraph,cells=fp.parseJSONFormat(fname)
-    patternnames,patternmaxmin=fp.parsePatterns(pname)
+    patternnames,patternmaxmin,originalpatterns=fp.parsePatterns(pname)
     # put max/min patterns in terms of the alphabet u,m,M,d
     patterns=translatePatterns(varnames,patternnames,patternmaxmin,cyclic=cyclic)
     # translate domain graph into wall graph
@@ -14,7 +36,7 @@ def preprocess(fname='dsgrn_output.json',pname='patterns.txt',cyclic=1):
     varsaffectedatwall=varsAtWalls(threshnames,walldomains,wallthresh,varnames)
     # make wall labels
     wallinfo = wl.makeWallInfo(outedges,walldomains,varsaffectedatwall)
-    return patterns, wallinfo
+    return patterns, originalpatterns, wallinfo
 
 def translatePatterns(varnames,patternnames,patternmaxmin,cyclic=0):
     numvars=len(varnames)
@@ -30,9 +52,10 @@ def translatePatterns(varnames,patternnames,patternmaxmin,cyclic=0):
             # build a set of template patterns if there are missing variables in the pattern (these could either be 'u' or 'd')
             templates=makeTemplates(numvars,inds,variable_extrema,length_pattern)
             # for each template, fill in the remaining blanks based on the location of the extrema, and knit the variable sequences into a pattern
+            pats=[]
             for template in templates:
-                pattern=makePattern(template,length_pattern,cyclic)
-                patterns.append(pattern)
+                pats.append(makePattern(template,length_pattern,cyclic))
+            patterns.append(pats)                
     return patterns
 
 def isGoodPattern(variable_extrema,inds,extrema):

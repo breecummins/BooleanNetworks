@@ -1,20 +1,47 @@
+# The MIT License (MIT)
+
+# Copyright (c) 2015 Breschine Cummins
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
 import preprocess as pp
 
 def callPatternMatch(fname='dsgrn_output.json',pname='patterns.txt',rname='results.txt',cyclic=1,findallmatches=1, printtoscreen=0,writetofile=1): # pragma: no cover
     print "Preprocessing..."
-    patterns,wallinfo=pp.preprocess(fname,pname,cyclic) 
+    patternlist,originalpatterns,wallinfo=pp.preprocess(fname,pname,cyclic) 
     print "Searching..."
     if writetofile: f=open(rname,'w',0)
-    for pattern in patterns:
-        matches=matchPattern(pattern,wallinfo,cyclic=cyclic,findallmatches=findallmatches)
+    for patterns,origpat in zip(patternlist,originalpatterns):
+        allmatches=[]
+        for pattern in patterns:
+            matches=matchPattern(pattern,wallinfo,cyclic=cyclic,findallmatches=findallmatches)
+            if 'None' not in matches:
+                allmatches.extend(matches)
+        matches=sorted(list(set(allmatches)))
         if printtoscreen:
             print "\n"
             print '-'*25
-            print "Pattern: {}".format(pattern)
+            print "Pattern: {}".format(origpat)
             print "Results: {}".format(matches)
             print '-'*25
-        if writetofile and 'None' not in matches:
-            f.write("Pattern: {}".format(pattern)+'\n')
+        if writetofile and matches:
+            f.write("Pattern: {}".format(origpat)+'\n')
             f.write("Results: {}".format(matches)+'\n')
     if writetofile: f.close()
 

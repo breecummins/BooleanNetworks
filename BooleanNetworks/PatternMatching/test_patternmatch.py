@@ -1,3 +1,25 @@
+# The MIT License (MIT)
+
+# Copyright (c) 2015 Breschine Cummins
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+
 from patternmatch import matchPattern
 import preprocess as pp
 import fileparsers as fp
@@ -78,17 +100,15 @@ def test2(showme=1,findallmatches=1):
 def test3(showme=1,findallmatches=1):
     outedges,walldomains,varsaffectedatwall,varnames,threshnames=tc.test3()
     wallinfo = makeWallInfo(outedges,walldomains,varsaffectedatwall)
-    patternnames,patternmaxmin=fp.parsePatterns()
+    patternnames,patternmaxmin,originalpatterns=fp.parsePatterns()
     patterns=pp.translatePatterns(varnames,patternnames,patternmaxmin,cyclic=1)
-    match = matchPattern(patterns[0],wallinfo,cyclic=1,findallmatches=findallmatches)
+    match = matchPattern(patterns[0][0],wallinfo,cyclic=1,findallmatches=findallmatches)
     if showme: print match==[(0,2,4,5,3,1,0)]
-    match = matchPattern(patterns[1],wallinfo,cyclic=1,findallmatches=findallmatches)
+    match = matchPattern(patterns[1][0],wallinfo,cyclic=1,findallmatches=findallmatches)
     if showme: print 'None' in match
 
 def test4(showme=1,findallmatches=1):
     wallinfo = makeWallInfo(*tc.test4())
-    patternnames,patternmaxmin=fp.parsePatterns()
-
     pattern=['md','um','Mu','dM','md']
     match = matchPattern(pattern,wallinfo,cyclic=1,findallmatches=findallmatches)
     if showme and findallmatches: print set(match)==set([(1,0,2,5,6,4,1),(1,3,6,4,1)])
@@ -101,20 +121,21 @@ def test4(showme=1,findallmatches=1):
 def test5(showme=1,findallmatches=1):
     outedges,walldomains,varsaffectedatwall,varnames,threshnames=tc.test5()
     wallinfo = makeWallInfo(outedges,walldomains,varsaffectedatwall)
-    patternnames,patternmaxmin=fp.parsePatterns()
+    patternnames,patternmaxmin,originalpatterns=fp.parsePatterns()
     patterns=pp.translatePatterns(varnames,patternnames,patternmaxmin,cyclic=1)
-    match = matchPattern(patterns[0],wallinfo,cyclic=1,findallmatches=findallmatches)
+    match = matchPattern(patterns[0][0],wallinfo,cyclic=1,findallmatches=findallmatches)
     if showme and findallmatches: print set(match)==set([(4, 8, 10, 5, 2, 1, 4), (0, 3, 7, 9, 10, 5, 2, 1, 0), (3, 7, 9, 10, 5, 2, 1, 0, 3), (4, 6, 7, 9, 10, 5, 2, 1, 4)])
     if showme and not findallmatches: print match[0] in [(4, 8, 10, 5, 2, 1, 4), (0, 3, 7, 9, 10, 5, 2, 1, 0), (3, 7, 9, 10, 5, 2, 1, 0, 3), (4, 6, 7, 9, 10, 5, 2, 1, 4)]
-    match = matchPattern(patterns[1],wallinfo,cyclic=1,findallmatches=findallmatches)
+    match = matchPattern(patterns[1][0],wallinfo,cyclic=1,findallmatches=findallmatches)
     if showme: print 'None' in match
 
 def test6(showme=1,findallmatches=1):
     outedges,walldomains,varsaffectedatwall,varnames,threshnames=tc.test6()
     wallinfo = makeWallInfo(outedges,walldomains,varsaffectedatwall)
-    patternnames,patternmaxmin=fp.parsePatterns()
+    patternnames,patternmaxmin,originalpatterns=fp.parsePatterns()
     patterns=pp.translatePatterns(varnames,patternnames,patternmaxmin,cyclic=1)
     solutions=[[(0, 13, 9, 2, 12, 7, 0), (0, 3, 15, 11, 6, 2, 12, 7, 0), (0, 3, 15, 5, 9, 2, 12, 7, 0), (0, 3, 10, 16, 6, 2, 12, 7, 0)],[(8,4,16,6,2,12,7,0,8)],[(14,4,16,6,14)],None,[(1,4,16,6,2,12,1)],None]
+    patterns=[p for pat in patterns for p in pat]
     for p,s in zip(patterns,solutions):
         match = matchPattern(p,wallinfo,cyclic=1,findallmatches=findallmatches)
         if s:
@@ -125,8 +146,9 @@ def test6(showme=1,findallmatches=1):
 
 def test7(showme=1,findallmatches=1):
     tc.test7()
-    patterns,wallinfo = pp.preprocess(cyclic=1)
+    patterns,originalpatterns,wallinfo = pp.preprocess(cyclic=1)
     solutions=[None,None,[(1,2,3,4,5,0,1)],[(4,5,0,1,2,3,4)]]
+    patterns=[p for pat in patterns for p in pat]
     for p,s in zip(patterns,solutions):
         match = matchPattern(p,wallinfo,cyclic=1,findallmatches=findallmatches)
         if s:
@@ -136,8 +158,9 @@ def test7(showme=1,findallmatches=1):
 
 def test8(showme=1,findallmatches=1):
     tc.test8()
-    patterns,wallinfo = pp.preprocess(cyclic=1)
+    patterns,originalpatterns,wallinfo = pp.preprocess(cyclic=1)
     solutions=[[(1,2,6,0,1),(1, 3, 4, 5, 6, 0, 1)]]*4+[None]*4
+    patterns=[p for pat in patterns for p in pat]
     for p,s in zip(patterns,solutions):
         match = matchPattern(p,wallinfo,cyclic=1,findallmatches=findallmatches)
         if s:
