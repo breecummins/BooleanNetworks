@@ -47,6 +47,8 @@ def strongConnect(outedges):
 
 def strongConnectIndices(outedges):
     components=strongConnect(outedges)
+    # print components
+    # print max(components)
     number_components=[components.count(k) for k in range(max(components)) if components.count(k)>1]
     return number_components, [k for k,c in enumerate(components) if components.count(c)>1]
 
@@ -74,7 +76,7 @@ def makeGraph(genes,outedges,regulation,name='graph_lastedge500.png'):
                 graph.add_edge(pydot.Edge(i,o))
     graph.write_png(name)
 
-def generateResult(topscores=350,threshold=0.1,scorename='350',thresholdname='00'):
+def generateResult(topscores=350,threshold=0.1,scorename='350',thresholdname='00',makegraph=1,saveme=1):
     print 'Parsing file...'
     source,target,type_reg,lem_score=parseFile(threshold)
     genes=chooseGenes(topscores,source,target)
@@ -91,22 +93,40 @@ def generateResult(topscores=350,threshold=0.1,scorename='350',thresholdname='00
     # if flatscores:
     #     print min(flatscores), max(flatscores)
     # print outedges
-    print 'Making graph for {} nodes and {} edges....'.format(len(scc_genes),len([o for oe in outedges for o in oe]))
-    makeGraph(scc_genes,outedges,regulation,name='graph_topscores{}_thresh{}.png'.format(scorename,thresholdname))
-    f=open('data_topscores{}_thresh{}.txt'.format(scorename,thresholdname),'w')
-    f.write('{} top scores and threshold of {}'.format(topscores,threshold)+'\n')
-    f.write('{} nodes and {} edges'.format(len(scc_genes),len([o for oe in outedges for o in oe]))+'\n')
-    f.write('{} strongly connected component(s) with {} nodes in each'.format(len(number_components),number_components)+'\n')
-    f.write(str(scc_genes)+'\n')
-    f.write(str(outedges)+'\n')
-    f.write(str(regulation)+'\n')
-    f.write(str(LEM_scores))
-    f.close()
+    if makegraph:
+        print 'Making graph for {} nodes and {} edges....'.format(len(scc_genes),len([o for oe in outedges for o in oe]))
+        makeGraph(scc_genes,outedges,regulation,name='graph_topscores{}_thresh{}.png'.format(scorename,thresholdname))
+    if saveme:
+        f=open('data_topscores{}_thresh{}.txt'.format(scorename,thresholdname),'w')
+        f.write('{} top scores and threshold of {}'.format(topscores,threshold)+'\n')
+        f.write('{} nodes and {} edges'.format(len(scc_genes),len([o for oe in outedges for o in oe]))+'\n')
+        f.write('{} strongly connected component(s) with {} nodes in each'.format(len(number_components),number_components)+'\n')
+        f.write(str(scc_genes)+'\n')
+        f.write(str(outedges)+'\n')
+        f.write(str(regulation)+'\n')
+        f.write(str(LEM_scores))
+        f.close()
+    return number_components
 
+f=open('datamaxnumnodes.txt','w')
+g=open('datalenscc.txt','w')
 for topscores in [450, 500, 550, 575, 600, 625, 650, 700, 750]:
+    M=[]
     for k,threshold in enumerate([0.5,0.2,0.195,0.19,0.185,0.18,0.17,0.16,0.15,0.12,0.1]):
         print topscores, threshold
-        generateResult(topscores,threshold,str(topscores),str(k).zfill(2))
+        number_components=generateResult(topscores,threshold,str(topscores),str(k).zfill(2),0,0)
+        if threshold>0.1:
+            f.write(str(max(number_components))+' & ')
+            g.write(str(len(number_components))+' & ')
+        else:
+            f.write(str(max(number_components))+'\n')
+            g.write(str(len(number_components))+'\n')
+f.close()
+g.close()
+
+
+
+
 
 
 
