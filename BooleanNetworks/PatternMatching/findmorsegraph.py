@@ -19,6 +19,19 @@ def exists_FC(jsonparsed):
             return morseset
     return False
 
+def all_FC(jsonparsed):
+    allmorsesets=[]
+    for morseset, a in enumerate(jsonparsed["annotations"]):
+        if a[0] == "FC":
+            allmorsesets.append(morseset)
+    return tuple(allmorsesets) if allmorsesets else False
+
+def is_FC(jsonparsed):
+    a = jsonparsed["annotations"]
+    if len(a) == 1 and a[0][0]=="FC":
+        return 0
+    return False
+
 def scan(fname="networks/6D_OneWayForcing.txt",largestparam=10**6,getMorseSet=exists_FC,firstonly=True):
     params=[]
     for p in irange(largestparam):

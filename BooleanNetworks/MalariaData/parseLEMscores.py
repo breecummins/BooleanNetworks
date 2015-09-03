@@ -131,20 +131,27 @@ def generateResult(topscores=350,threshold=0.1,scorename='350',thresholdname='00
         f.close()
     return grouped_scc_gene_inds
 
-# f=open('datamaxnumnodes.txt','w')
-# g=open('datalenscc.txt','w')
-for topscores in [450, 500, 550, 575, 600, 625, 650, 700, 750]:
-    for k,threshold in enumerate([0.5,0.2,0.195,0.19,0.185,0.18,0.17,0.16,0.15,0.12,0.1]):
-        print topscores, threshold
-        grouped_scc_gene_inds=generateResult(topscores,threshold,str(topscores),str(k).zfill(2),0,0,1)
-        # if threshold>0.1:
-        #     f.write(str(max(number_components))+' & ')
-        #     g.write(str(len(number_components))+' & ')
-        # else:
-        #     f.write(str(max(number_components))+'\n')
-        #     g.write(str(len(number_components))+'\n')
-# f.close()
-# g.close()
+topscorelist=range(450,570,5)#[450, 500, 550, 575, 600, 625, 650, 700, 750]
+thresholdlist=[0.5,0.2,0.195,0.194,0.193,0.192,0.191,0.19,0.185,0.18,0.17,0.16,0.15,0.14,0.13,0.12,0.11,0.10]#[0.5,0.2,0.195,0.19,0.185,0.18,0.17,0.16,0.15,0.12,0.1]
+makegraph=1
+saveme=0
+plottimeseries=0
+
+f=open('data_maxnumnodes.txt','w')
+g=open('data_lenscc.txt','w')
+
+for topscore in topscorelist:
+    for k,threshold in enumerate(thresholdlist):
+        print topscore, threshold
+        grouped_scc_gene_inds=generateResult(topscore,threshold,str(topscore),str(k).zfill(2),makegraph,saveme,plottimeseries)
+        if threshold>thresholdlist[-1]:
+            f.write(str(max([len(s) for s in grouped_scc_gene_inds]))+' & ')
+            g.write(str(len(grouped_scc_gene_inds))+' & ')
+        else:
+            f.write(str(max([len(s) for s in grouped_scc_gene_inds]))+'\n')
+            g.write(str(len(grouped_scc_gene_inds))+'\n')
+f.close()
+g.close()
 
 
 
