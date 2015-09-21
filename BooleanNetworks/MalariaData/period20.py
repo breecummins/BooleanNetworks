@@ -80,16 +80,17 @@ def plottimeseries(period20,fname='period20_timeseries.png'):
     # plt.show()
     plt.savefig(fname, bbox_extra_artists=(leghandle,), bbox_inches='tight')
 
-period20 = ['PF3D7_0504700','PF3D7_0506700','PF3D7_0518400','PF3D7_0729000','PF3D7_0818700','PF3D7_0919000','PF3D7_0925700','PF3D7_1008000','PF3D7_1009400','PF3D7_1138800','PF3D7_1225200','PF3D7_1337400']
+if __name__=='__main__':
+    period20 = ['PF3D7_0504700','PF3D7_0506700','PF3D7_0518400','PF3D7_0729000','PF3D7_0818700','PF3D7_0919000','PF3D7_0925700','PF3D7_1008000','PF3D7_1009400','PF3D7_1138800','PF3D7_1225200','PF3D7_1337400']
 
-plottimeseries(period20[:2]+period20[3:7],'period20_timeseries_6node.png')
-# exponents=[10,15,20,22,25]
-# outedgeslist=[]
-# sourcelist=[]
-# sccoutedgeslist=[]
-# for exp,threshold in zip(exponents,[10**(-e) for e in exponents]):
-#     print exp
-#     sccoe,outedges,source=makeNetwork(period20,threshold,scc=1,savename='period20_network_threshexp{}.png'.format(exp),nontrivial=1)
-#     sccoutedgeslist.append(sccoe)
-#     outedgeslist.append(outedges)
-#     sourcelist.append(source)
+    plottimeseries(period20[:2]+period20[3:7],'period20_timeseries_6node.png')
+    # exponents=[10,15,20,22,25]
+    # outedgeslist=[]
+    # sourcelist=[]
+    # sccoutedgeslist=[]
+    # for exp,threshold in zip(exponents,[10**(-e) for e in exponents]):
+    #     print exp
+    #     sccoe,outedges,source=makeNetwork(period20,threshold,scc=1,savename='period20_network_threshexp{}.png'.format(exp),nontrivial=1)
+    #     sccoutedgeslist.append(sccoe)
+    #     outedgeslist.append(outedges)
+    #     sourcelist.append(source)

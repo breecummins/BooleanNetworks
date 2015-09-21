@@ -5,36 +5,48 @@ from subprocess import call
 import sys
 
 
-def getAllParams(fname="networks/6D_Malaria.txt",largestparam=46656,getMorseSet=fmg.is_FC):
-    params=fmg.scan(fname,largestparam,getMorseSet,firstonly=False)
+def getAllParams(fname="networks/5D_Malaria_20hr.txt",smallestparam=0,largestparam=8640000,getMorseSet=fmg.is_FP_clock):
+    params=fmg.scan(fname,smallestparam,largestparam,getMorseSet,firstonly=False)
     f=open('storeparams.txt','w')
     f.write(str(params))
     f.close()
     return params
 
-def parseParams(fname="storeparams.txt"):
+def parseParams(fname="storeparams.txt",format=1):
     f=open(fname,'r')
-    params=eval(f.readline())
+    if format==1:
+        params=eval(f.readline())
+    else:
+        params=[]
+        for r in f.readlines():
+            if r != '\n':
+                params.append((int(r),0))
     f.close()
     return params
 
 def setPattern():
     f=open('patterns.txt','w')
-    for s1 in permutations(['x6 min','x2 min','x3 max','x5 max','x4 max', 'x1 min']):
-        patternstr1=', '.join(s1) + ', x2 max, x6 max, '
-        for s2 in permutations(['x1 max', 'x3 min','x5 min','x4 min']):
+    for s1 in permutations(['x3 max','x5 max','x1 max', 'x4 max']):
+        patternstr1=', '.join(s1) + ', x2 max, '
+        for s2 in permutations(['x1 min', 'x3 min','x5  min', 'x2 min','x4 min']):
             patternstr2=patternstr1 + ', '.join(s2) + ', ' + s1[0] + '\n'
             f.write(patternstr2)
     f.close()
 
-def patternSearch(fname="networks/6D_Malaria.txt",largestparam=46656,getMorseSet=fmg.all_FC,paramsstored=1):
+def patternSearch(fname="networks/5D_Malaria_20hr.txt",smallestparam=26074,largestparam=100000,getMorseSet=fmg.is_FP_clock,paramsstored=1,paramformat=1):
     setPattern()
     if paramsstored:
-        params = parseParams()
+        if paramformat==1:
+            params = parseParams("storeparams.txt",paramformat)
+        else:
+            params = parseParams("storedparams1.txt",paramformat)
     else:
-        params = getAllParams(fname,0,largestparam,getMorseSet)
+        params = getAllParams(fname,smallestparam,largestparam,getMorseSet)
+        f=open("storeparams.txt",'w')
+        f.write(str(params))
+        f.close()
     N=len(params)
-    f=open('malariaresults.txt','w')
+    f=open('malariaresults_20hr.txt','w')
     for k,(p,m) in enumerate(params):
         print "Parameter {} of {}".format(k+1,N)
         if type(m) is tuple:
@@ -57,7 +69,7 @@ def patternSearch(fname="networks/6D_Malaria.txt",largestparam=46656,getMorseSet
 
 if __name__=='__main__':
     # setPattern()
-    patternSearch(getMorseSet=fmg.all_FC,paramsstored=0)
+    patternSearch(paramsstored=0)
 
 
 

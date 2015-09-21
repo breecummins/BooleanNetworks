@@ -85,7 +85,7 @@ def makeGraph(genes,genelist,outedges,regulation,name='graph_lastedge500.png'):
                 graph.add_edge(pydot.Edge(genelist.index(genes[i]),genelist.index(genes[o])))
     graph.write_png(name)
 
-def generateResult(topscores=350,threshold=0.1,scorename='350',thresholdname='00',makegraph=1,saveme=1,plottimeseries=1):
+def generateResult(topscores=350,threshold=0.1,scorename='350',thresholdname='00',makegraph=1,saveme=1,plottimeseries=1,onlylargestnetwork=0):
     print 'Parsing file...'
     source,target,type_reg,lem_score=parseFile(threshold)
     genes=chooseGenes(topscores,source,target)
@@ -97,23 +97,32 @@ def generateResult(topscores=350,threshold=0.1,scorename='350',thresholdname='00
     scc_genenames=[[genes[g]  for g in G] for G in grouped_scc_gene_inds ]
     # print scc_genes
     print 'Pruning outedges...'
-    flat_scc_gene_inds= [g for G in grouped_scc_gene_inds for g in G]
+    if onlylargestnetwork:
+        L = [len(g) for g in grouped_scc_gene_inds]
+        ind=L.index(max(L))
+        grouped_scc_gene_inds = grouped_scc_gene_inds[ind]
+        flat_scc_gene_inds = grouped_scc_gene_inds[:]
+        scc_genenames = scc_genenames[ind]
+        flat_scc_genenames = scc_genenames[:]
+    else:    
+        flat_scc_gene_inds= [g for G in grouped_scc_gene_inds for g in G]
+        flat_scc_genenames = [s for S in scc_genenames for s in S]
     outedges,regulation,LEM_scores=pruneOutedges(flat_scc_gene_inds,outedges,regulation,LEM_scores)
     if makegraph or plottimeseries:
         genelist,timeseries=generateMasterList()
     if makegraph:
         print 'Making graph for {} nodes and {} edges....'.format(len(flat_scc_gene_inds),len([o for oe in outedges for o in oe]))
-        makeGraph([s for S in scc_genenames for s in S],genelist,outedges,regulation,name='graph_topscores{}_thresh{}.png'.format(scorename,thresholdname))
-    if plottimeseries:
-        L=[len(g) for g in grouped_scc_gene_inds]
-        ind = L.index(max(L))
-        scc=grouped_scc_gene_inds[ind]
-        sccnames=scc_genenames[ind]
+        makeGraph(flat_scc_genenames,genelist,outedges,regulation,name='graph_topscores{}_thresh{}.png'.format(scorename,thresholdname))
+    if plottimeseries and onlylargestnetwork:
+        # L=[len(g) for g in grouped_scc_gene_inds]
+        # ind = L.index(max(L))
+        # scc=grouped_scc_gene_inds[ind]
+        # sccnames=scc_genenames[ind]
         fig=plt.figure()
         plt.hold('on')
         times=range(0,61,3)
         leg=[]
-        for s,sn in zip(scc,sccnames):
+        for s,sn in zip(flat_scc_gene_inds,flat_scc_genenames):
             plt.plot(times,[t/max(timeseries[s]) for t in timeseries[s]])
             leg.append(str(genelist.index(sn))+' '+sn)
         leghandle=plt.legend(leg,loc='center left', bbox_to_anchor=(1, 1))
@@ -131,32 +140,83 @@ def generateResult(topscores=350,threshold=0.1,scorename='350',thresholdname='00
         f.close()
     return grouped_scc_gene_inds
 
-def produceTableData():
+def runMe(tabledata=0):
     topscorelist=[575]#[450, 500, 550, 575, 600, 625, 650, 700, 750]
-    thresholdlist=[0.15,0.14,0.13,0.12,0.11,0.10]#[0.5,0.2,0.195,0.194,0.193,0.192,0.191,0.19,0.185,0.18,0.17,0.16,#[0.5,0.2,0.195,0.19,0.185,0.18,0.17,0.16,0.15,0.12,0.1]
-    makegraph=1
+    thresholdlist=[0.17]#[0.5,0.2,0.195,0.194,0.193,0.192,0.191,0.19,0.185,0.18,0.17,0.16,0.15,0.12,0.1]
+    makegraph=0
     saveme=0
-    plottimeseries=0
-
-    f=open('data_maxnumnodes.txt','w')
-    g=open('data_lenscc.txt','w')
-
+    plottimeseries=1
+    onlylargestnetwork=1
+    if tabledata:
+        f=open('data_maxnumnodes.txt','w')
+        g=open('data_lenscc.txt','w')
     for topscore in topscorelist:
         for k,threshold in enumerate(thresholdlist):
             print topscore, threshold
-            grouped_scc_gene_inds=generateResult(topscore,threshold,str(topscore),str(k).zfill(2),makegraph,saveme,plottimeseries)
-            if threshold>thresholdlist[-1]:
-                f.write(str(max([len(s) for s in grouped_scc_gene_inds]))+' & ')
-                g.write(str(len(grouped_scc_gene_inds))+' & ')
+            grouped_scc_gene_inds=generateResult(topscore,threshold,str(topscore),str(k).zfill(2),makegraph=makegraph,saveme=saveme,plottimeseries=plottimeseries,onlylargestnetwork=onlylargestnetwork)
+            if tabledata:
+                if threshold>thresholdlist[-1]:
+                    f.write(str(max([len(s) for s in grouped_scc_gene_inds]))+' & ')
+                    g.write(str(len(grouped_scc_gene_inds))+' & ')
+                else:
+                    f.write(str(max([len(s) for s in grouped_scc_gene_inds]))+'\n')
+                    g.write(str(len(grouped_scc_gene_inds))+'\n')
+    if tabledata:
+        f.close()
+        g.close()
+
+def network6and15incolor():
+    network6node=[60,93,184,188,234,395]
+    network15node=[248,100,118,345,14,154,411,17,340,366,176,406,111,288,171]
+    print 'Parsing file...'
+    source,target,type_reg,lem_score=parseFile(0.1)
+    genes=chooseGenes(750,source,target)
+    # print genes
+    print 'Making outedges...'
+    outedges,regulation,LEM_scores=makeOutedges(genes,source,target,type_reg,lem_score)
+    # print outedges
+    grouped_scc_gene_inds=strongConnectIndices(outedges)
+    scc_genenames=[[genes[g]  for g in G] for G in grouped_scc_gene_inds ]
+    # print scc_genes
+    print 'Pruning outedges...'
+    L = [len(g) for g in grouped_scc_gene_inds]
+    ind=L.index(max(L))
+    grouped_scc_gene_inds = grouped_scc_gene_inds[ind]
+    flat_scc_gene_inds = grouped_scc_gene_inds[:]
+    scc_genenames = scc_genenames[ind]
+    genes = scc_genenames[:]
+    outedges,regulation,LEM_scores=pruneOutedges(flat_scc_gene_inds,outedges,regulation,LEM_scores)
+    genelist,timeseries=generateMasterList()
+    print 'Making graph for {} nodes and {} edges....'.format(len(flat_scc_gene_inds),len([o for oe in outedges for o in oe]))
+    graph = pydot.Dot(graph_type='digraph')
+    for g in genes:
+        # if genelist.index(g) in network6node: 
+        #     graph.add_node(pydot.Node(genelist.index(g)),style="filled",fillcolor='red')
+        # elif genelist.index(g) in network15node: 
+        #     graph.add_node(pydot.Node(genelist.index(g)),style="filled",fillcolor='green')
+        # else:
+        graph.add_node(pydot.Node(genelist.index(g)))
+    for i,(oe,reg) in enumerate(zip(outedges,regulation)):
+        for o,r in zip(oe,reg):
+            # if genelist.index(genes[i]) in network6node and genelist.index(genes[o]) in network6node:
+            #     if r=='r':
+            #         graph.add_edge(pydot.Edge(genelist.index(genes[i]),genelist.index(genes[o]),arrowhead='tee',color='red'))
+            #     else:
+            #         graph.add_edge(pydot.Edge(genelist.index(genes[i]),genelist.index(genes[o]),color='red'))
+            # elif genelist.index(genes[i]) in network15node and genelist.index(genes[o]) in network15node:
+            #     if r=='r':
+            #         graph.add_edge(pydot.Edge(genelist.index(genes[i]),genelist.index(genes[o]),arrowhead='tee',color='green'))
+            #     else:
+            #         graph.add_edge(pydot.Edge(genelist.index(genes[i]),genelist.index(genes[o]),color='green'))
+            # else:
+            if r=='r':
+                graph.add_edge(pydot.Edge(genelist.index(genes[i]),genelist.index(genes[o]),arrowhead='tee'))
             else:
-                f.write(str(max([len(s) for s in grouped_scc_gene_inds]))+'\n')
-                g.write(str(len(grouped_scc_gene_inds))+'\n')
-    f.close()
-    g.close()
+                graph.add_edge(pydot.Edge(genelist.index(genes[i]),genelist.index(genes[o])))
+    graph.write_dot('network6node15nodecolored_40.dot')
+  
 
-
-# produceTableData()
-
-
-
+if __name__=='__main__':
+    # runMe()
+    network6and15incolor()
 

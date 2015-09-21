@@ -32,9 +32,16 @@ def is_FC(jsonparsed):
         return 0
     return False
 
-def scan(fname="networks/6D_OneWayForcing.txt",largestparam=10**6,getMorseSet=exists_FC,firstonly=True):
+def is_FP_clock(jsonparsed):
+    anns = [a[0] for a in jsonparsed["annotations"]]
+    if len(anns) == 2 and (set(anns) == set(["FC","FP"])):
+        morseset=anns.index("FC")
+        return morseset
+    return False
+
+def scan(fname="networks/6D_OneWayForcing.txt",smallestparam=0,largestparam=10**6,getMorseSet=exists_FC,firstonly=True):
     params=[]
-    for p in irange(largestparam):
+    for p in irange(smallestparam,largestparam):
         jsonparsed=json.loads(subprocess.check_output(["dsgrn network "+fname+" morsegraph json "+str(p)],shell=True))
         morseset= getMorseSet(jsonparsed)
         if morseset is not False:
