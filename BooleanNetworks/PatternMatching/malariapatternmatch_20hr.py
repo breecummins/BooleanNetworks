@@ -33,7 +33,7 @@ def setPattern():
             f.write(patternstr2)
     f.close()
 
-def patternSearch(fname="networks/5D_Malaria_20hr.txt",smallestparam=26074,largestparam=100000,getMorseSet=fmg.is_FP_clock,paramsstored=1,paramformat=1):
+def patternSearch(fname="networks/5D_Malaria_20hr.txt",smallestparam=100000,largestparam=200000,getMorseSet=fmg.is_FP_clock,paramsstored=1,paramformat=1):
     setPattern()
     if paramsstored:
         if paramformat==1:
