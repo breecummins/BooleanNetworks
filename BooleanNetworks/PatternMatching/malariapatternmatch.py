@@ -5,8 +5,8 @@ from subprocess import call
 import sys
 
 
-def getAllParams(fname="networks/6D_Malaria.txt",largestparam=46656,getMorseSet=fmg.is_FC):
-    params=fmg.scan(fname,largestparam,getMorseSet,firstonly=False)
+def getAllParams(fname="networks/6D_Malaria.txt",smallestparam=0,largestparam=46656,getMorseSet=fmg.is_FC):
+    params=fmg.scan(fname,smallestparam,largestparam,getMorseSet,firstonly=False)
     f=open('storeparams.txt','w')
     f.write(str(params))
     f.close()
@@ -27,14 +27,13 @@ def setPattern():
             f.write(patternstr2)
     f.close()
 
-def patternSearch(fname="networks/6D_Malaria.txt",largestparam=46656,getMorseSet=fmg.all_FC,paramsstored=1):
-    setPattern()
+def patternSearch(fname="networks/6D_Malaria.txt",smallestparam=0,largestparam=46656,getMorseSet=fmg.all_FC,paramsstored=1,resultsfile='malariaresults.txt'):
     if paramsstored:
         params = parseParams()
     else:
-        params = getAllParams(fname,0,largestparam,getMorseSet)
+        params = getAllParams(fname,smallestparam,largestparam,getMorseSet)
     N=len(params)
-    f=open('malariaresults.txt','w')
+    f=open(resultsfile,'w')
     for k,(p,m) in enumerate(params):
         print "Parameter {} of {}".format(k+1,N)
         if type(m) is tuple:
@@ -56,7 +55,7 @@ def patternSearch(fname="networks/6D_Malaria.txt",largestparam=46656,getMorseSet
 
 
 if __name__=='__main__':
-    # setPattern()
+    setPattern()
     patternSearch(getMorseSet=fmg.all_FC,paramsstored=0)
 
 
