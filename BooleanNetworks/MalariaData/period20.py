@@ -80,10 +80,63 @@ def plottimeseries(period20,fname='period20_timeseries.png'):
     # plt.show()
     plt.savefig(fname, bbox_extra_artists=(leghandle,), bbox_inches='tight')
 
+def network6and15incolor():
+    network6node=[60,93,184,188,234,395]
+    network15node=[248,100,118,345,14,154,411,17,340,366,176,406,111,288,171]
+    print 'Parsing file...'
+    source,target,type_reg,lem_score=parseFile(0.1)
+    genes=LEM.chooseGenes(750,source,target)
+    # print genes
+    print 'Making outedges...'
+    outedges,regulation,LEM_scores=LEM.makeOutedges(genes,source,target,type_reg,lem_score)
+    # print outedges
+    grouped_scc_gene_inds=LEM.strongConnectIndices(outedges)
+    scc_genenames=[[genes[g]  for g in G] for G in grouped_scc_gene_inds ]
+    # print scc_genes
+    print 'Pruning outedges...'
+    L = [len(g) for g in grouped_scc_gene_inds]
+    ind=L.index(max(L))
+    grouped_scc_gene_inds = grouped_scc_gene_inds[ind]
+    flat_scc_gene_inds = grouped_scc_gene_inds[:]
+    scc_genenames = scc_genenames[ind]
+    genes = scc_genenames[:]
+    outedges,regulation,LEM_scores=LEM.pruneOutedges(flat_scc_gene_inds,outedges,regulation,LEM_scores)
+    genelist,timeseries=LEM.generateMasterList()
+    print 'Making graph for {} nodes and {} edges....'.format(len(flat_scc_gene_inds),len([o for oe in outedges for o in oe]))
+    graph = pydot.Dot(graph_type='digraph')
+    for g in genes:
+        if genelist.index(g) in network6node: 
+            graph.add_node(pydot.Node(genelist.index(g),style="filled",fillcolor='red'))
+        elif genelist.index(g) in network15node: 
+            graph.add_node(pydot.Node(genelist.index(g),style="filled",fillcolor='green'))
+        else:
+            graph.add_node(pydot.Node(genelist.index(g)))
+    for i,(oe,reg) in enumerate(zip(outedges,regulation)):
+        for o,r in zip(oe,reg):
+            if genelist.index(genes[i]) in network6node and genelist.index(genes[o]) in network6node:
+                if r=='r':
+                    graph.add_edge(pydot.Edge(genelist.index(genes[i]),genelist.index(genes[o]),arrowhead='tee',color='red'))
+                else:
+                    graph.add_edge(pydot.Edge(genelist.index(genes[i]),genelist.index(genes[o]),color='red'))
+            elif genelist.index(genes[i]) in network15node and genelist.index(genes[o]) in network15node:
+                if r=='r':
+                    graph.add_edge(pydot.Edge(genelist.index(genes[i]),genelist.index(genes[o]),arrowhead='tee',color='green'))
+                else:
+                    graph.add_edge(pydot.Edge(genelist.index(genes[i]),genelist.index(genes[o]),color='green'))
+            else:
+                if r=='r':
+                    graph.add_edge(pydot.Edge(genelist.index(genes[i]),genelist.index(genes[o]),arrowhead='tee'))
+                else:
+                    graph.add_edge(pydot.Edge(genelist.index(genes[i]),genelist.index(genes[o])))
+    graph.write_dot('network6node15nodecolored_40.dot')
+  
+
 if __name__=='__main__':
     period20 = ['PF3D7_0504700','PF3D7_0506700','PF3D7_0518400','PF3D7_0729000','PF3D7_0818700','PF3D7_0919000','PF3D7_0925700','PF3D7_1008000','PF3D7_1009400','PF3D7_1138800','PF3D7_1225200','PF3D7_1337400']
 
     plottimeseries(period20[:2]+period20[3:7],'period20_timeseries_6node.png')
+    # LEM.makeTable()
+    network6and15incolor()
     # exponents=[10,15,20,22,25]
     # outedgeslist=[]
     # sourcelist=[]

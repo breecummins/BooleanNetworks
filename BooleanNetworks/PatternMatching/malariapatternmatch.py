@@ -28,7 +28,7 @@ def setPattern():
     f.close()
 
 def patternSearch(fname="networks/6D_Malaria.txt",smallestparam=0,largestparam=46656,getMorseSet=fmg.all_FC,paramsstored=1,resultsfile='malariaresults.txt'):
-    if paramsstored:
+    if paramsstored == 1:
         params = parseParams()
     else:
         params = getAllParams(fname,smallestparam,largestparam,getMorseSet)

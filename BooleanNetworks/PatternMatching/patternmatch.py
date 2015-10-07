@@ -22,10 +22,12 @@
 
 import preprocess as pp
 
-def callPatternMatch(fname='dsgrn_output.json',pname='patterns.txt',rname='results.txt',cyclic=1,findallmatches=1, printtoscreen=0,writetofile=1,returnmatches=0): # pragma: no cover
-    print "Preprocessing..."
+def callPatternMatch(fname='dsgrn_output.json',pname='patterns.txt',rname='results.txt',cyclic=1,findallmatches=1, printtoscreen=0,writetofile=1,returnmatches=0,numberofmatchesonly=1): # pragma: no cover
+    if printtoscreen:
+        print "Preprocessing..."
     patternlist,originalpatterns,wallinfo=pp.preprocess(fname,pname,cyclic) 
-    print "Searching..."
+    if printtoscreen:
+        print "Searching..."
     if writetofile: 
         f=open(rname,'w',0)
     if returnmatches:
@@ -45,11 +47,19 @@ def callPatternMatch(fname='dsgrn_output.json',pname='patterns.txt',rname='resul
             print "Results: {}".format(matches)
             print '-'*25
         if writetofile and matches:
-            f.write("Pattern: {}".format(origpat)+'\n')
-            f.write("Results: {}".format(matches)+'\n')
+            if numberofmatchesonly:
+                f.write("Pattern: {}".format(origpat)+'\n')
+                f.write("Results: {}".format(len(matches))+'\n')
+            else:
+                f.write("Pattern: {}".format(origpat)+'\n')
+                f.write("Results: {}".format(matches)+'\n')
         if returnmatches and matches:
-            matches_result.append(matches)
-            patterns_result.append(origpat)
+            if numberofmatchesonly:
+                matches_result.append(len(matches))
+                patterns_result.append(origpat)
+            else:
+                matches_result.append(matches)
+                patterns_result.append(origpat)
     if writetofile: 
         f.close()
     if returnmatches:

@@ -1,8 +1,7 @@
-import malariapatternmatch as useDSGRN
 from itertools import permutations
-import findmorsegraph as fmg
+import useDSGRN
 
-def model5D_Model_B(smallestparam=211895,largestparam=212541,paramsstored=1,resultsfile='results_5D_B.txt'):
+def model5D_Model_B(morseset=0,specfile="networks/5D_Model_B.txt",paramfile="5D_Model_B_FCParams.txt",resultsfile='results_5D_B.txt'):
     def setPattern():
         f=open('patterns.txt','w')
         for s1 in permutations(['Y1 max','Y2 max','Z max']):
@@ -12,7 +11,7 @@ def model5D_Model_B(smallestparam=211895,largestparam=212541,paramsstored=1,resu
                 f.write(patternstr2)
         f.close()
     setPattern()
-    useDSGRN.patternSearch(fname="networks/5D_Model_B.txt",smallestparam=smallestparam,largestparam=largestparam,getMorseSet=fmg.is_FC,paramsstored=paramsstored,resultsfile=resultsfile)
+    useDSGRN.patternSearch(morseset,specfile,paramfile,resultsfile)
 
 def collectPatterns(fname='results_5D_B.txt'):
     f=open(fname,'r')
@@ -20,9 +19,10 @@ def collectPatterns(fname='results_5D_B.txt'):
     for l in f.readlines():
         if l.startswith('Pattern: '):
             patternsuccess.append(l[9:])
-    print set(patternsuccess)
+    for p in set(patternsuccess):
+        print p
     f.close()
 
 if __name__=='__main__':
-    model5D_Model_B(670267,675000,0,'results_5D_B_6.txt')
-    collectPatterns('results_5D_B_6.txt')
+    # model5D_Model_B(paramfile="5D_Model_B_FCParams.txt")
+    collectPatterns('results_5D_B.txt')

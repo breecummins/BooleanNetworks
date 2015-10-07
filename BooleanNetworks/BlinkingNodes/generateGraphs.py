@@ -24,9 +24,9 @@ def makeGraph(nodes,edges,regulation,nodeON,nodeOFF,edgesON,edgesOFF,name='examp
 def makeGraphSequence(nodes,edges,regulation,pattern,fnamestart='example'):
     if pattern[0:2] !=pattern[-2:-1]:
         if pattern[0] == pattern[-1]:
-            pattern = pattern+[pattern[1]]
+            pattern.extend(pattern[1:])
         else:
-            pattern.extend(pattern[0:2])
+            pattern.extend(pattern)
     pat = [tuple(p.split()) for p in pattern] 
     edgesON=[]
     edgesOFF=[]
@@ -60,13 +60,13 @@ def makeGraphSequence(nodes,edges,regulation,pattern,fnamestart='example'):
 
 
 def dsgrn5D_Model_B():
-    pattern1=['X max','Z max','Y2 max', 'Y1 max', 'Y3 max', 'X min','Y1 min','Y2 min', 'Z min', 'Y3 min']
-    pattern2=['X max','Y2 max','Z max', 'Y1 max', 'Y3 max', 'X min','Y1 min', 'Z min','Y2 min', 'Y3 min']
+    pattern1=['X max','Z max','Y1 max', 'Y2 max', 'Y3 max', 'X min','Y2 min','Y1 min', 'Z min', 'Y3 min']
+    pattern2=['X max','Y1 max','Y2 max', 'Z max', 'Y3 max', 'X min','Z min', 'Y2 min','Y1 min', 'Y3 min']
     nodes=['X','Y1','Y2','Y3','Z']
     edges=[(0,1,2,4),(2,),(3,),(0,),(0,)]
     regulation=[('a','a','a','a'),('a',),('a',),('a',),('r',)]
-    makeGraphSequence(nodes,edges,regulation,pattern1,'pattern1_5D_Model_B')
-    makeGraphSequence(nodes,edges,regulation,pattern2,'pattern2_5D_Model_B')
+    # makeGraphSequence(nodes,edges,regulation,pattern1,'pattern_5D_Model_B')
+    makeGraphSequence(nodes,edges,regulation,pattern2,'pattern_5D_Model_B')
 
 if __name__=='__main__':
     # nodes=['X1','X2','X3']
