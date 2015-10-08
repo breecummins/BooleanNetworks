@@ -82,8 +82,7 @@ def getChars(isvaratwall,(prev,curr,next)):
             chars=['m']
     elif not isvaratwall: # extrema not allowed
         if prev<curr>next or prev>curr<next:
-            chars=['0']
-            # raise ValueError('Debug: Extrema are not allowed for variables that are not affected at threshold.')
+            raise ValueError('Debug: Extrema are not allowed for variables that are not affected at threshold.')
         elif prev<curr==next or prev==curr<next:
             chars = ['u']
         elif prev>curr==next or prev==curr>next:
@@ -97,43 +96,42 @@ def infoFromWalls(varind,varval,wallinds,walldomains):
     # return isgreaterthan, islessthan 
     signs = [cmp(varval - walldomains[k][varind],0) for k in wallinds]
     if set([-1,1]).issubset(signs):
-        return False,False
+        return False,False,True
     elif set([1]).issubset(signs):
-        return True,False
+        return True,False,False
     elif set([-1]).issubset(signs):
-        return False,True
+        return False,True,False
     else:
-        return False,False
+        return False,False,False
 
 def getAdditionalWallInfo(varind,(prevval,currval,nextval),(prev_out,curr_in,curr_out,next_in),walldomains):
-    prev_gt_out,prev_lt_out=infoFromWalls(varind,prevval,prev_out,walldomains)
-    curr_gt_in,curr_lt_in=infoFromWalls(varind,currval,curr_in,walldomains)
-    curr_gt_out,curr_lt_out=infoFromWalls(varind,currval,curr_out,walldomains)
-    next_gt_in,next_lt_in=infoFromWalls(varind,nextval,next_in,walldomains)
-    return prev_gt_out,prev_lt_out,curr_gt_in,curr_lt_in,curr_gt_out,curr_lt_out,next_gt_in,next_lt_in
+    prev_gt_out,prev_lt_out,contradictoryp=infoFromWalls(varind,prevval,prev_out,walldomains)
+    curr_gt_in,curr_lt_in,contradictoryci=infoFromWalls(varind,currval,curr_in,walldomains)
+    curr_gt_out,curr_lt_out,contradictoryco=infoFromWalls(varind,currval,curr_out,walldomains)
+    next_gt_in,next_lt_in,contradictoryn=infoFromWalls(varind,nextval,next_in,walldomains)
+    contradictory=[contradictoryp,contradictoryci,contradictoryn,contradictoryco]
+    return prev_gt_out,prev_lt_out,curr_gt_in,curr_lt_in,curr_gt_out,curr_lt_out,next_gt_in,next_lt_in,contradictory
 
-def getCharsExtrema(prev_gt_out,prev_lt_out,curr_gt_in,curr_lt_in,curr_gt_out,curr_lt_out,next_gt_in,next_lt_in):
+def getCharsExtrema(prev_gt_out,prev_lt_out,curr_gt_in,curr_lt_in,curr_gt_out,curr_lt_out,next_gt_in,next_lt_in,contradictory):
     if (prev_gt_out or curr_lt_in) and (next_gt_in or curr_lt_out):
         chars=['m'] 
+    elif (prev_gt_out or curr_lt_in) and not any(contradictory[2:]):
+        chars=['m','d'] 
+    elif not any(contradictory[:2]) and (next_gt_in or curr_lt_out):
+        chars=['m','u'] 
     elif (prev_lt_out or curr_gt_in) and (next_lt_in or curr_gt_out):
         chars=['M'] 
-    elif prev_gt_out or curr_lt_in:  
-        chars=['m','d']
-    elif next_lt_in or curr_gt_out:
-        chars=['M','d']
-    elif prev_lt_out or curr_gt_in:
-        chars=['M','u']
-    elif next_gt_in or curr_lt_out:
-        chars=['m','u']
+    elif (prev_lt_out or curr_gt_in) and not any(contradictory[2:]):
+        chars=['M','u'] 
+    elif not any(contradictory[:2]) and (next_lt_in or curr_gt_out):
+        chars=['M','d'] 
     else:
         chars=['M','m','d','u']
     return chars
 
-def getCharsNoExtrema(prev_gt_out,prev_lt_out,curr_gt_in,curr_lt_in,curr_gt_out,curr_lt_out,next_gt_in,next_lt_in):
-    if ( (prev_gt_out or curr_lt_in) and (next_gt_in or curr_lt_out) ) or ( (prev_lt_out or curr_gt_in) and (next_lt_in or curr_gt_out) ):
-        chars=['1']
-        print prev_gt_out,prev_lt_out,curr_gt_in,curr_lt_in,curr_gt_out,curr_lt_out,next_gt_in,next_lt_in
-        # raise ValueError('Debug: Extrema are not allowed for variables that are not affected at threshold.')
+def getCharsNoExtrema(prev_gt_out,prev_lt_out,curr_gt_in,curr_lt_in,curr_gt_out,curr_lt_out,next_gt_in,next_lt_in,contradictory):
+    if any(contradictory) or ( (prev_gt_out or curr_lt_in) and (next_gt_in or curr_lt_out) ) or ( (prev_lt_out or curr_gt_in) and (next_lt_in or curr_gt_out) ):
+        chars=['d','u']
     elif prev_gt_out or curr_lt_in or next_lt_in or curr_gt_out:
         chars=['d']
     elif prev_lt_out or curr_gt_in or next_gt_in or curr_lt_out:

@@ -13,7 +13,7 @@ import patternmatch as pm
 
 def patternSearch(morseset=0,specfile="networks/5D_Model_B.txt",paramfile="5D_Model_B_FCParams.txt",resultsfile='results_5D_B.txt',printtoscreen=0):
     R=open(resultsfile,'w',0)
-    P=open(paramfile)
+    P=open(paramfile,'r')
     for param in P.readlines():
         if printtoscreen:
             print '\nParameter: '+param
@@ -45,8 +45,4 @@ def patternSearchSingle(parameter,morseset=0,specfile="networks/5D_Model_B.txt",
         R.write("Pattern: {}".format(pat)+'\n')
         R.write("Results: {}".format(match)+'\n')
     R.close()
-
-if __name__=='__main__':
-    parameter=116014
-    patternSearchSingle(parameter,specfile="networks/5D_Malaria_20hr.txt",resultsfile='results_malaria_param{}.txt'.format(parameter))
 

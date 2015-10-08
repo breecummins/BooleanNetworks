@@ -36,7 +36,7 @@ def preprocess(fname='dsgrn_output.json',pname='patterns.txt',cyclic=1):
     varsaffectedatwall=varsAtWalls(threshnames,walldomains,wallthresh,varnames)
     # make wall labels
     wallinfo = wl.makeWallInfo(outedges,walldomains,varsaffectedatwall)
-    return patterns, originalpatterns, wallinfo, walldomains, varsaffectedatwall
+    return patterns, originalpatterns, wallinfo
 
 def translatePatterns(varnames,patternnames,patternmaxmin,cyclic=0):
     numvars=len(varnames)
