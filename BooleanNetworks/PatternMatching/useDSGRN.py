@@ -19,11 +19,34 @@ def patternSearch(morseset=0,specfile="networks/5D_Model_B.txt",paramfile="5D_Mo
             print '\nParameter: '+param
         # shell call to dsgrn to produce dsgrn_output.json, which is the input for the pattern matcher
         call(["dsgrn network {} analyze morseset {} {} >dsgrn_output.json".format(specfile,morseset,int(param))],shell=True)
-        patterns,matches=pm.callPatternMatch(writetofile=0,returnmatches=1,printtoscreen=printtoscreen)
+        try:
+            patterns,matches=pm.callPatternMatch(writetofile=0,returnmatches=1,printtoscreen=printtoscreen)
+        except ValueError:
+            print 'Problem parameter is {}'.format(param)
+            raise
         for pat,match in zip(patterns,matches):
             R.write("Parameter: {}, Morseset: {}".format(param,morseset)+'\n')
             R.write("Pattern: {}".format(pat)+'\n')
             R.write("Results: {}".format(match)+'\n')
     R.close()
     P.close()
+
+def patternSearchSingle(parameter,morseset=0,specfile="networks/5D_Model_B.txt",resultsfile='results.txt',printtoscreen=0):
+    R=open(resultsfile,'w',0)
+    # shell call to dsgrn to produce dsgrn_output.json, which is the input for the pattern matcher
+    call(["dsgrn network {} analyze morseset {} {} >dsgrn_output.json".format(specfile,morseset,parameter)],shell=True)
+    try:
+        patterns,matches=pm.callPatternMatch(writetofile=0,returnmatches=1,printtoscreen=printtoscreen)
+    except ValueError:
+        print 'Problem parameter is {}'.format(parameter)
+        raise
+    for pat,match in zip(patterns,matches):
+        R.write("Parameter: {}, Morseset: {}".format(param,morseset)+'\n')
+        R.write("Pattern: {}".format(pat)+'\n')
+        R.write("Results: {}".format(match)+'\n')
+    R.close()
+
+if __name__=='__main__':
+    parameter=116014
+    patternSearchSingle(parameter,specfile="networks/5D_Malaria_20hr.txt",resultsfile='results_malaria_param{}.txt'.format(parameter))
 

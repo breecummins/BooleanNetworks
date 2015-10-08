@@ -63,6 +63,8 @@ def pathDependentLabelConstruction(triple,inandoutedges,walldomains,varatwall):
             else:
                 # use extra information to get the characters when extrema are not allowed
                 chars=getCharsNoExtrema(*getAdditionalWallInfo(varind,varvalues,inandoutedges,walldomains))
+                if chars==[1]:
+                    print varind,varvalues,inandoutedges
         # make every combination of characters in the growing labels
         walllabels=[l+c for l in walllabels for c in chars]
     return tuple(walllabels)
@@ -80,7 +82,8 @@ def getChars(isvaratwall,(prev,curr,next)):
             chars=['m']
     elif not isvaratwall: # extrema not allowed
         if prev<curr>next or prev>curr<next:
-            raise RunTimeError('Debug: Extrema are not allowed for variables that are not affected at threshold.')
+            chars=['0']
+            # raise ValueError('Debug: Extrema are not allowed for variables that are not affected at threshold.')
         elif prev<curr==next or prev==curr<next:
             chars = ['u']
         elif prev>curr==next or prev==curr>next:
@@ -128,7 +131,9 @@ def getCharsExtrema(prev_gt_out,prev_lt_out,curr_gt_in,curr_lt_in,curr_gt_out,cu
 
 def getCharsNoExtrema(prev_gt_out,prev_lt_out,curr_gt_in,curr_lt_in,curr_gt_out,curr_lt_out,next_gt_in,next_lt_in):
     if ( (prev_gt_out or curr_lt_in) and (next_gt_in or curr_lt_out) ) or ( (prev_lt_out or curr_gt_in) and (next_lt_in or curr_gt_out) ):
-        raise RunTimeError('Debug: Extrema are not allowed for variables that are not affected at threshold.')
+        chars=['1']
+        print prev_gt_out,prev_lt_out,curr_gt_in,curr_lt_in,curr_gt_out,curr_lt_out,next_gt_in,next_lt_in
+        # raise ValueError('Debug: Extrema are not allowed for variables that are not affected at threshold.')
     elif prev_gt_out or curr_lt_in or next_lt_in or curr_gt_out:
         chars=['d']
     elif prev_lt_out or curr_gt_in or next_gt_in or curr_lt_out:

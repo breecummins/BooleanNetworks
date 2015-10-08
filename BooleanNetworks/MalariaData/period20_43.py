@@ -1,5 +1,5 @@
-# placeholder for plotting time series
-
+import matplotlib.pyplot as plt
+import numpy as np
 import parseLEMscores as LEM
 
 def generateMasterList(fname='/Users/bcummins/ProjectData/malaria/wrair2015_pfalcip_harmonicGenes_forNewLEM/43geneIDs_intersect18-21hrPer_putative661TFs.txt'):
@@ -7,6 +7,37 @@ def generateMasterList(fname='/Users/bcummins/ProjectData/malaria/wrair2015_pfal
     genelist = [l[:-1] for l in f.readlines()]
     f.close()
     return genelist
+
+def timeSeriesParserPlotter(genes,masterlist,fname='/Users/bcummins/ProjectData/malaria/wrair2015_pfalcip_harmonicGenes_forNewLEM/wrair2015_pfalc_43tf_20hrPer_lem.tsv',savename='timeseries_malaria_8node_43_20hr.pdf'):
+    f=open(fname,'r')
+    for _ in range(5):
+        f.readline()
+    genelist=f.readline().split()[1:]
+    times=[[float(w) for w in l.split()[1:]] for l in f.readlines()]
+    timeseries=np.array(times).transpose()
+    fig=plt.figure()
+    NUM_COLORS = len(genes)
+    cm = plt.get_cmap('spectral')
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.set_color_cycle([cm(1.*i/NUM_COLORS) for i in range(NUM_COLORS)])
+    plt.hold('on')
+    times=range(0,61,3)
+    leg=[]
+    for g in genes:
+        ind=genelist.index(g)
+        M=max(timeseries[ind])
+        plt.plot(times,[t/M for t in timeseries[ind]],linewidth=2)
+        leg.append(str(masterlist.index(g)) + ' ' + g)
+    leghandle=plt.legend(leg,loc='center left', bbox_to_anchor=(1, 1))
+    # plt.show()
+    plt.savefig(savename, bbox_extra_artists=(leghandle,), bbox_inches='tight')
+
+def plotTimeSeries():
+    masterlist=generateMasterList()
+    genes=['PF3D7_0504700','PF3D7_0506700', 'PF3D7_0818700','PF3D7_0925700','PF3D7_0403500','PF3D7_1115500','PF3D7_1350900','PF3D7_0919000','PF3D7_1406100','PF3D7_0614800','PF3D7_1237800','PF3D7_0809900']
+    for g in genes:
+        timeSeriesParserPlotter([g],masterlist,savename='timeseries_malaria_8node_43_20hr_gene{:02d}.pdf'.format(masterlist.index(g)))
 
 def generateResult(topscores=350,threshold=0.1,scorename='350',thresholdname='00',makegraph=1,saveme=1,onlylargestnetwork=0,LEMfile='/Users/bcummins/ProjectData/malaria/wrair2015_pfalcip_462TF_forLEM/wrair2015_pfalc_462tf_lem.allscores.tsv',masterfile='/Users/bcummins/ProjectData/malaria/wrair2015_pfalcip_462TF_forLEM/cuffNorm_subTFs_stdNames.txt'):
     print 'Parsing file...'
@@ -72,13 +103,15 @@ def makeTable(topscorelist,thresholdlist,makegraph=1,saveme=0,onlylargestnetwork
         g.close()
 
 if __name__=='__main__':
-    topscorelist=[50]#[50,75,100,200]
-    thresholdlist=[5.e-5]#[0.1,0.01,0.005,0.006,0.007,0.008,0.009,1.e-4,9.e-5,8.e-5,7.e-5,6.e-5,5.e-5,4.5e-5,4.e-5,3.e-5,2.e-5,1.e-5]
-    LEMfile='/Users/bcummins/ProjectData/malaria/wrair2015_pfalcip_harmonicGenes_forNewLEM/wrair2015_pfalc_43tf_lem.allscores.tsv'
-    masterfile='/Users/bcummins/ProjectData/malaria/wrair2015_pfalcip_harmonicGenes_forNewLEM/43geneIDs_intersect18-21hrPer_putative661TFs.txt'
-    tableformat=1
-    saveme=0
-    makegraph=0
-    plottimeseries=0
-    onlylargestnetwork=0
-    makeTable(topscorelist,thresholdlist,makegraph,saveme,onlylargestnetwork,tableformat,LEMfile,masterfile)
+    plotTimeSeries()
+
+
+    # topscorelist=[50]#[50,75,100,200]
+    # thresholdlist=[5.e-5]#[0.1,0.01,0.005,0.006,0.007,0.008,0.009,1.e-4,9.e-5,8.e-5,7.e-5,6.e-5,5.e-5,4.5e-5,4.e-5,3.e-5,2.e-5,1.e-5]
+    # LEMfile='/Users/bcummins/ProjectData/malaria/wrair2015_pfalcip_harmonicGenes_forNewLEM/wrair2015_pfalc_43tf_lem.allscores.tsv'
+    # masterfile='/Users/bcummins/ProjectData/malaria/wrair2015_pfalcip_harmonicGenes_forNewLEM/43geneIDs_intersect18-21hrPer_putative661TFs.txt'
+    # tableformat=1
+    # saveme=0
+    # makegraph=0
+    # onlylargestnetwork=0
+    # makeTable(topscorelist,thresholdlist,makegraph,saveme,onlylargestnetwork,tableformat,LEMfile,masterfile)

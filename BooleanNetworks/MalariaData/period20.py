@@ -77,7 +77,7 @@ def plottimeseries(period20,fname='period20_timeseries.png'):
         plt.plot(times,[t/max(ts) for t in ts])
         leg.append(str(genelist.index(p))+' '+p)
     leghandle=plt.legend(leg,loc='center left', bbox_to_anchor=(1, 1))
-    # plt.show()
+    plt.show()
     plt.savefig(fname, bbox_extra_artists=(leghandle,), bbox_inches='tight')
 
 def network6and15incolor():
@@ -136,7 +136,7 @@ if __name__=='__main__':
 
     plottimeseries(period20[:2]+period20[3:7],'period20_timeseries_6node.png')
     # LEM.makeTable()
-    network6and15incolor()
+    # network6and15incolor()
     # exponents=[10,15,20,22,25]
     # outedgeslist=[]
     # sourcelist=[]

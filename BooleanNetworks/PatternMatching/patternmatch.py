@@ -25,7 +25,31 @@ import preprocess as pp
 def callPatternMatch(fname='dsgrn_output.json',pname='patterns.txt',rname='results.txt',cyclic=1,findallmatches=1, printtoscreen=0,writetofile=1,returnmatches=0,numberofmatchesonly=1): # pragma: no cover
     if printtoscreen:
         print "Preprocessing..."
-    patternlist,originalpatterns,wallinfo=pp.preprocess(fname,pname,cyclic) 
+    patternlist,originalpatterns,wallinfo,walldomains,varsaffectedatwall=pp.preprocess(fname,pname,cyclic) 
+    #check wallinfo for illegal chars (means impossible scenario)
+    flatlabels = [((key[0],key[1],nextwall),w) for key,list_of_labels in wallinfo.iteritems() for (nextwall,labels) in list_of_labels for w in labels]
+    for (triple,lab) in flatlabels:
+        if '0' in lab:
+            print triple,lab
+            print walldomains[triple[0]]
+            print walldomains[triple[1]]
+            print walldomains[triple[2]]
+            print varsaffectedatwall[triple[1]]
+            raise ValueError('Debug: Extrema are not allowed for variables that are not affected at threshold. Simple algorithm.')
+        if '1' in lab:
+            print triple,lab
+            print walldomains[triple[0]]
+            print walldomains[triple[1]]
+            print walldomains[triple[2]]
+            print varsaffectedatwall[triple[1]]
+            for (t,l) in flatlabels:
+                if t[1]==triple[2]:
+                    print t,l
+                    print walldomains[t[0]]
+                    print walldomains[t[1]]
+                    print walldomains[t[2]]
+            raise ValueError('Debug: Extrema are not allowed for variables that are not affected at threshold. Extended algorithm')
+    # everything legal, so continue    
     if printtoscreen:
         print "Searching..."
     if writetofile: 
