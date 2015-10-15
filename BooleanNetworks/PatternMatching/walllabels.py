@@ -47,7 +47,7 @@ def makeWallInfo(outedges,walldomains,varsaffectedatwall):
 def pathDependentLabelConstruction(triple,inandoutedges,walldomains,varatwall):
     # make a label for the given triple
     if triple[1]==triple[2]: # can't handle steady states
-        raise RunTimeError('Debug: Wall has a self-loop.')
+        raise ValueError('Aborting: Wall has a self-loop.')
     walllabels=['']
     # for every variable find allowable letters for triple
     for varind in range(len(walldomains[0])): 
@@ -62,7 +62,18 @@ def pathDependentLabelConstruction(triple,inandoutedges,walldomains,varatwall):
                 chars=getCharsExtrema(*getAdditionalWallInfo(varind,varvalues,inandoutedges,walldomains))
             else:
                 # use extra information to get the characters when extrema are not allowed
-                chars=getCharsNoExtrema(*getAdditionalWallInfo(varind,varvalues,inandoutedges,walldomains))
+                try:
+                    chars=getCharsNoExtrema(*getAdditionalWallInfo(varind,varvalues,inandoutedges,walldomains))
+                except ValueError:
+                    print triple, varind, varvalues, varatwall
+                    print walldomains[triple[1]]
+                    print inandoutedges
+                    print 'previous out ', infoFromWalls(varind,varvalues[0],inandoutedges[0],walldomains)
+                    print 'current in ', infoFromWalls(varind,varvalues[1],inandoutedges[1],walldomains)
+                    print 'current out ', infoFromWalls(varind,varvalues[1],inandoutedges[2],walldomains)
+                    print 'next in ', infoFromWalls(varind,varvalues[2],inandoutedges[3],walldomains)
+                    print getAdditionalWallInfo(varind,varvalues,inandoutedges,walldomains)
+                    raise
                 if chars==[1]:
                     print varind,varvalues,inandoutedges
         # make every combination of characters in the growing labels
@@ -82,7 +93,7 @@ def getChars(isvaratwall,(prev,curr,next)):
             chars=['m']
     elif not isvaratwall: # extrema not allowed
         if prev<curr>next or prev>curr<next:
-            raise ValueError('Debug: Extrema are not allowed for variables that are not affected at threshold.')
+            raise ValueError("Wall labeling failed. A variable not affected at threshold is changing.")
         elif prev<curr==next or prev==curr<next:
             chars = ['u']
         elif prev>curr==next or prev==curr>next:
@@ -105,33 +116,36 @@ def infoFromWalls(varind,varval,wallinds,walldomains):
         return False,False,False
 
 def getAdditionalWallInfo(varind,(prevval,currval,nextval),(prev_out,curr_in,curr_out,next_in),walldomains):
-    prev_gt_out,prev_lt_out,contradictoryp=infoFromWalls(varind,prevval,prev_out,walldomains)
-    curr_gt_in,curr_lt_in,contradictoryci=infoFromWalls(varind,currval,curr_in,walldomains)
-    curr_gt_out,curr_lt_out,contradictoryco=infoFromWalls(varind,currval,curr_out,walldomains)
-    next_gt_in,next_lt_in,contradictoryn=infoFromWalls(varind,nextval,next_in,walldomains)
-    contradictory=[contradictoryp,contradictoryci,contradictoryn,contradictoryco]
-    return prev_gt_out,prev_lt_out,curr_gt_in,curr_lt_in,curr_gt_out,curr_lt_out,next_gt_in,next_lt_in,contradictory
+    prev_gt_out,prev_lt_out,badflow=infoFromWalls(varind,prevval,prev_out,walldomains)  
+    if badflow:          
+        raise ValueError("Wall labeling failed. Flow traveling outward in both directions from the same cell.")
+    curr_gt_in,curr_lt_in,_=infoFromWalls(varind,currval,curr_in,walldomains)
+    curr_gt_out,curr_lt_out,badflow=infoFromWalls(varind,currval,curr_out,walldomains)
+    if badflow:          
+        raise ValueError("Wall labeling failed. Flow traveling outward in both directions from the same cell.")
+    next_gt_in,next_lt_in,_=infoFromWalls(varind,nextval,next_in,walldomains)
+    return prev_gt_out,prev_lt_out,curr_gt_in,curr_lt_in,curr_gt_out,curr_lt_out,next_gt_in,next_lt_in
 
-def getCharsExtrema(prev_gt_out,prev_lt_out,curr_gt_in,curr_lt_in,curr_gt_out,curr_lt_out,next_gt_in,next_lt_in,contradictory):
+def getCharsExtrema(prev_gt_out,prev_lt_out,curr_gt_in,curr_lt_in,curr_gt_out,curr_lt_out,next_gt_in,next_lt_in):
     if (prev_gt_out or curr_lt_in) and (next_gt_in or curr_lt_out):
         chars=['m'] 
-    elif (prev_gt_out or curr_lt_in) and not any(contradictory[2:]):
+    elif (prev_gt_out or curr_lt_in):
         chars=['m','d'] 
-    elif not any(contradictory[:2]) and (next_gt_in or curr_lt_out):
+    elif (next_gt_in or curr_lt_out):
         chars=['m','u'] 
     elif (prev_lt_out or curr_gt_in) and (next_lt_in or curr_gt_out):
         chars=['M'] 
-    elif (prev_lt_out or curr_gt_in) and not any(contradictory[2:]):
+    elif (prev_lt_out or curr_gt_in):
         chars=['M','u'] 
-    elif not any(contradictory[:2]) and (next_lt_in or curr_gt_out):
+    elif (next_lt_in or curr_gt_out):
         chars=['M','d'] 
     else:
         chars=['M','m','d','u']
     return chars
 
-def getCharsNoExtrema(prev_gt_out,prev_lt_out,curr_gt_in,curr_lt_in,curr_gt_out,curr_lt_out,next_gt_in,next_lt_in,contradictory):
-    if any(contradictory) or ( (prev_gt_out or curr_lt_in) and (next_gt_in or curr_lt_out) ) or ( (prev_lt_out or curr_gt_in) and (next_lt_in or curr_gt_out) ):
-        chars=['d','u']
+def getCharsNoExtrema(prev_gt_out,prev_lt_out,curr_gt_in,curr_lt_in,curr_gt_out,curr_lt_out,next_gt_in,next_lt_in):
+    if ( (prev_gt_out or curr_lt_in) and (next_gt_in or curr_lt_out) ) or ( (prev_lt_out or curr_gt_in) and (next_lt_in or curr_gt_out) ):
+        raise ValueError("Wall labeling failed. A variable not affected at threshold is changing.")
     elif prev_gt_out or curr_lt_in or next_lt_in or curr_gt_out:
         chars=['d']
     elif prev_lt_out or curr_gt_in or next_gt_in or curr_lt_out:

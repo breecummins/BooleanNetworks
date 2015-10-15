@@ -11,12 +11,15 @@ import patternmatch as pm
 #
 # So far the Morse set number is entered by hand, but I should write a parser eventually.
 
-def patternSearch(morseset=0,specfile="networks/5D_Model_B.txt",paramfile="5D_Model_B_FCParams.txt",resultsfile='results_5D_B.txt',printtoscreen=0):
+def patternSearch(morseset=0,specfile="networks/5D_Model_B.txt",paramfile="5D_Model_B_FCParams.txt",resultsfile='results_5D_B.txt',printtoscreen=0,printparam=0):
     R=open(resultsfile,'w',0)
     P=open(paramfile,'r')
+    paramcount=1
     for param in P.readlines():
-        if printtoscreen:
-            print '\nParameter: '+param
+        param=param.split()[0]
+        if printparam:
+            print '\nParameter: '+param+', number {}'.format(paramcount)
+        paramcount+=1
         # shell call to dsgrn to produce dsgrn_output.json, which is the input for the pattern matcher
         call(["dsgrn network {} analyze morseset {} {} >dsgrn_output.json".format(specfile,morseset,int(param))],shell=True)
         try:

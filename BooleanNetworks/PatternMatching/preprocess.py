@@ -103,8 +103,10 @@ def varsAtWalls(threshnames,walldomains,wallthresh,varnames):
         varsaffectedatthresh.append(tuple([varnames.index(u) for u in t]))
     varsaffectedatwall=[-1]*len(walldomains)
     for k,(j,w) in zip(wallthresh,enumerate(walldomains)):
-        if k>-1 and w[k]-int(w[k])<0.25 and 0<w[k]<len(varsaffectedatthresh[k])+1:
+        if abs(w[k]-int(w[k]))<0.25:
             varsaffectedatwall[j]=varsaffectedatthresh[k][int(w[k]-1)]
+    if any([v<0 for v in varsaffectedatwall]):
+        raise ValueError('Affected variables are undefined at some walls.')
     return varsaffectedatwall
 
 def makeWallGraphFromDomainGraph(domgraph,cells):
@@ -122,9 +124,9 @@ def makeWallGraphFromDomainGraph(domgraph,cells):
         n=len(c0)
         location=[True if c0[k]!=c1[k] else False for k in range(n)]
         if sum(location) > 1:
-            raise RunTimeError("The domain graph has an edge between nonadjacent domains. Aborting.")
+            raise ValueError("The domain graph has an edge between nonadjacent domains. Aborting.")
         elif sum(location)==0:
-            raise RunTimeError("The domain graph has a self-loop. Aborting.")
+            raise ValueError("The domain graph has a self-loop. Aborting.")
         else:
             wallthresh.append(location.index(True))
             walldomains.append(tuple([sum(c0[k]+c1[k])/4.0 for k in range(n)])) 
