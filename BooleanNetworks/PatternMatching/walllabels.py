@@ -21,19 +21,33 @@
 # THE SOFTWARE.
 
 import itertools
+from numpy import sign
 
 def makeWallInfo(outedges,walldomains,varsaffectedatwall):
     # This function creates the dictionary used in the core recursive call for the pattern matching.
-    inedges=[tuple([j for j,o in enumerate(outedges) if node in o]) for node in range(len(outedges))]   
+    inedges=[tuple([j for j,o in enumerate(outedges) if node in o]) for node in range(len(outedges))]  
+    # precache wall differences
+    outsigns=makeWallSigns(walldomains,outedges,True)
+    insigns=makeWallSigns(walldomains,inedges,False)
     # make every triple and the list of associated wall labels; store in dict indexed by (inedge,wall)
     wallinfo={}
     for currentwall,(ie,oe) in enumerate(zip(inedges,outedges)):
        for previouswall,nextwall in itertools.product(ie,oe):
             # construct the wall label for every permissible triple
             triple=(previouswall,currentwall,nextwall)
-            inandoutedges=(outedges[previouswall],inedges[currentwall],outedges[currentwall],inedges[nextwall])
             varatwall=varsaffectedatwall[currentwall]
-            labels=pathDependentLabelConstruction(triple,inandoutedges,walldomains,varatwall)
+            try:
+                labels=pathDependentLabelConstruction(triple,insigns,outsigns,walldomains,varatwall)
+            except ValueError:
+                print triple[1],inedges[triple[1]]
+                print triple[2],inedges[triple[2]]
+                print 'current in'
+                for i in inedges[triple[1]]:
+                    print walldomains[i], walldomains[triple[1]]
+                print 'next in'
+                for i in inedges[triple[2]]:
+                    print walldomains[i], walldomains[triple[2]]
+                raise
             # Put the result in the dictionary.
             key=(previouswall,currentwall)
             value=(nextwall,labels)
@@ -44,14 +58,34 @@ def makeWallInfo(outedges,walldomains,varsaffectedatwall):
                 wallinfo[key]=[value]
     return wallinfo
 
-def pathDependentLabelConstruction(triple,inandoutedges,walldomains,varatwall):
+def makeWallSigns(walldomains,edges,out):
+    n=len(walldomains[0])
+    edgesigns=[]
+    for dom,ed in zip(walldomains,edges):
+        alldifferences=[]
+        for i in range(n):
+            diffs=[]
+            for e in ed:
+                dom2=walldomains[e]
+                diffs.append(sign(dom[i] - dom2[i]))
+            if set([-1,1]).issubset(diffs):
+                print 'both'
+                if out:
+                    raise ValueError("The wall graph has spreading flow.")
+                else: 
+                    diffs=[0]
+            alldifferences.append(1 if 1 in diffs else -1 if -1 in diffs else 0)
+        edgesigns.append(alldifferences)
+    return edgesigns
+
+def pathDependentLabelConstruction(triple,insigns,outsigns,walldomains,varatwall):
     # make a label for the given triple
     if triple[1]==triple[2]: # can't handle steady states
         raise ValueError('Aborting: Wall has a self-loop.')
     walllabels=['']
     # for every variable find allowable letters for triple
     for varind in range(len(walldomains[0])): 
-        isvaratwall = varind==varatwall
+        isvaratwall=varind==varatwall
         varvalues=tuple([walldomains[k][varind] for k in triple])
         # try simple algorithm first
         chars=getChars(isvaratwall,varvalues) 
@@ -59,25 +93,24 @@ def pathDependentLabelConstruction(triple,inandoutedges,walldomains,varatwall):
             # now try complex algorithm
             if isvaratwall:
                 # use extra information to get the characters when extrema are allowed
-                chars=getCharsExtrema(*getAdditionalWallInfo(varind,varvalues,inandoutedges,walldomains))
+                chars=getCharsExtrema(varind,triple,insigns,outsigns)
             else:
                 # use extra information to get the characters when extrema are not allowed
                 try:
-                    chars=getCharsNoExtrema(*getAdditionalWallInfo(varind,varvalues,inandoutedges,walldomains))
+                    chars=getCharsNoExtrema(varind,triple,insigns,outsigns)
                 except ValueError:
-                    print triple, varind, varvalues, varatwall
-                    print walldomains[triple[1]]
-                    print inandoutedges
-                    print 'previous out ', infoFromWalls(varind,varvalues[0],inandoutedges[0],walldomains)
-                    print 'current in ', infoFromWalls(varind,varvalues[1],inandoutedges[1],walldomains)
-                    print 'current out ', infoFromWalls(varind,varvalues[1],inandoutedges[2],walldomains)
-                    print 'next in ', infoFromWalls(varind,varvalues[2],inandoutedges[3],walldomains)
-                    print getAdditionalWallInfo(varind,varvalues,inandoutedges,walldomains)
+                    print varind, varatwall
+                    print triple[0],walldomains[triple[0]]
+                    print triple[1],walldomains[triple[1]]
+                    print triple[2],walldomains[triple[2]]
+                    print outsigns[triple[0]]
+                    print insigns[triple[1]]
+                    print outsigns[triple[1]]
+                    print insigns[triple[2]]
                     raise
-                if chars==[1]:
-                    print varind,varvalues,inandoutedges
         # make every combination of characters in the growing labels
         walllabels=[l+c for l in walllabels for c in chars]
+
     return tuple(walllabels)
 
 def getChars(isvaratwall,(prev,curr,next)):
@@ -100,56 +133,30 @@ def getChars(isvaratwall,(prev,curr,next)):
             chars = ['d']
     return chars
 
-def infoFromWalls(varind,varval,wallinds,walldomains):
-    # We want the difference between the value at the current wall, varval,
-    # and the value at all adjacent walls to have the same sign (or zero,
-    # but not all can be zero).
-    # return isgreaterthan, islessthan 
-    signs = [cmp(varval - walldomains[k][varind],0) for k in wallinds]
-    if set([-1,1]).issubset(signs):
-        return False,False,True
-    elif set([1]).issubset(signs):
-        return True,False,False
-    elif set([-1]).issubset(signs):
-        return False,True,False
+def getCharsExtrema(varind,(prev,curr,next),insigns,outsigns):
+    if ( outsigns[prev][varind]==-1 or insigns[curr][varind]==1 ) and ( outsigns[curr][varind]==1 or insigns[next][varind]==-1 ):
+        chars=['M']
+    elif ( outsigns[prev][varind]==-1 or insigns[curr][varind]==1 ):
+        chars=['u','M']
+    elif ( outsigns[curr][varind]==1 or insigns[next][varind]==-1 ):
+        chars=['d','M']
+    elif ( outsigns[prev][varind]==1 or insigns[curr][varind]==-1 ) and ( outsigns[curr][varind]==-1 or insigns[next][varind]==1 ):
+        chars=['m']
+    elif ( outsigns[prev][varind]==1 or insigns[curr][varind]==-1 ):
+        chars=['d','m']
+    elif ( outsigns[curr][varind]==-1 or insigns[next][varind]==1 ):
+        chars=['u','m']
     else:
-        return False,False,False
-
-def getAdditionalWallInfo(varind,(prevval,currval,nextval),(prev_out,curr_in,curr_out,next_in),walldomains):
-    prev_gt_out,prev_lt_out,badflow=infoFromWalls(varind,prevval,prev_out,walldomains)  
-    if badflow:          
-        raise ValueError("Wall labeling failed. Flow traveling outward in both directions from the same cell.")
-    curr_gt_in,curr_lt_in,_=infoFromWalls(varind,currval,curr_in,walldomains)
-    curr_gt_out,curr_lt_out,badflow=infoFromWalls(varind,currval,curr_out,walldomains)
-    if badflow:          
-        raise ValueError("Wall labeling failed. Flow traveling outward in both directions from the same cell.")
-    next_gt_in,next_lt_in,_=infoFromWalls(varind,nextval,next_in,walldomains)
-    return prev_gt_out,prev_lt_out,curr_gt_in,curr_lt_in,curr_gt_out,curr_lt_out,next_gt_in,next_lt_in
-
-def getCharsExtrema(prev_gt_out,prev_lt_out,curr_gt_in,curr_lt_in,curr_gt_out,curr_lt_out,next_gt_in,next_lt_in):
-    if (prev_gt_out or curr_lt_in) and (next_gt_in or curr_lt_out):
-        chars=['m'] 
-    elif (prev_gt_out or curr_lt_in):
-        chars=['m','d'] 
-    elif (next_gt_in or curr_lt_out):
-        chars=['m','u'] 
-    elif (prev_lt_out or curr_gt_in) and (next_lt_in or curr_gt_out):
-        chars=['M'] 
-    elif (prev_lt_out or curr_gt_in):
-        chars=['M','u'] 
-    elif (next_lt_in or curr_gt_out):
-        chars=['M','d'] 
-    else:
-        chars=['M','m','d','u']
+        chars=['u','d','m','M']
     return chars
 
-def getCharsNoExtrema(prev_gt_out,prev_lt_out,curr_gt_in,curr_lt_in,curr_gt_out,curr_lt_out,next_gt_in,next_lt_in):
-    if ( (prev_gt_out or curr_lt_in) and (next_gt_in or curr_lt_out) ) or ( (prev_lt_out or curr_gt_in) and (next_lt_in or curr_gt_out) ):
+def getCharsNoExtrema(varind,(prev,curr,next),insigns,outsigns):
+    if ( ( outsigns[prev][varind]==-1 or insigns[curr][varind]==1 ) and ( outsigns[curr][varind]==1 or insigns[next][varind]==-1 ) ) or ( ( outsigns[prev][varind]==1 or insigns[curr][varind]==-1 ) and ( outsigns[curr][varind]==-1 or insigns[next][varind]==1 )  ):
         raise ValueError("Wall labeling failed. A variable not affected at threshold is changing.")
-    elif prev_gt_out or curr_lt_in or next_lt_in or curr_gt_out:
-        chars=['d']
-    elif prev_lt_out or curr_gt_in or next_gt_in or curr_lt_out:
+    elif outsigns[prev][varind]==-1 or insigns[curr][varind]==1 or outsigns[curr][varind]==-1 or insigns[next][varind]==1:
         chars=['u']
+    elif outsigns[prev][varind]==1 or insigns[curr][varind]==-1 or outsigns[curr][varind]==1 or insigns[next][varind]==-1:
+        chars=['d']
     else:
         chars=['d','u']
     return chars

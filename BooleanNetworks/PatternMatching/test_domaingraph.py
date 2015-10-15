@@ -15,6 +15,18 @@ def testgraph(domains,edges):
                 for e in d:
                     print e,domains[e]
 
+def testwallgraph(domains,edges):
+    for k,(c,d) in enumerate(zip(domains,edges)):
+        for i in range(n):
+            diffs=[]
+            for e in d:
+                c2=domains[e]
+                diffs.append(np.sign(c[i] - c2[i]))
+            if set([-1,1]).issubset(diffs):
+                print k,c
+                for e in d:
+                    print e,domains[e]
+
 specfile="networks/5D_Malaria_20hr.txt"
 parameter=116014
 morseset=0
@@ -27,6 +39,6 @@ n=len(cells[0])
 
 outedges,wallthresh,walldomains=pp.makeWallGraphFromDomainGraph(domgraph,cells) 
 
-testgraph(walldomains,outedges)  
+testwallgraph(walldomains,outedges)  
 
 

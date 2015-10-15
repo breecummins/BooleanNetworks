@@ -38,7 +38,7 @@ def test0():
     print wallinfo[(3,4)]==[(6,('um',))]
     print wallinfo[(1,4)]==[(6,('um',))]
     print set(wallinfo[(6,5)])==set([(2,('dM',)),(3,('dM',))])
-    print wl.infoFromWalls(0,walldomains[4][0],[1,3],walldomains)==(True,False)
+    # print wl.infoFromWalls(0,walldomains[4][0],[1,3],walldomains)==(True,False)
 
 def test1():
     outedges,walldomains,varsaffectedatwall=tc.test1()
@@ -47,7 +47,7 @@ def test1():
     print wallinfo[(1,3)]==[(2,('Mu',))]
     print wallinfo[(3,2)]==[(0,('dM',))]
     print wallinfo[(2,0)]==[(1,('md',))]
-    print wl.infoFromWalls(1,walldomains[2][1],[3],walldomains)==(True,False)
+    # print wl.infoFromWalls(1,walldomains[2][1],[3],walldomains)==(True,False)
 
 def test2():
     outedges,walldomains,varsaffectedatwall=tc.test2()
@@ -55,7 +55,7 @@ def test2():
     print set(wallinfo[(0,1)])==set([(3,('um',)),(4,('um',))])
     print wallinfo[(3,2)]==[(0,('dM',))]
     print wallinfo[(1,4)]==[(6,('uu',))]
-    print wl.infoFromWalls(1,walldomains[1][1],[3,4],walldomains)==(False,True)
+    # print wl.infoFromWalls(1,walldomains[1][1],[3,4],walldomains)==(False,True)
 
 def test3():
     outedges,walldomains,varsaffectedatwall,varnames,threshnames=tc.test3()
@@ -64,7 +64,7 @@ def test3():
     print set(wallinfo[(3,1)][0][1])==set(('udd','uMd'))
     print set(wallinfo[(4,5)][0][1])==set(('dud','duM'))
     print set(wallinfo[(2,4)][0][1])==set(('duu','dmu'))
-    print wl.infoFromWalls(1,walldomains[0][1],[1],walldomains)==(False,True)
+    # print wl.infoFromWalls(1,walldomains[0][1],[1],walldomains)==(False,True)
 
 def test4():
     outedges,walldomains,varsaffectedatwall=tc.test4()
@@ -80,7 +80,7 @@ def test5():
     print set( [ wallinfo[(2,1)][k][0] for k in [0,1] ]  )==set([0,4])
     print set( wallinfo[(2,1)][0][1]  )==set(('ddd','ddM'))
     print set( wallinfo[(2,1)][1][1]  )==set(('ddd','ddM'))
-    print set(wallinfo[(1,4)])==set([(6,('mdd','udd')),(8,('mdd','udd'))])
+    print set(wallinfo[(1,4)])==set([(6,('udd','mdd')),(8,('udd','mdd'))])
 
 def test6():
     outedges,walldomains,varsaffectedatwall,varnames,threshnames=tc.test6()

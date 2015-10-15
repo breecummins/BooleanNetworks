@@ -27,6 +27,7 @@ import itertools
 def preprocess(fname='dsgrn_output.json',pname='patterns.txt',cyclic=1):
     # read input files; basedir should have dsgrn_output.json and patterns.txt
     varnames,threshnames,domgraph,cells=fp.parseJSONFormat(fname)
+    print threshnames
     patternnames,patternmaxmin,originalpatterns=fp.parsePatterns(pname)
     # put max/min patterns in terms of the alphabet u,m,M,d
     patterns=translatePatterns(varnames,patternnames,patternmaxmin,cyclic=cyclic)
