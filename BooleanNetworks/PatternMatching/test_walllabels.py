@@ -89,7 +89,10 @@ def test6():
     print set(wallinfo[(3,15)])==set([(5,('Muu',)),(11,('Muu',))])
     print wallinfo[(4,16)]==[(6,('Muu',))]
     print wallinfo[(10,16)]==[(6,('Muu',))]
-    print wallinfo[(0,13)]==[(9,('Muu',))]
+    print wallinfo[(6,2)]==[(12,('dud','dMd'))]
+    print wallinfo[(0,3)]#==[(10,('uuu',)),(15,('uuu',))]
+    print wallinfo[(12,1)]#==[(4,('udd','umd'))]
+    print wallinfo[(0,13)]#==[(9,('Muu',))]
 
 
 if __name__=='__main__':
