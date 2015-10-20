@@ -28,9 +28,7 @@ def test0():
     # NO STEADY STATES, SEE NOTES FOR FLOW ACROSS WALLS
     walldomains=[(0.5,1),(1,0.5),(1,1.5),(1.5,1),(2,0.5),(2,1.5),(2.5,1)]
     outedges=[(1,),(4,),(0,),(4,),(6,),(2,3),(5,)]
-    varsaffectedatwall=[-1]*len(outedges)
-    for k in [0,1,2,3,6]:
-        varsaffectedatwall[k]=0
+    varsaffectedatwall=[0]*len(outedges)
     for k in [4,5]:
         varsaffectedatwall[k]=1
     return outedges,walldomains,varsaffectedatwall
@@ -117,6 +115,8 @@ def test6():
 
 def test7():
     # dsgrn output, repressilator example like test 3
+    subprocesscall(["dsgrn network networks/3D_Example.txt domaingraph > dsgrn_domaincells.json".format(specfile)],shell=True)
+    subprocesscall(["dsgrn network networks/3D_Example.txt domaingraph json 13 > dsgrn_domaingraph.json".format(specfile,int(param))],shell=True)
     subprocess.call(["dsgrn network networks/3D_Example.txt analyze morseset 0 13 >dsgrn_output.json"],shell=True)
     f=open('patterns.txt','w')
     f.write('Z min, X min, Y min, Z max, X max, Y max\n X max, Y max, Z max, X min, Y min, Z min\n X min, Y max, Z min, X max, Y min, Z max\n X max, Y min, Z max, X min, Y max, Z min')
@@ -124,6 +124,8 @@ def test7():
 
 def test8():
     # dsgrn output, 5D Cycle
+    subprocesscall(["dsgrn network networks/5D_Cycle.txt domaingraph > dsgrn_domaincells.json".format(specfile)],shell=True)
+    subprocesscall(["dsgrn network networks/5D_Cycle.txt domaingraph json 847328 > dsgrn_domaingraph.json".format(specfile,int(param))],shell=True)
     subprocess.call(["dsgrn network networks/5D_Cycle.txt analyze morseset 3 847328 >dsgrn_output.json"],shell=True)
     f=open('patterns.txt','w')
     f.write('X3 max, X4 max, X3 min, X4 min\n X3 max, X4 min, X3 min, X4 max')

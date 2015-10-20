@@ -36,9 +36,18 @@ def parsePatterns(fname="patterns.txt"):
         maxmin.append(L[1::2])
     return varnames, maxmin, originalpatterns
 
-def parseJSONFormat(fname='dsgrn_output.json'):
+def parseMorseSet(fname='dsgrn_output.json'):
     parsed = json.load(open(fname),strict=False)
     varnames = [ x[0] for x in parsed["network"] ]
     threshnames = [ [parsed["network"][i][2][j] for j in parsed["parameter"][i][2]] for i in range(len(parsed["network"])) ]
-    return varnames,threshnames,parsed["graph"],parsed["cells"]
+    return varnames,threshnames,parsed["graph"],parsed["cells"],parsed["vertices"]
+
+def parseDomainCells(fname='dsgrn_domaincells.json'):
+    parsed = json.load(open(fname),strict=False)
+    return parsed["cells"]
+
+def parseDomainGraph(fname="dsgrn_domaingraph.json"):
+    return json.load(open(fname),strict=False)
+
+
 

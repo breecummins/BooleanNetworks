@@ -53,7 +53,7 @@ parameter=116014
 morseset=0
 
 call(["dsgrn network {} analyze morseset {} {} >dsgrn_output.json".format(specfile,morseset,parameter)],shell=True)
-varnames,threshnames,domgraph,cells=fp.parseJSONFormat('dsgrn_output.json')
+varnames,threshnames,domgraph,cells=fp.parseMorseSet('dsgrn_output.json')
 n=len(cells[0])
 
 finddomain(cells,domgraph)

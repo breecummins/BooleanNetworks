@@ -27,16 +27,17 @@ def testme():
     test0()
     test1()
     test2()
-    test3()
-    test4()
-    test5()
-    test6()
+    # test3()
+    # test4()
+    # test5()
+    # test6()
 
 def test0():
     outedges,walldomains,varsaffectedatwall=tc.test0()
     wallinfo = wl.makeWallInfo(outedges,walldomains,varsaffectedatwall)
     print wallinfo[(3,4)]==[(6,('um',))]
     print wallinfo[(1,4)]==[(6,('um',))]
+    print wallinfo[(2,0)]==[(1,('md',))]
     print set(wallinfo[(6,5)])==set([(2,('dM',)),(3,('dM',))])
     # print wl.infoFromWalls(0,walldomains[4][0],[1,3],walldomains)==(True,False)
 
@@ -54,6 +55,7 @@ def test2():
     wallinfo = wl.makeWallInfo(outedges,walldomains,varsaffectedatwall)
     print set(wallinfo[(0,1)])==set([(3,('um',)),(4,('um',))])
     print wallinfo[(3,2)]==[(0,('dM',))]
+    print wallinfo[(5,2)]==[(0,('dM',))]
     print wallinfo[(1,4)]==[(6,('uu',))]
     # print wl.infoFromWalls(1,walldomains[1][1],[3,4],walldomains)==(False,True)
 

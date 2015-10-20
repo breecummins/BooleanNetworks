@@ -29,12 +29,12 @@ def testme():
     test0()
     test1()
     test2()
-    test3()
-    test4()
-    test5()
-    test6()
-    test7()
-    test8()
+    # test3()
+    # test4()
+    # test5()
+    # test6()
+    # test7()
+    # test8()
 
 def test0():
     varnames=['X','Z']
@@ -90,8 +90,11 @@ def test6():
 
 def test7():
     tc.test7()
-    varnames,threshnames,domgraph,cells=fp.parseJSONFormat()
-    outedges,wallthresh,walldomains=pp.makeWallGraphFromDomainGraph(domgraph,cells)
+    varnames,threshnames,morsedomgraph,morsecells,vertexmap=fp.parseMorseSet()
+    domaingraph=fp.parseDomainGraph()
+    domaincells=fp.parseDomainCells()
+    extendedmorsegraph,extendedmorsecells,booleanoutedges=pp.makeExtendedMorseSetDomainGraph(vertexmap,morsecells,domaingraph,domaincells)
+    outedges,wallthresh,walldomains=pp.makeWallGraphFromDomainGraph(len(vertexmap),extendedmorsegraph, extendedmorsecells)
     varsaffectedatwall=pp.varsAtWalls(threshnames,walldomains,wallthresh,varnames)
     print outedges==[(1,),(2,),(3,),(4,),(5,),(0,)]
     print wallthresh==[1,2,0,1,2,0]
@@ -101,8 +104,11 @@ def test7():
 
 def test8():
     tc.test8()
-    varnames,threshnames,domgraph,cells=fp.parseJSONFormat()
-    outedges,wallthresh,walldomains=pp.makeWallGraphFromDomainGraph(domgraph,cells)
+    varnames,threshnames,morsedomgraph,morsecells,vertexmap=fp.parseMorseSet()
+    domaingraph=fp.parseDomainGraph()
+    domaincells=fp.parseDomainCells()
+    extendedmorsegraph,extendedmorsecells,booleanoutedges=pp.makeExtendedMorseSetDomainGraph(vertexmap,morsecells,domaingraph,domaincells)
+    outedges,wallthresh,walldomains=pp.makeWallGraphFromDomainGraph(len(vertexmap),extendedmorsegraph, extendedmorsecells)
     varsaffectedatwall=pp.varsAtWalls(threshnames,walldomains,wallthresh,varnames)
     print outedges == [(1,),(2,3),(6,),(4,),(5,),(6,),(0,)]
     print wallthresh == [2,3,2,3,2,3,3]

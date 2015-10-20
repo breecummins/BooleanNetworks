@@ -24,18 +24,23 @@ import walllabels as wl
 import fileparsers as fp
 import itertools
 
-def preprocess(fname='dsgrn_output.json',pname='patterns.txt',cyclic=1):
-    # read input files; basedir should have dsgrn_output.json and patterns.txt
-    varnames,threshnames,domgraph,cells=fp.parseJSONFormat(fname)
+def preprocess(fname1='dsgrn_output.json',fname2='dsgrn_domaingraph.json',fname3='dsgrn_domaincells.json',pname='patterns.txt',cyclic=1):
+    # read input files
+    varnames,threshnames,morsedomgraph,morsecells,vertexmap=fp.parseMorseSet(fname1)
+    domaingraph=fp.parseDomainGraph(fname2)
+    domaincells=fp.parseDomainCells(fname3)
     patternnames,patternmaxmin,originalpatterns=fp.parsePatterns(pname)
     # put max/min patterns in terms of the alphabet u,m,M,d
     patterns=translatePatterns(varnames,patternnames,patternmaxmin,cyclic=cyclic)
     # translate domain graph into wall graph
-    outedges,wallthresh,walldomains=makeWallGraphFromDomainGraph(domgraph,cells)    
+    extendedmorsegraph,extendedmorsecells,booleanoutedges=makeExtendedMorseSetDomainGraph(vertexmap,morsecells,domaingraph,domaincells)
+    outedges,wallthresh,walldomains=makeWallGraphFromDomainGraph(len(vertexmap),extendedmorsegraph, extendedmorsecells)
     # record which variable is affected at each wall
     varsaffectedatwall=varsAtWalls(threshnames,walldomains,wallthresh,varnames)
     # make wall labels
     wallinfo = wl.makeWallInfo(outedges,walldomains,varsaffectedatwall)
+    # truncate back to Morse wall graph
+    wallinfo = truncateExtendedWallGraph(booleanoutedges,outedges,wallinfo)
     return patterns, originalpatterns, wallinfo
 
 def translatePatterns(varnames,patternnames,patternmaxmin,cyclic=0):
@@ -103,19 +108,34 @@ def varsAtWalls(threshnames,walldomains,wallthresh,varnames):
         varsaffectedatthresh.append(tuple([varnames.index(u) for u in t]))
     varsaffectedatwall=[-1]*len(walldomains)
     for k,(j,w) in zip(wallthresh,enumerate(walldomains)):
-        if abs(w[k]-int(w[k]))<0.25:
+        if k != None and abs(w[k]-int(w[k]))<0.25: # is abs val check necessary?
             varsaffectedatwall[j]=varsaffectedatthresh[k][int(w[k]-1)]
+        elif k is None:
+            varsaffectedatwall[j]=None
     if any([v<0 for v in varsaffectedatwall]):
         raise ValueError('Affected variables are undefined at some walls.')
     return varsaffectedatwall
 
-def makeWallGraphFromDomainGraph(domgraph,cells):
+def makeWallGraphFromDomainGraph(N,domgraph,cells):
+    morseinds=range(N)
     domedges=[(k,d) for k,e in enumerate(domgraph) for d in e]
-    wallgraph=[(k,j) for k,edge1 in enumerate(domedges) for j,edge2 in enumerate(domedges) if edge1[1]==edge2[0]]
+    booleanwallgraph=[]
+    wallgraph=[]
+    for k,edge1 in enumerate(domedges):
+        for j,edge2 in enumerate(domedges):
+            if edge1[1]==edge2[0]:
+                wallgraph.append((k,j))
+                if edge1[0] in morseinds and edge1[1] in morseinds and edge2[1] in morseinds:
+                    booleanwallgraph.append(True)
+                else:
+                    booleanwallgraph.append(False)                       
     outedges=[[] for _ in range(len(domedges))]
-    for e in wallgraph:
+    booleanoutedges=[[] for _ in range(len(domedges))]
+    for e,b in zip(wallgraph,booleanwallgraph):
         outedges[e[0]].append(e[1])
+        booleanoutedges[e[0]].append(b)
     outedges=[tuple(o) for o in outedges]
+    booleanoutedges=[tuple(o) for o in booleanoutedges]
     wallthresh=[]
     walldomains=[]
     for de in domedges:
@@ -123,11 +143,53 @@ def makeWallGraphFromDomainGraph(domgraph,cells):
         c1=cells[de[1]]
         n=len(c0)
         location=[True if c0[k]!=c1[k] else False for k in range(n)]
-        if sum(location) > 1:
+        if sum(location) > 1: # check for errors
             raise ValueError("The domain graph has an edge between nonadjacent domains. Aborting.")
-        elif sum(location)==0:
-            raise ValueError("The domain graph has a self-loop. Aborting.")
+        elif sum(location)==0: # handle self-loops
+            wallthresh.append(None)
+            walldomains.append(tuple([sum(c0[k]+c1[k])/4.0 for k in range(n)])) 
         else:
             wallthresh.append(location.index(True))
             walldomains.append(tuple([sum(c0[k]+c1[k])/4.0 for k in range(n)])) 
-    return outedges,wallthresh,walldomains
+    return outedges,wallthresh,walldomains,booleanoutedges
+
+def makeExtendedMorseSetDomainGraph(vertexmap,morsecells,domaingraph,domaincells):
+    # add new domains with edges to or from domains in the Morse domain graph
+    newdomains=[k for v in vertexmap for k,edges in enumerate(domaingraph) if v in edges and k not in vertexmap]
+    newvertexmap=vertexmap+newdomains # lists must be explicitly added to preserve original indexing in vertexmap
+    # extend the morse domain graph and cells
+    extendedmorsecells=morsecells+[domaincells[v] for v in newdomains]
+    extendedmorsegraph=[[newvertexmap.index(e) for e in domaingraph[v] if e in newvertexmap] for v in newvertexmap]
+    return extendedmorsegraph, extendedmorsecells
+
+def truncateExtendedWallGraph(booleanoutedges,outedges,wallinfo):
+    # take the extra walls out of wallinfo
+    flatoutedges=[(k,o) for k,oe in enumerate(outedges) for o in oe]
+    flatbooledge=[b for be in booleanoutedges for b in be]
+    wallvertexmap=[]
+    for k,(oe,boe) in enumerate(zip(outedges,booleanoutedges)):
+        if any(boe):
+            wallvertexmap.append(k)
+        for o,b in zip(oe,boe):
+            if b:
+                labels=wallinfo[(k,o)]
+                newlabels=[]
+                for l in labels:
+                    if flatbooledge(flatoutedges.index((o,l[0]))):
+                        newlabels.append(l)
+                wallinfo[(k,o)] = newlabels
+            else:
+                wallinfo.pop((k,o), None)    
+    # translate to new wall indices
+    newwallinfo={}
+    for key,labels in wallinfo.iteritems():
+        newwallinfo[(wallvertexmap.index(key[0]), wallvertexmap.index(key[1]))] = [tuple(wallvertexmap.index(next),lab) for next,lab in labels]
+    return newwallinfo
+
+
+if __name__=='__main__':
+    varnames,threshnames,morsedomgraph,morsecells,vertexmap=fp.parseMorseSet()
+    domaingraph=fp.parseDomainGraph()
+    domaincells=fp.parseDomainCells()
+    print makeExtendedMorseSetDomainGraph(vertexmap,morsecells,domaingraph,domaincells)
+

@@ -39,14 +39,14 @@ def makeWallInfo(outedges,walldomains,varsaffectedatwall):
             try:
                 labels=pathDependentLabelConstruction(triple,insigns,outsigns,walldomains,varatwall)
             except ValueError:
-                print triple[1],inedges[triple[1]]
-                print triple[2],inedges[triple[2]]
-                print 'current in'
-                for i in inedges[triple[1]]:
-                    print walldomains[i], walldomains[triple[1]]
-                print 'next in'
-                for i in inedges[triple[2]]:
-                    print walldomains[i], walldomains[triple[2]]
+                # print triple[1],inedges[triple[1]]
+                # print triple[2],inedges[triple[2]]
+                # print 'current in'
+                # for i in inedges[triple[1]]:
+                #     print walldomains[i], walldomains[triple[1]]
+                # print 'next in'
+                # for i in inedges[triple[2]]:
+                #     print walldomains[i], walldomains[triple[2]]
                 raise
             # Put the result in the dictionary.
             key=(previouswall,currentwall)
@@ -99,14 +99,14 @@ def pathDependentLabelConstruction(triple,insigns,outsigns,walldomains,varatwall
                 try:
                     chars=getCharsNoExtrema(varind,triple,insigns,outsigns)
                 except ValueError:
-                    print varind, varatwall
-                    print triple[0],walldomains[triple[0]]
-                    print triple[1],walldomains[triple[1]]
-                    print triple[2],walldomains[triple[2]]
-                    print outsigns[triple[0]]
-                    print insigns[triple[1]]
-                    print outsigns[triple[1]]
-                    print insigns[triple[2]]
+                    # print varind, varatwall
+                    # print triple[0],walldomains[triple[0]]
+                    # print triple[1],walldomains[triple[1]]
+                    # print triple[2],walldomains[triple[2]]
+                    # print outsigns[triple[0]]
+                    # print insigns[triple[1]]
+                    # print outsigns[triple[1]]
+                    # print insigns[triple[2]]
                     raise
         # make every combination of characters in the growing labels
         walllabels=[l+c for l in walllabels for c in chars]
