@@ -33,8 +33,8 @@ def preprocess(fname1='dsgrn_output.json',fname2='dsgrn_domaingraph.json',fname3
     # put max/min patterns in terms of the alphabet u,m,M,d
     patterns=translatePatterns(varnames,patternnames,patternmaxmin,cyclic=cyclic)
     # translate domain graph into wall graph
-    extendedmorsegraph,extendedmorsecells,booleanoutedges=makeExtendedMorseSetDomainGraph(vertexmap,morsecells,domaingraph,domaincells)
-    outedges,wallthresh,walldomains=makeWallGraphFromDomainGraph(len(vertexmap),extendedmorsegraph, extendedmorsecells)
+    extendedmorsegraph,extendedmorsecells=makeExtendedMorseSetDomainGraph(vertexmap,morsecells,domaingraph,domaincells)
+    outedges,wallthresh,walldomains,booleanoutedges=makeWallGraphFromDomainGraph(len(vertexmap),extendedmorsegraph, extendedmorsecells)
     # record which variable is affected at each wall
     varsaffectedatwall=varsAtWalls(threshnames,walldomains,wallthresh,varnames)
     # make wall labels
@@ -117,7 +117,7 @@ def varsAtWalls(threshnames,walldomains,wallthresh,varnames):
     return varsaffectedatwall
 
 def makeWallGraphFromDomainGraph(N,domgraph,cells):
-    morseinds=range(N)
+    morseinds=range(N) # number of domains in morse set
     domedges=[(k,d) for k,e in enumerate(domgraph) for d in e]
     booleanwallgraph=[]
     wallgraph=[]
@@ -155,7 +155,7 @@ def makeWallGraphFromDomainGraph(N,domgraph,cells):
 
 def makeExtendedMorseSetDomainGraph(vertexmap,morsecells,domaingraph,domaincells):
     # add new domains with edges to or from domains in the Morse domain graph
-    newdomains=[k for v in vertexmap for k,edges in enumerate(domaingraph) if v in edges and k not in vertexmap]
+    newdomains=sorted(list(set([k for v in vertexmap for k,edges in enumerate(domaingraph) if v in edges and k not in vertexmap]+[e for v in vertexmap for e in domaingraph[v] if e not in vertexmap])))
     newvertexmap=vertexmap+newdomains # lists must be explicitly added to preserve original indexing in vertexmap
     # extend the morse domain graph and cells
     extendedmorsecells=morsecells+[domaincells[v] for v in newdomains]
@@ -175,7 +175,7 @@ def truncateExtendedWallGraph(booleanoutedges,outedges,wallinfo):
                 labels=wallinfo[(k,o)]
                 newlabels=[]
                 for l in labels:
-                    if flatbooledge(flatoutedges.index((o,l[0]))):
+                    if flatbooledge[flatoutedges.index((o,l[0]))]:
                         newlabels.append(l)
                 wallinfo[(k,o)] = newlabels
             else:
@@ -183,7 +183,7 @@ def truncateExtendedWallGraph(booleanoutedges,outedges,wallinfo):
     # translate to new wall indices
     newwallinfo={}
     for key,labels in wallinfo.iteritems():
-        newwallinfo[(wallvertexmap.index(key[0]), wallvertexmap.index(key[1]))] = [tuple(wallvertexmap.index(next),lab) for next,lab in labels]
+        newwallinfo[(wallvertexmap.index(key[0]), wallvertexmap.index(key[1]))] = [tuple([wallvertexmap.index(next),lab]) for next,lab in labels]
     return newwallinfo
 
 

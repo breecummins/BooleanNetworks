@@ -64,24 +64,62 @@ def test3():
     # Y : ~X : Z
     # Z : ~Y : X
     # 3D EXAMPLE, NEGATIVE FEEDBACK, NO STEADY STATES (ONLY SADDLES)
-    walldomains=[(1.5,1,0.5),(1,1.5,0.5),(1.5,0.5,1),(0.5,1.5,1),(1,0.5,1.5),(0.5,1,1.5)]
-    outedges=[(2,),(0,),(4,),(1,),(5,),(3,)]
-    varsaffectedatwall=[2,1,0,0,1,2]
+    domaingraph=[(1,3,5),(2,),(3,),(4,),(5,),(6,),(1,),(2,4,6)]
+    domaincells=[
+    [[0,1],[0,1],[0,1]],
+    [[1,2],[0,1],[0,1]],
+    [[1,2],[0,1],[1,2]],
+    [[0,1],[0,1],[1,2]],
+    [[0,1],[1,2],[1,2]],
+    [[0,1],[1,2],[0,1]],
+    [[1,2],[1,2],[0,1]],
+    [[1,2],[1,2],[1,2]]
+    ]
+    morseset=domaincells[1:-1]
+    vertexmap=range(1,7)
+    walldomains=[(1.5,0.5,1),(1,0.5,1.5),(0.5,1,1.5),(0.5,1.5,1),(1,1.5,0.5),(1.5,1,0.5)]
+    outedges=[(1,),(2,),(3,),(4,),(5,),(0,)]
+    varsaffectedatwall=[0,1,2,0,1,2]
+    # walldomains=[(1.5,1,0.5),(1,1.5,0.5),(1.5,0.5,1),(0.5,1.5,1),(1,0.5,1.5),(0.5,1,1.5)]
+    # outedges=[(2,),(0,),(4,),(1,),(5,),(3,)]
+    # varsaffectedatwall=[2,1,0,0,1,2]
     varnames=['X','Y','Z']
     threshnames=[['Y'],['Z'],['X']]
     f=open('patterns.txt','w')
     f.write('Z min, X max, Y min, Z max, X min, Y max\n Z min, X min, Y max, Y min, Z max, X max')
     f.close()
-    return outedges,walldomains,varsaffectedatwall,varnames,threshnames
+    return domaingraph,domaincells,morseset,vertexmap,outedges,walldomains,varsaffectedatwall,varnames,threshnames
 
 def test4():
     # X1 : (X1)(~X2) : X1 X2
     # X2 : (X2)(X1) : X2 X1
     # 2D EXAMPLE WITH TWO THRESHOLDS EACH, HAS CYCLES AND 1 OFF FIXED POINT
-    walldomains=[(1.5,1),(1.5,2),(2,0.5),(2,1.5),(2,2.5),(2.5,1),(2.5,2)]
-    outedges=[(2,),(0,3),(5,),(6,),(1,),(6,),(4,)]
-    varsaffectedatwall=[1,0,1,1,1,1,0]
-    return outedges,walldomains,varsaffectedatwall
+    domaingraph=[(1,),(2,0),(2,),(0,4),(5,7),(8,),(3,),(6,),(7,)]
+    domaincells=[
+    [[0,1],[2,3]],
+    [[0,1],[1,2]],
+    [[0,1],[0,1]],
+    [[1,2],[2,3]],
+    [[1,2],[1,2]],
+    [[1,2],[0,1]],
+    [[2,3],[2,3]],
+    [[2,3],[1,2]],
+    [[2,3],[0,1]]
+    ]
+    morseset=domaincells[3:]
+    vertexmap=range(3,9)
+    walldomains=[(1.5,2),(1.5,1),(2,1.5),(2,0.5),(2,2.5),(2.5,2),(2.5,1)]
+    outedges=[(1,2),(3,),(5,),(6,),(0,),(4,),(5,)]
+    varsaffectedatwall=[0,1,1,1,1,0,1]
+    varnames=['X1','X2']
+    threshnames=[['X1','X2'],['X2','X1']]
+    f=open('patterns.txt','w')
+    f.write('X2 max, X1 min, X2 min, X1 max\n X2 max, X2 min, X1 min, X1 max')
+    f.close()
+    # walldomains=[(1.5,1),(1.5,2),(2,0.5),(2,1.5),(2,2.5),(2.5,1),(2.5,2)]
+    # outedges=[(2,),(0,3),(5,),(6,),(1,),(6,),(4,)]
+    # varsaffectedatwall=[1,0,1,1,1,1,0]
+    return domaingraph,domaincells,morseset,vertexmap,outedges,walldomains,varsaffectedatwall,varnames,threshnames
 
 def test5():
     # X1 : (X2)(~X3) : X2

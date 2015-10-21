@@ -31,8 +31,8 @@ def testme(showme=1):
     test0(showme,findallmatches=1)
     test1(showme,findallmatches=1)
     test2(showme,findallmatches=1)
-    # test3(showme,findallmatches=1)
-    # test4(showme,findallmatches=1)
+    test3(showme,findallmatches=1)
+    test4(showme,findallmatches=1)
     # test5(showme,findallmatches=1)
     # test6(showme,findallmatches=1)
     # test7(showme,findallmatches=1)
@@ -41,8 +41,8 @@ def testme(showme=1):
     test0(showme,findallmatches=0)
     test1(showme,findallmatches=0)
     test2(showme,findallmatches=0)
-    # test3(showme,findallmatches=0)
-    # test4(showme,findallmatches=0)
+    test3(showme,findallmatches=0)
+    test4(showme,findallmatches=0)
     # test5(showme,findallmatches=0)
     # test6(showme,findallmatches=0)
     # test7(showme,findallmatches=0)
@@ -98,24 +98,32 @@ def test2(showme=1,findallmatches=1):
     if showme and not findallmatches: print match[0] in [(1,4,6),(1,3)]
 
 def test3(showme=1,findallmatches=1):
-    outedges,walldomains,varsaffectedatwall,varnames,threshnames=tc.test3()
-    wallinfo = makeWallInfo(outedges,walldomains,varsaffectedatwall)
+    domaingraph,domaincells,morseset,vertexmap,outedges,walldomains,varsaffectedatwall,varnames,threshnames=tc.test3()
+    extendedmorsegraph,extendedmorsecells=pp.makeExtendedMorseSetDomainGraph(vertexmap,morseset,domaingraph,domaincells)
+    newoutedges,wallthresh,newwalldomains,booleanoutedges=pp.makeWallGraphFromDomainGraph(len(vertexmap),extendedmorsegraph, extendedmorsecells)
+    newvarsaffectedatwall=pp.varsAtWalls(threshnames,newwalldomains,wallthresh,varnames)
+    wallinfo = makeWallInfo(newoutedges,newwalldomains,newvarsaffectedatwall)
+    wallinfo = pp.truncateExtendedWallGraph(booleanoutedges,newoutedges,wallinfo)
     patternnames,patternmaxmin,originalpatterns=fp.parsePatterns()
     patterns=pp.translatePatterns(varnames,patternnames,patternmaxmin,cyclic=1)
     match = matchPattern(patterns[0][0],wallinfo,cyclic=1,findallmatches=findallmatches)
-    if showme: print match==[(0,2,4,5,3,1,0)]
+    if showme: print match==[(5,0,1,2,3,4,5)]
     match = matchPattern(patterns[1][0],wallinfo,cyclic=1,findallmatches=findallmatches)
     if showme: print 'None' in match
 
 def test4(showme=1,findallmatches=1):
-    wallinfo = makeWallInfo(*tc.test4())
-    pattern=['md','um','Mu','dM','md']
-    match = matchPattern(pattern,wallinfo,cyclic=1,findallmatches=findallmatches)
-    if showme and findallmatches: print set(match)==set([(1,0,2,5,6,4,1),(1,3,6,4,1)])
-    if showme and not findallmatches: print match[0] in [(1,0,2,5,6,4,1),(1,3,6,4,1)]
-
-    pattern=['mdu','umu','Muu','dMu','mdu']
-    match = matchPattern(pattern,wallinfo,cyclic=1,findallmatches=findallmatches)
+    domaingraph,domaincells,morseset,vertexmap,outedges,walldomains,varsaffectedatwall,varnames,threshnames=tc.test4()
+    extendedmorsegraph,extendedmorsecells=pp.makeExtendedMorseSetDomainGraph(vertexmap,morseset,domaingraph,domaincells)
+    newoutedges,wallthresh,newwalldomains,booleanoutedges=pp.makeWallGraphFromDomainGraph(len(vertexmap),extendedmorsegraph, extendedmorsecells)
+    newvarsaffectedatwall=pp.varsAtWalls(threshnames,newwalldomains,wallthresh,varnames)
+    wallinfo = makeWallInfo(newoutedges,newwalldomains,newvarsaffectedatwall)
+    wallinfo = pp.truncateExtendedWallGraph(booleanoutedges,newoutedges,wallinfo)
+    patternnames,patternmaxmin,originalpatterns=fp.parsePatterns()
+    patterns=pp.translatePatterns(varnames,patternnames,patternmaxmin,cyclic=1)
+    match = matchPattern(patterns[0][0],wallinfo,cyclic=1,findallmatches=findallmatches)
+    if showme and findallmatches: print set(match)==set([(4, 0, 2, 5, 4), (4, 0, 1, 3, 6, 5, 4)])
+    if showme and not findallmatches: print match[0] in [(4, 0, 2, 5, 4), (4, 0, 1, 3, 6, 5, 4)]
+    match = matchPattern(patterns[1][0],wallinfo,cyclic=1,findallmatches=findallmatches)
     if showme: print 'None' in match
 
 def test5(showme=1,findallmatches=1):
