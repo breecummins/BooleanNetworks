@@ -31,7 +31,7 @@ def testme():
     test2()
     test3()
     test4()
-    # test5()
+    test5()
     # test6()
     # test7()
     # test8()
@@ -95,7 +95,7 @@ def test4():
     print translatePatterns(varnames,patternnames,patternmaxmin,cyclic=1)==[[['dM','md','um','Mu','dM']],[['dM','dm','mu','Mu','dM']]]
 
 def test5():
-    outedges,walldomains,varsaffectedatwall,varnames,threshnames=tc.test5()
+    domaingraph,domaincells,morseset,vertexmap,outedges,walldomains,varsaffectedatwall,varnames,threshnames=tc.test5()
     patternnames,patternmaxmin,originalpatterns=fp.parsePatterns()
     patterns=translatePatterns(varnames,patternnames,patternmaxmin,cyclic=1)
     print patterns==[[['mdd','umd','uum','Muu','dMu','ddM','mdd']],[['mdd','umd','Mud','dum','dMu','ddM','mdd']]]

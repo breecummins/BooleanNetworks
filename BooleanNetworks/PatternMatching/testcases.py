@@ -126,15 +126,32 @@ def test5():
     # X2 : X1 : X1 X3
     # X3 : X2 : X1
     # 3D EXAMPLE WHERE ONE VAR HAS 2 THRESHOLDS, NO FIXED POINT
-    walldomains=[(0.5,1,1.5),(0.5,2,1.5),(1,2.5,1.5),(0.5,0.5,1),(0.5,1.5,1),(1.5,2.5,1),(0.5,1,0.5),(1,0.5,0.5),(1,1.5,0.5),(1.5,1,0.5),(1.5,2,0.5)]
-    outedges=[(3,),(0,4),(1,),(7,),(6,8),(2,),(7,),(9,),(10,),(10,),(5,)]
-    varsaffectedatwall=[0,2,1,0,0,0,0,1,1,0,2]
+    domaingraph=[(3,),(0,4),(1,5,8),(4,),(5,),(11,),(0,),(1,6),(7,),(3,6,10),(4,7,11),(8,)]
+    domaincells=[
+    [(0,1),(0,1),(0,1)],
+    [(0,1),(1,2),(0,1)],
+    [(0,1),(2,3),(0,1)],
+    [(1,2),(0,1),(0,1)],
+    [(1,2),(1,2),(0,1)],
+    [(1,2),(2,3),(0,1)],
+    [(0,1),(0,1),(1,2)],
+    [(0,1),(1,2),(1,2)],
+    [(0,1),(2,3),(1,2)],
+    [(1,2),(0,1),(1,2)],
+    [(1,2),(1,2),(1,2)],
+    [(1,2),(2,3),(1,2)],
+    ]
+    morseset=domaincells[0:2]+domaincells[3:9]+[domaincells[11]]
+    vertexmap=[0,1,3,4,5,6,7,8,11]
+    walldomains=[(1,0.5,0.5),(0.5,1,0.5),(1,1.5,0.5),(1.5,1,0.5),(1.5,2,0.5),(1.5,2.5,1),(0.5,0.5,1),(0.5,1.5,1),(0.5,1,1.5),(0.5,2,1.5),(1,2.5,1.5)]
+    outedges=[(3,),(0,),(4,),(4,),(5,),(10,),(0,),(1,2),(6,),(7,8),(9,)]
+    varsaffectedatwall=[1,0,1,0,2,0,0,0,0,2,1]
     f=open('patterns.txt','w')
     f.write('X1 min, X2 min, X3 min, X1 max, X2 max, X3 max\n X1 min, X2 min, X1 max, X3 min, X2 max, X3 max')
     f.close()
     varnames=['X1','X2','X3']
     threshnames=[['X2'],['X1','X3'],['X1']]
-    return outedges,walldomains,varsaffectedatwall,varnames,threshnames
+    return domaingraph,domaincells,morseset,vertexmap,outedges,walldomains,varsaffectedatwall,varnames,threshnames
 
 def test6():
     # X1 : (X1)(~X3) : X1 X2 X3

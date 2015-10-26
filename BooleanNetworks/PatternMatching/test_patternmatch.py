@@ -33,7 +33,7 @@ def testme(showme=1):
     test2(showme,findallmatches=1)
     test3(showme,findallmatches=1)
     test4(showme,findallmatches=1)
-    # test5(showme,findallmatches=1)
+    test5(showme,findallmatches=1)
     # test6(showme,findallmatches=1)
     # test7(showme,findallmatches=1)
     # test8(showme,findallmatches=1)
@@ -43,7 +43,7 @@ def testme(showme=1):
     test2(showme,findallmatches=0)
     test3(showme,findallmatches=0)
     test4(showme,findallmatches=0)
-    # test5(showme,findallmatches=0)
+    test5(showme,findallmatches=0)
     # test6(showme,findallmatches=0)
     # test7(showme,findallmatches=0)
     # test8(showme,findallmatches=0)
@@ -127,13 +127,17 @@ def test4(showme=1,findallmatches=1):
     if showme: print 'None' in match
 
 def test5(showme=1,findallmatches=1):
-    outedges,walldomains,varsaffectedatwall,varnames,threshnames=tc.test5()
-    wallinfo = makeWallInfo(outedges,walldomains,varsaffectedatwall)
+    domaingraph,domaincells,morseset,vertexmap,outedges,walldomains,varsaffectedatwall,varnames,threshnames=tc.test5()
+    extendedmorsegraph,extendedmorsecells=pp.makeExtendedMorseSetDomainGraph(vertexmap,morseset,domaingraph,domaincells)
+    newoutedges,wallthresh,newwalldomains,booleanoutedges=pp.makeWallGraphFromDomainGraph(len(vertexmap),extendedmorsegraph, extendedmorsecells)
+    newvarsaffectedatwall=pp.varsAtWalls(threshnames,newwalldomains,wallthresh,varnames)
+    wallinfo = makeWallInfo(newoutedges,newwalldomains,newvarsaffectedatwall)
+    wallinfo = pp.truncateExtendedWallGraph(booleanoutedges,newoutedges,wallinfo)
     patternnames,patternmaxmin,originalpatterns=fp.parsePatterns()
     patterns=pp.translatePatterns(varnames,patternnames,patternmaxmin,cyclic=1)
     match = matchPattern(patterns[0][0],wallinfo,cyclic=1,findallmatches=findallmatches)
-    if showme and findallmatches: print set(match)==set([(4, 8, 10, 5, 2, 1, 4), (0, 3, 7, 9, 10, 5, 2, 1, 0), (3, 7, 9, 10, 5, 2, 1, 0, 3), (4, 6, 7, 9, 10, 5, 2, 1, 4)])
-    if showme and not findallmatches: print match[0] in [(4, 8, 10, 5, 2, 1, 4), (0, 3, 7, 9, 10, 5, 2, 1, 0), (3, 7, 9, 10, 5, 2, 1, 0, 3), (4, 6, 7, 9, 10, 5, 2, 1, 4)]
+    if showme and findallmatches: print set(match)==set([(6,0,3,4,5,10,9,8,6),(7,1,0,3,4,5,10,9,7),(7,2,4,5,10,9,7)])
+    if showme and not findallmatches: print match[0] in [(6,0,3,4,5,10,9,8,6),(7,1,0,3,4,5,10,9,7),(7,2,4,5,10,9,7)]
     match = matchPattern(patterns[1][0],wallinfo,cyclic=1,findallmatches=findallmatches)
     if showme: print 'None' in match
 

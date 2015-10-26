@@ -30,7 +30,7 @@ def testme():
     test2()
     test3()
     test4()
-    # test5()
+    test5()
     # test6()
 
 def test0():
@@ -93,13 +93,28 @@ def test4():
     print wallinfo[(6,5)]==[(4,('Mu',))]
 
 def test5():
-    outedges,walldomains,varsaffectedatwall,varnames,threshnames=tc.test5()
-    wallinfo = wl.makeWallInfo(outedges,walldomains,varsaffectedatwall)
-    print set(wallinfo[(1,0)][0][1])==set(('ddd','mdd','udd','Mdd'))
-    print set( [ wallinfo[(2,1)][k][0] for k in [0,1] ]  )==set([0,4])
-    print set( wallinfo[(2,1)][0][1]  )==set(('ddd','ddM'))
-    print set( wallinfo[(2,1)][1][1]  )==set(('ddd','ddM'))
-    print set(wallinfo[(1,4)])==set([(6,('udd','mdd')),(8,('udd','mdd'))])
+    domaingraph,domaincells,morseset,vertexmap,outedges,walldomains,varsaffectedatwall,varnames,threshnames=tc.test5()
+    extendedmorsegraph,extendedmorsecells=pp.makeExtendedMorseSetDomainGraph(vertexmap,morseset,domaingraph,domaincells)
+    newoutedges,wallthresh,newwalldomains,booleanoutedges=pp.makeWallGraphFromDomainGraph(len(vertexmap),extendedmorsegraph, extendedmorsecells)
+    print newwalldomains==walldomains+[(0.5,2,0.5),(1,2.5,0.5),(0.5,2.5,1),(1.5,0.5,1),(1,0.5,1.5),(1.5,1,1.5),(1.5,1.5,1),(1,1.5,1.5),(1.5,2,1.5)]
+    print newoutedges==outedges+[(1, 2), (5,), (9,), (3,), (6,), (17, 18, 19), (4,), (7, 8), (10,)]
+    newvarsaffectedatwall=pp.varsAtWalls(threshnames,newwalldomains,wallthresh,varnames)
+    print newvarsaffectedatwall[:11]==varsaffectedatwall
+    wallinfo = wl.makeWallInfo(newoutedges,newwalldomains,newvarsaffectedatwall)
+    wallinfo = pp.truncateExtendedWallGraph(booleanoutedges,newoutedges,wallinfo)
+    print set(wallinfo.keys())==set([(0,3),(1,0),(2,4),(3,4),(4,5),(5,10),(6,0),(7,1),(7,2),(8,6),(9,7),(9,8),(10,9)])
+    print wallinfo[(0,3)]==[(4,('uud',))]
+    print wallinfo[(1,0)]==[(3,('umd',))]
+    print wallinfo[(2,4)]==[(5,('uum',))]
+    print wallinfo[(3,4)]==[(5,('uum',))]
+    print wallinfo[(4,5)]==[(10,('Muu',))]
+    print wallinfo[(5,10)]==[(9,('dMu',))]
+    print wallinfo[(6,0)]==[(3,('umd',))]
+    print wallinfo[(7,1)]==[(0,('udd',))]
+    print wallinfo[(7,2)]==[(4,('umd',))]
+    print wallinfo[(8,6)]==[(0,('mdd',))]
+    print set(wallinfo[(9,7)])==set([(1,('mdd',)),(2,('mdd',))])
+    print set(wallinfo[(10,9)])==set([(7,('ddM',)),(8,('ddM',))])
 
 def test6():
     outedges,walldomains,varsaffectedatwall,varnames,threshnames=tc.test6()

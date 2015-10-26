@@ -69,7 +69,6 @@ def makeWallSigns(walldomains,edges,out):
                 dom2=walldomains[e]
                 diffs.append(sign(dom[i] - dom2[i]))
             if set([-1,1]).issubset(diffs):
-                print 'both'
                 if out:
                     raise ValueError("The wall graph has spreading flow.")
                 else: 
@@ -136,14 +135,18 @@ def getChars(isvaratwall,(prev,curr,next)):
 def getCharsExtrema(varind,(prev,curr,next),insigns,outsigns):
     if ( outsigns[prev][varind]==-1 or insigns[curr][varind]==1 ) and ( outsigns[curr][varind]==1 or insigns[next][varind]==-1 ):
         chars=['M']
-    elif ( outsigns[prev][varind]==-1 or insigns[curr][varind]==1 ):
-        chars=['u','M']
-    elif ( outsigns[curr][varind]==1 or insigns[next][varind]==-1 ):
-        chars=['d','M']
     elif ( outsigns[prev][varind]==1 or insigns[curr][varind]==-1 ) and ( outsigns[curr][varind]==-1 or insigns[next][varind]==1 ):
         chars=['m']
+    elif ( outsigns[prev][varind]==-1 or insigns[curr][varind]==1 ) and ( outsigns[curr][varind]==-1 or insigns[next][varind]==1 ):
+        chars=['u']
+    elif ( outsigns[prev][varind]==1 or insigns[curr][varind]==-1 ) and ( outsigns[curr][varind]==1 or insigns[next][varind]==-1 ):
+        chars=['d']
+    elif ( outsigns[prev][varind]==-1 or insigns[curr][varind]==1 ):
+        chars=['u','M']
     elif ( outsigns[prev][varind]==1 or insigns[curr][varind]==-1 ):
         chars=['d','m']
+    elif ( outsigns[curr][varind]==1 or insigns[next][varind]==-1 ):
+        chars=['d','M']
     elif ( outsigns[curr][varind]==-1 or insigns[next][varind]==1 ):
         chars=['u','m']
     else:
