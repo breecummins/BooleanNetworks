@@ -34,7 +34,7 @@ def testme(showme=1):
     test3(showme,findallmatches=1)
     test4(showme,findallmatches=1)
     test5(showme,findallmatches=1)
-    # test6(showme,findallmatches=1)
+    test6(showme,findallmatches=1)
     # test7(showme,findallmatches=1)
     # test8(showme,findallmatches=1)
     # # find first match only
@@ -44,7 +44,7 @@ def testme(showme=1):
     test3(showme,findallmatches=0)
     test4(showme,findallmatches=0)
     test5(showme,findallmatches=0)
-    # test6(showme,findallmatches=0)
+    test6(showme,findallmatches=0)
     # test7(showme,findallmatches=0)
     # test8(showme,findallmatches=0)
 
@@ -142,11 +142,15 @@ def test5(showme=1,findallmatches=1):
     if showme: print 'None' in match
 
 def test6(showme=1,findallmatches=1):
-    outedges,walldomains,varsaffectedatwall,varnames,threshnames=tc.test6()
-    wallinfo = makeWallInfo(outedges,walldomains,varsaffectedatwall)
+    domaingraph,domaincells,morseset,vertexmap,outedges,walldomains,varsaffectedatwall,varnames,threshnames=tc.test6()
+    extendedmorsegraph,extendedmorsecells=pp.makeExtendedMorseSetDomainGraph(vertexmap,morseset,domaingraph,domaincells)
+    newoutedges,wallthresh,newwalldomains,booleanoutedges=pp.makeWallGraphFromDomainGraph(len(vertexmap),extendedmorsegraph, extendedmorsecells)
+    newvarsaffectedatwall=pp.varsAtWalls(threshnames,newwalldomains,wallthresh,varnames)
+    wallinfo = makeWallInfo(newoutedges,newwalldomains,newvarsaffectedatwall)
+    wallinfo = pp.truncateExtendedWallGraph(booleanoutedges,newoutedges,wallinfo)
     patternnames,patternmaxmin,originalpatterns=fp.parsePatterns()
     patterns=pp.translatePatterns(varnames,patternnames,patternmaxmin,cyclic=1)
-    solutions=[[(0, 13, 9, 2, 12, 7, 0), (0, 3, 15, 11, 6, 2, 12, 7, 0), (0, 3, 15, 5, 9, 2, 12, 7, 0), (0, 3, 10, 16, 6, 2, 12, 7, 0)],[(8,4,16,6,2,12,7,0,8)],[(14,4,16,6,14)],None,[(1,4,16,6,2,12,1)],None]
+    solutions=[[(0, 5, 8, 9, 3, 1, 0), (0, 6, 11, 13, 16, 9, 3, 1, 0), (0, 6, 12, 14, 8, 9, 3, 1, 0), (0, 6, 12, 15, 16, 9, 3, 1, 0)],[(4,7,13,16,9,3,1,0,4)],[(10,7,13,16,10)],None,[(2,7,13,16,9,3,2)],None]
     patterns=[p for pat in patterns for p in pat]
     for p,s in zip(patterns,solutions):
         match = matchPattern(p,wallinfo,cyclic=1,findallmatches=findallmatches)

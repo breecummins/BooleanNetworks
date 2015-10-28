@@ -32,7 +32,7 @@ def testme():
     test3()
     test4()
     test5()
-    # test6()
+    test6()
     # test7()
     # test8()
 
@@ -111,8 +111,8 @@ def test7():
     varnames,threshnames,morsedomgraph,morsecells,vertexmap=fp.parseMorseSet()
     domaingraph=fp.parseDomainGraph()
     domaincells=fp.parseDomainCells()
-    extendedmorsegraph,extendedmorsecells,booleanoutedges=pp.makeExtendedMorseSetDomainGraph(vertexmap,morsecells,domaingraph,domaincells)
-    outedges,wallthresh,walldomains=pp.makeWallGraphFromDomainGraph(len(vertexmap),extendedmorsegraph, extendedmorsecells)
+    extendedmorsegraph,extendedmorsecells=pp.makeExtendedMorseSetDomainGraph(vertexmap,morsecells,domaingraph,domaincells)
+    outedges,wallthresh,walldomains,booleanoutedges=pp.makeWallGraphFromDomainGraph(len(vertexmap),extendedmorsegraph, extendedmorsecells)
     varsaffectedatwall=pp.varsAtWalls(threshnames,walldomains,wallthresh,varnames)
     print outedges==[(1,),(2,),(3,),(4,),(5,),(0,)]
     print wallthresh==[1,2,0,1,2,0]
@@ -125,8 +125,8 @@ def test8():
     varnames,threshnames,morsedomgraph,morsecells,vertexmap=fp.parseMorseSet()
     domaingraph=fp.parseDomainGraph()
     domaincells=fp.parseDomainCells()
-    extendedmorsegraph,extendedmorsecells,booleanoutedges=pp.makeExtendedMorseSetDomainGraph(vertexmap,morsecells,domaingraph,domaincells)
-    outedges,wallthresh,walldomains=pp.makeWallGraphFromDomainGraph(len(vertexmap),extendedmorsegraph, extendedmorsecells)
+    extendedmorsegraph,extendedmorsecells=pp.makeExtendedMorseSetDomainGraph(vertexmap,morsecells,domaingraph,domaincells)
+    outedges,wallthresh,walldomains,booleanoutedges=pp.makeWallGraphFromDomainGraph(len(vertexmap),extendedmorsegraph, extendedmorsecells)
     varsaffectedatwall=pp.varsAtWalls(threshnames,walldomains,wallthresh,varnames)
     print outedges == [(1,),(2,3),(6,),(4,),(5,),(6,),(0,)]
     print wallthresh == [2,3,2,3,2,3,3]

@@ -158,20 +158,59 @@ def test6():
     # X2 : X1 : X3
     # X3 : X1(~X2) : X1
     # 3D EXAMPLE WHERE ONE VAR HAS 3 THRESHOLDS, CHOSE PARAM SET WITH FIXED POINT, 2 WHITE WALLS
-    walldomains=[(2,0.5,0.5),(2,1.5,0.5),(2,1.5,1.5),(3,0.5,0.5),(3,1.5,0.5),(3,0.5,1.5),(3,1.5,1.5),(1.5,1,0.5),(2.5,1,0.5),(2.5,1,1.5),(3.5,1,0.5),(3.5,1,1.5),(1.5,1.5,1),(2.5,0.5,1),(2.5,1.5,1),(3.5,0.5,1),(3.5,1.5,1)]
-    outedges=[(3,8,13),(4,),(12,),(10,15),(16,),(9,),(2,14),(0,),(4,),(2,14),(16,),(6,),(1,7),(9,),(4,),(5,11),(6,)]
-    varsaffectedatwall=[1]*3 + [2]*9 + [0]*5
+    domaingraph=[(2,),(0,),(2,),(1,2),(6,8),(4,9),(2,),(3,5,6),(9,10,12),(13,),(6,11),(7,9),(13,14),(15,),(10,15),(11,)]
+    domaincells=[
+    [(0,1),(0,1),(0,1)],
+    [(0,1),(1,2),(0,1)],
+    [(0,1),(0,1),(1,2)],
+    [(0,1),(1,2),(1,2)],
+    [(1,2),(0,1),(0,1)],
+    [(1,2),(1,2),(0,1)],
+    [(1,2),(0,1),(1,2)],
+    [(1,2),(1,2),(1,2)],
+    [(2,3),(0,1),(0,1)],
+    [(2,3),(1,2),(0,1)],
+    [(2,3),(0,1),(1,2)],
+    [(2,3),(1,2),(1,2)],
+    [(3,4),(0,1),(0,1)],
+    [(3,4),(1,2),(0,1)],
+    [(3,4),(0,1),(1,2)],
+    [(3,4),(1,2),(1,2)],
+    ]
+    morseset=domaincells[4:6]+domaincells[7:]
+    vertexmap=[4,5]+range(7,16)
+    walldomains=[
+    (2,0.5,0.5),
+    (1.5,1,0.5),
+    (2,1.5,0.5),
+    (1.5,1.5,1),
+    (2.5,1,0.5),
+    (2.5,0.5,1),
+    (3,0.5,0.5),
+    (3,1.5,0.5),
+    (2.5,1,1.5),
+    (2,1.5,1.5),
+    (2.5,1.5,1),
+    (3.5,1,0.5),
+    (3.5,0.5,1),
+    (3.5,1.5,1),
+    (3,0.5,1.5),
+    (3.5,1,1.5),
+    (3,1.5,1.5)
+    ]
+    outedges=[(4,5,6),(0,),(7,),(1,2),(7,),(8,),(11,12),(13,),(9,10),(3,),(7,),(13,),(14,15),(16,),(8,),(16,),(9,10)]
+    varsaffectedatwall=[1,2,1,0,2,0,2,2,2,1,0,2,0,0,2,2,2]
     f=open('patterns.txt','w')
     f.write('X2 min, X1 max, X3 max, X2 max, X1 min, X3 min, X2 min\n X3 max, X3 min, X1 max, X3 max, X2 max, X1 min, X3 min, X2 min\n X1 min, X3 min, X1 max, X3 max\n X2 min, X3 min, X1 max, X3 max, X2 max, X1 min\n X2 min, X3 min, X1 min, X3 max, X2 max, X1 max')
     f.close()
     varnames=['X1','X2','X3']
     threshnames=[['X1','X2','X3'],['X3'],['X1']]
-    return outedges,walldomains,varsaffectedatwall,varnames,threshnames
+    return domaingraph,domaincells,morseset,vertexmap,outedges,walldomains,varsaffectedatwall,varnames,threshnames
 
 def test7():
     # dsgrn output, repressilator example like test 3
-    subprocesscall(["dsgrn network networks/3D_Example.txt domaingraph > dsgrn_domaincells.json".format(specfile)],shell=True)
-    subprocesscall(["dsgrn network networks/3D_Example.txt domaingraph json 13 > dsgrn_domaingraph.json".format(specfile,int(param))],shell=True)
+    subprocess.call(["dsgrn network networks/3D_Example.txt domaingraph > dsgrn_domaincells.json"],shell=True)
+    subprocess.call(["dsgrn network networks/3D_Example.txt domaingraph json 13 > dsgrn_domaingraph.json"],shell=True)
     subprocess.call(["dsgrn network networks/3D_Example.txt analyze morseset 0 13 >dsgrn_output.json"],shell=True)
     f=open('patterns.txt','w')
     f.write('Z min, X min, Y min, Z max, X max, Y max\n X max, Y max, Z max, X min, Y min, Z min\n X min, Y max, Z min, X max, Y min, Z max\n X max, Y min, Z max, X min, Y max, Z min')
@@ -179,8 +218,8 @@ def test7():
 
 def test8():
     # dsgrn output, 5D Cycle
-    subprocesscall(["dsgrn network networks/5D_Cycle.txt domaingraph > dsgrn_domaincells.json".format(specfile)],shell=True)
-    subprocesscall(["dsgrn network networks/5D_Cycle.txt domaingraph json 847328 > dsgrn_domaingraph.json".format(specfile,int(param))],shell=True)
+    subprocess.call(["dsgrn network networks/5D_Cycle.txt domaingraph > dsgrn_domaincells.json"],shell=True)
+    subprocess.call(["dsgrn network networks/5D_Cycle.txt domaingraph json 847328 > dsgrn_domaingraph.json"],shell=True)
     subprocess.call(["dsgrn network networks/5D_Cycle.txt analyze morseset 3 847328 >dsgrn_output.json"],shell=True)
     f=open('patterns.txt','w')
     f.write('X3 max, X4 max, X3 min, X4 min\n X3 max, X4 min, X3 min, X4 max')
