@@ -41,8 +41,8 @@ def patternSearch(morseset=0,specfile="networks/5D_Malaria_20hr.txt",paramfile="
 
 if __name__=='__main__':
     setPattern()
-    parameter=116014
-    useDSGRN.patternSearchSingle(parameter,specfile="networks/5D_Malaria_20hr.txt",resultsfile='results_malaria_param{}.txt'.format(parameter))
+    # parameter=116014
+    # useDSGRN.patternSearchSingle(parameter,specfile="networks/5D_Malaria_20hr.txt",resultsfile='results_malaria_param{}.txt'.format(parameter))
     # patternSearch()
 
 

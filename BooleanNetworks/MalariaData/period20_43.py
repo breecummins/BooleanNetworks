@@ -103,15 +103,15 @@ def makeTable(topscorelist,thresholdlist,makegraph=1,saveme=0,onlylargestnetwork
         g.close()
 
 if __name__=='__main__':
-    plotTimeSeries()
+    # plotTimeSeries()
 
 
-    # topscorelist=[50]#[50,75,100,200]
-    # thresholdlist=[5.e-5]#[0.1,0.01,0.005,0.006,0.007,0.008,0.009,1.e-4,9.e-5,8.e-5,7.e-5,6.e-5,5.e-5,4.5e-5,4.e-5,3.e-5,2.e-5,1.e-5]
-    # LEMfile='/Users/bcummins/ProjectData/malaria/wrair2015_pfalcip_harmonicGenes_forNewLEM/wrair2015_pfalc_43tf_lem.allscores.tsv'
-    # masterfile='/Users/bcummins/ProjectData/malaria/wrair2015_pfalcip_harmonicGenes_forNewLEM/43geneIDs_intersect18-21hrPer_putative661TFs.txt'
-    # tableformat=1
-    # saveme=0
-    # makegraph=0
-    # onlylargestnetwork=0
-    # makeTable(topscorelist,thresholdlist,makegraph,saveme,onlylargestnetwork,tableformat,LEMfile,masterfile)
+    topscorelist=[50,75,100,200]
+    thresholdlist=[0.1,0.01,0.005,0.006,0.007,0.008,0.009,1.e-4,9.e-5,8.e-5,7.e-5,6.e-5,5.e-5,4.5e-5,4.e-5,3.e-5,2.e-5,1.e-5]
+    LEMfile='/Users/bcummins/ProjectData/malaria/wrair2015_pfalcip_harmonicGenes_forNewLEM/wrair2015_pfalc_43tf_lem.allscores.tsv'
+    masterfile='/Users/bcummins/ProjectData/malaria/wrair2015_pfalcip_harmonicGenes_forNewLEM/43geneIDs_intersect18-21hrPer_putative661TFs.txt'
+    tableformat=1
+    saveme=0
+    makegraph=0
+    onlylargestnetwork=0
+    makeTable(topscorelist,thresholdlist,makegraph,saveme,onlylargestnetwork,tableformat,LEMfile,masterfile)
