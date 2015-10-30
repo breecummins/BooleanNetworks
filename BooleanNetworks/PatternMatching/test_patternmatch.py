@@ -56,6 +56,11 @@ def test0(showme=1,findallmatches=1):
     if showme and findallmatches: print set(match)==set([(0, 1, 4, 6, 5, 2, 0), (3, 4, 6, 5, 3)])
     if showme and not findallmatches: print match[0] in [(0, 1, 4, 6, 5, 2, 0), (3, 4, 6, 5, 3)]
 
+    pattern=['md','um','Mu','dM','md','um','Mu','dM','md'] #check double loop
+    match = matchPattern(pattern,wallinfo,cyclic=1,findallmatches=findallmatches)
+    if showme and findallmatches: print set(match)==set([(0, 1, 4, 6, 5, 2, 0, 1, 4, 6, 5, 2, 0), (3, 4, 6, 5, 3, 4, 6, 5, 3), (0, 1, 4, 6, 5, 3, 4, 6, 5, 2, 0), (3, 4, 6, 5, 2, 0, 1, 4, 6, 5, 3)])
+    if showme and not findallmatches: print match[0] in [(0, 1, 4, 6, 5, 2, 0, 1, 4, 6, 5, 2, 0), (3, 4, 6, 5, 3, 4, 6, 5, 3), (0, 1, 4, 6, 5, 3, 4, 6, 5, 2, 0), (3, 4, 6, 5, 2, 0, 1, 4, 6, 5, 3)]
+
     pattern=['um','md'] #intermediate extrema
     match = matchPattern(pattern,wallinfo,cyclic=0,findallmatches=findallmatches)
     if showme: print 'None' in match

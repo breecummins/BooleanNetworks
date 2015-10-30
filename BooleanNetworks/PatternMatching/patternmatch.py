@@ -22,14 +22,14 @@
 
 import preprocess as pp
 
-def callPatternMatch(fname='dsgrn_output.json',pname='patterns.txt',rname='results.txt',cyclic=1,findallmatches=1, printtoscreen=0,writetofile=1,returnmatches=0,numberofmatchesonly=1): # pragma: no cover
+def callPatternMatch(fname_morseset='dsgrn_output.json',fname_domgraph='dsgrn_domaingraph.json',fname_domcells='dsgrn_domaincells.json',fname_patterns='patterns.txt',fname_results='results.txt',cyclic=1,findallmatches=1, printtoscreen=0,writetofile=1,returnmatches=0,numberofmatchesonly=1): # pragma: no cover
     if printtoscreen:
         print "Preprocessing..."
-    patternlist,originalpatterns,wallinfo=pp.preprocess(fname,pname,cyclic) 
+    patternlist,originalpatterns,wallinfo=pp.preprocess(fname_morseset,fname_domgraph,fname_domcells,fname_patterns,cyclic) 
     if printtoscreen:
         print "Searching..."
     if writetofile: 
-        f=open(rname,'w',0)
+        f=open(fname_results,'w',0)
     if returnmatches:
         matches_result=[]
         patterns_result=[]
@@ -47,14 +47,16 @@ def callPatternMatch(fname='dsgrn_output.json',pname='patterns.txt',rname='resul
             print "Results: {}".format(matches)
             print '-'*25
         if writetofile and matches:
-            if numberofmatchesonly:
+            if numberofmatchesonly and findallmatches:
                 f.write("Pattern: {}".format(origpat)+'\n')
                 f.write("Results: {}".format(len(matches))+'\n')
-            else:
+            elif findallmatches:
                 f.write("Pattern: {}".format(origpat)+'\n')
                 f.write("Results: {}".format(matches)+'\n')
+            else:
+                f.write("Pattern: {}".format(origpat)+'\n')
         if returnmatches and matches:
-            if numberofmatchesonly:
+            if numberofmatchesonly and findallmatches:
                 matches_result.append(len(matches))
                 patterns_result.append(origpat)
             else:

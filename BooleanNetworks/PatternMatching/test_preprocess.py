@@ -42,6 +42,10 @@ def test0():
     patternmaxmin=[['max','max','min','min']]
     patterns=translatePatterns(varnames,patternnames,patternmaxmin,cyclic=1)
     print patterns==[[['Mu','dM','md','um','Mu']]]
+    patternnames=[['X','Z','X','Z','X','Z','X','Z']]
+    patternmaxmin=[['max','max','min','min','max','max','min','min']]
+    patterns=translatePatterns(varnames,patternnames,patternmaxmin,cyclic=1)
+    print patterns==[[['Mu','dM','md','um','Mu','dM','md','um','Mu']]]
 
 def test1():
     varnames=['X','Z']
@@ -101,7 +105,7 @@ def test5():
     print patterns==[[['mdd','umd','uum','Muu','dMu','ddM','mdd']],[['mdd','umd','Mud','dum','dMu','ddM','mdd']]]
 
 def test6():
-    outedges,walldomains,varsaffectedatwall,varnames,threshnames=tc.test6()
+    domaingraph,domaincells,morseset,vertexmap,outedges,walldomains,varsaffectedatwall,varnames,threshnames=tc.test6()
     patternnames,patternmaxmin,originalpatterns=fp.parsePatterns()
     patterns=translatePatterns(varnames,patternnames,patternmaxmin,cyclic=1)
     print patterns==[[['umu','Muu','duM','dMd','mdd','udm','umu']],[['uuM','uum','Muu','duM','dMd','mdd','udm','umu','uuM']],[['mud','uum','Muu','duM','mud'],['mdd','udm','Mdu','ddM','mdd']],[['umd','uum','Muu','duM','dMd','mdd','umd']],[['dmd','dum','muu','uuM','uMd','Mdd','dmd']]]

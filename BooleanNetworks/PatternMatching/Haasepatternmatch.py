@@ -1,7 +1,7 @@
 from itertools import permutations
 import useDSGRN
 
-def model5D_Model_B(morseset=0,specfile="networks/5D_Model_B.txt",paramfile="5D_Model_B_FCParams.txt",resultsfile='results_5D_B.txt'):
+def model5D_Model_B(morseset=0,specfile="networks/5D_Model_B.txt",paramfile="5D_Model_B_FCParams.txt",resultsfile='results_5D_B.txt',findallmatches=1):
     def setPattern():
         f=open('patterns.txt','w')
         for s1 in permutations(['Y1 max','Y2 max','Z max']):
@@ -11,7 +11,7 @@ def model5D_Model_B(morseset=0,specfile="networks/5D_Model_B.txt",paramfile="5D_
                 f.write(patternstr2)
         f.close()
     setPattern()
-    useDSGRN.patternSearch(morseset,specfile,paramfile,resultsfile)
+    useDSGRN.patternSearch(morseset,specfile,paramfile,resultsfile,findallmatches=findallmatches)
 
 def collectPatterns(fname='results_5D_B.txt'):
     f=open(fname,'r')
@@ -24,5 +24,5 @@ def collectPatterns(fname='results_5D_B.txt'):
     f.close()
 
 if __name__=='__main__':
-    # model5D_Model_B(paramfile="5D_Model_B_FCParams.txt")
-    collectPatterns('results_5D_B.txt')
+    model5D_Model_B(paramfile="5D_Model_B_FCParams_first.txt",findallmatches=0)
+    # collectPatterns('results_5D_B.txt')
