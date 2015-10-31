@@ -34,7 +34,7 @@ def setPattern():
             f.write(patternstr2)
     f.close()
 
-def patternSearch(morseset=0,specfile="networks/5D_Malaria_20hr.txt",paramfile="5D_Malaria_2015_FCParams.txt",resultsfile="results_5Dmalaria_20hr_morsegraph565.txt",findallmatches=0,printparam=1):
+def patternSearch(morseset=0,specfile="networks/5D_Malaria_20hr.txt",paramfile="5D_Malaria_2015_FCParams_MorseGraph565.txt",resultsfile="results_5Dmalaria_20hr_morsegraph565.txt",findallmatches=0,printparam=1):
     setPattern()
     useDSGRN.patternSearch(morseset,specfile,paramfile,resultsfile,printparam=printparam,findallmatches=findallmatches)
 
