@@ -1,8 +1,15 @@
 import numpy as np
 from scipy.integrate import ode
 import matplotlib.pyplot as plt
+import matplotlib
 import hillparsers as hp
 import constructhillfunctions as chf
+
+font = {'family' : 'normal',
+        'size'   : 22}
+
+matplotlib.rc('font', **font)
+
 
 def RHS(t,x,eqns):
     xdot = [e(x) for e in eqns]
@@ -30,7 +37,9 @@ def integrate(r,y0,t0,t1,dt):
         funcvals.append(r.y)
     return times,funcvals
 
-def plotResults(times,funcvals,plotoptions={},legendoptions={}):
+def plotResults(times,funcvals,plotoptions={},legendoptions={},figuresize=()):
+    if figuresize:
+        plt.figure(figsize=figuresize)
     funcvals=np.array(funcvals)
     if 'label' in plotoptions.keys():
         labels=plotoptions['label']
