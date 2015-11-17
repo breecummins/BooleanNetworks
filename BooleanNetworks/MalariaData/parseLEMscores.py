@@ -73,7 +73,7 @@ def pruneOutedges(geneinds, outedges, regulation, LEM_scores):
         new_LEM_scores.append(tuple(ltup)) 
     return new_outedges,new_regulation,new_LEM_scores       
 
-def makeGraph(genes,genelist,outedges,regulation,name='graph_lastedge500.png'):
+def makeGraph(genes,genelist,outedges,regulation,name='graph_lastedge500.pdf'):
     graph = pydot.Dot(graph_type='digraph')
     for g in genes:
         graph.add_node(pydot.Node(genelist.index(g)))
@@ -83,7 +83,7 @@ def makeGraph(genes,genelist,outedges,regulation,name='graph_lastedge500.png'):
                 graph.add_edge(pydot.Edge(genelist.index(genes[i]),genelist.index(genes[o]),arrowhead='tee'))
             else:
                 graph.add_edge(pydot.Edge(genelist.index(genes[i]),genelist.index(genes[o])))
-    graph.write_png(name)
+    graph.write_pdf(name)
 
 def generateResult(topscores=350,threshold=0.1,scorename='350',thresholdname='00',makegraph=1,saveme=1,plottimeseries=1,onlylargestnetwork=0,LEMfile='/Users/bcummins/ProjectData/malaria/wrair2015_pfalcip_462TF_forLEM/wrair2015_pfalc_462tf_lem.allscores.tsv',masterfile='/Users/bcummins/ProjectData/malaria/wrair2015_pfalcip_462TF_forLEM/cuffNorm_subTFs_stdNames.txt'):
     print 'Parsing file...'
@@ -111,8 +111,9 @@ def generateResult(topscores=350,threshold=0.1,scorename='350',thresholdname='00
     if makegraph or plottimeseries:
         genelist,timeseries=generateMasterList(masterfile)
     if makegraph:
+        makeGraph(genes,genelist,outedges,regulation,name='allgenes_topscores{}_thresh{}.pdf'.format(scorename,thresholdname))
         print 'Making graph for {} nodes and {} edges....'.format(len(flat_scc_gene_inds),len([o for oe in outedges for o in oe]))
-        makeGraph(flat_scc_genenames,genelist,outedges,regulation,name='graph_topscores{}_thresh{}.png'.format(scorename,thresholdname))
+        makeGraph(flat_scc_genenames,genelist,outedges,regulation,name='graph_topscores{}_thresh{}.pdf'.format(scorename,thresholdname))
     if plottimeseries and onlylargestnetwork:
         # L=[len(g) for g in grouped_scc_gene_inds]
         # ind = L.index(max(L))
@@ -160,12 +161,16 @@ def makeTable(topscorelist,thresholdlist,makegraph=1,saveme=0,plottimeseries=0,o
         g.close()
 
 if __name__=='__main__':
-    topscorelist=range(100,1100,100)
-    thresholdlist=[10e-5,10e-10,10e-50,10e-100]
-    LEMfile='/Users/bcummins/ProjectData/malaria/wrair2015_pfalcip_harmonicGenes_forNewLEM/wrair2015_pfalc_43tf_lem.allscores.tsv'
+    # topscorelist=range(100,1100,100)
+    # thresholdlist=[10e-5,10e-10,10e-50,10e-100]
+    # LEMfile='/Users/bcummins/ProjectData/malaria/wrair2015_pfalcip_harmonicGenes_forNewLEM/wrair2015_pfalc_43tf_lem.allscores.tsv'
+    topscorelist=[650]
+    thresholdlist=[0.16]
+    LEMfile = '/Users/bcummins/ProjectData/malaria/wrair2015_pfalcip_462TF_forLEM/wrair2015_pfalc_462tf_lem.allscores.tsv'
     tableformat=1
-    saveme=1
+    saveme=0
     makegraph=1
     plottimeseries=0
-    onlylargestnetwork=1
-    makeTable(topscorelist,thresholdlist,makegraph,saveme,plottimeseries,onlylargestnetwork,tableformat,LEMfile,masterfile='/Users/bcummins/ProjectData/malaria/wrair2015_pfalcip_462TF_forLEM/cuffNorm_subTFs_stdNames.txt')
+    onlylargestnetwork=0
+    # makeTable(topscorelist,thresholdlist,makegraph,saveme,plottimeseries,onlylargestnetwork,tableformat,LEMfile,masterfile='/Users/bcummins/ProjectData/malaria/wrair2015_pfalcip_462TF_forLEM/cuffNorm_subTFs_stdNames.txt')
+    generateResult(topscorelist[0],thresholdlist[0],scorename=str(topscorelist[0]),thresholdname='016',makegraph=makegraph,saveme=saveme,plottimeseries=plottimeseries,onlylargestnetwork=onlylargestnetwork)
