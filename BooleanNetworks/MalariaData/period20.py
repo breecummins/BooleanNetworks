@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from matplotlib import rcParams
 import parseLEMscores as LEM
 import pydot
 
@@ -70,14 +71,16 @@ def plottimeseries(period20,fname='period20_timeseries.png'):
         masterinds.append(ind)
         period20_timeseries.append(timeseries[ind])
     fig=plt.figure()
+    rcParams.update({'font.size': 22})
     plt.hold('on')
     times=range(0,61,3)
     leg=[]
     for p,ts in zip(period20,period20_timeseries):
-        plt.plot(times,[t/max(ts) for t in ts])
+        plt.plot(times,[t/max(ts) for t in ts],linewidth=2)
         leg.append(str(genelist.index(p))+' '+p)
+    plt.xlabel('Hours')
+    plt.ylabel('Abundance')
     leghandle=plt.legend(leg,loc='center left', bbox_to_anchor=(1, 1))
-    plt.show()
     plt.savefig(fname, bbox_extra_artists=(leghandle,), bbox_inches='tight')
 
 def network6and15incolor():
@@ -134,7 +137,7 @@ def network6and15incolor():
 if __name__=='__main__':
     period20 = ['PF3D7_0504700','PF3D7_0506700','PF3D7_0518400','PF3D7_0729000','PF3D7_0818700','PF3D7_0919000','PF3D7_0925700','PF3D7_1008000','PF3D7_1009400','PF3D7_1138800','PF3D7_1225200','PF3D7_1337400']
 
-    plottimeseries(period20[:2]+period20[3:7],'period20_timeseries_6node.png')
+    plottimeseries(period20[:2]+period20[4:7],'period20_timeseries_5node.pdf')
     # LEM.makeTable()
     # network6and15incolor()
     # exponents=[10,15,20,22,25]
