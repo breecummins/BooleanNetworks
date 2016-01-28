@@ -44,4 +44,3 @@ def makeHillEqns(eqnstr,params,vals,n):
         e="lambda X: -X["+K+"] + " + e
         eqns.append(eval(e))
     return eqns
-

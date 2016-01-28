@@ -43,7 +43,7 @@ def pruneOutedges(geneinds, outedges, regulation, LEM_scores):
         new_LEM_scores.append(tuple(ltup)) 
     return new_outedges,new_regulation,new_LEM_scores       
 
-def getEdges(period20,threshold=0,fname='/Users/bcummins/ProjectData/malaria/wrair2015_pfalc_462tf_lem.allscores.tsv',scc=1):
+def getEdges(period20,threshold=0,fname='/Users/bcummins/ProjectData/malaria/wrair2015_pfalcip_462TF_forLEM/wrair2015_pfalc_462tf_lem.allscores.tsv',scc=1):
     source,target,type_reg,lem_score=LEM.parseFile(threshold,fname)
     outedges,regulation,LEM_scores=LEM.makeOutedges(period20,source,target,type_reg,lem_score)
     if scc:
@@ -136,9 +136,13 @@ def network6and15incolor():
 
 if __name__=='__main__':
     period20 = ['PF3D7_0504700','PF3D7_0506700','PF3D7_0518400','PF3D7_0729000','PF3D7_0818700','PF3D7_0919000','PF3D7_0925700','PF3D7_1008000','PF3D7_1009400','PF3D7_1138800','PF3D7_1225200','PF3D7_1337400']
+    thresholds = [1.e-10,1.e-15,1.e-20,1.e-22,1.e-25]
+    names = [10,15,20,22,25]
 
-    plottimeseries(period20[:2]+period20[4:7],'period20_timeseries_5node.pdf')
-    # LEM.makeTable()
+    for t,n in zip(thresholds,names):
+        makeNetwork(period20,t,scc=1,savename='period20_network_threshexp'+str(n)+'.pdf',nontrivial=1)
+
+    # plottimeseries(period20[:2]+period20[4:7],'period20_timeseries_5node.pdf')
     # network6and15incolor()
     # exponents=[10,15,20,22,25]
     # outedgeslist=[]
@@ -150,3 +154,6 @@ if __name__=='__main__':
     #     sccoutedgeslist.append(sccoe)
     #     outedgeslist.append(outedges)
     #     sourcelist.append(source)
+
+    # period20_5genes = ['PF3D7_0504700','PF3D7_0506700','PF3D7_0818700','PF3D7_0919000','PF3D7_0925700'] # 72, 77, 177, 199, 204
+

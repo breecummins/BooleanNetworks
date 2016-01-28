@@ -24,11 +24,11 @@ def parseFile(bound=0,fname='/Users/bcummins/ProjectData/malaria/wrair2015_pfalc
     for l in f.readlines():
         wordlist=l.split()
         if float(wordlist[3])>bound:
-            source.append(wordlist[0])
+            target.append(wordlist[0])
             lem_score.append(float(wordlist[3]))
             two_words=wordlist[2].split('(')
             type_reg.append(two_words[0])
-            target.append(two_words[1][:-1])
+            source.append(two_words[1][:-1])
         else:
             break
     f.close()

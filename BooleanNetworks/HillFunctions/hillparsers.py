@@ -7,12 +7,12 @@ def parseEqns(fname='equations.txt'):
         varnames.append(L[0])
         eqns.append(L[1])
     f.close()
-    inteqns=[]
+    eqnstr=[]
     for e in eqns:
         for k,v in enumerate(varnames):
             e=e.replace('~'+v,str(k)+' n').replace(v,str(k)+' p').replace(')(',')*(')
-        inteqns.append(e)
-    return inteqns,varnames
+        eqnstr.append(e)
+    return eqnstr,varnames
 
 def parseSamples(varnames,fname='samples.txt'):
     f=open(fname,'r')
