@@ -140,7 +140,7 @@ if __name__=='__main__':
     names = [10,15,20,22,25]
 
     for t,n in zip(thresholds,names):
-        makeNetwork(period20,t,scc=1,savename='period20_network_threshexp'+str(n)+'.pdf',nontrivial=1)
+        makeNetwork(period20,t,scc=1,savename='period20_network_threshexp'+str(n)+'.png',nontrivial=1)
 
     # plottimeseries(period20[:2]+period20[4:7],'period20_timeseries_5node.pdf')
     # network6and15incolor()
