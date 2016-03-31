@@ -58,7 +58,7 @@ def strongConnect(outedges):
 
 def strongConnectIndices(outedges):
     components=strongConnect(outedges)
-    grouped_components=[[k for k,c in enumerate(components) if c == d] for d in range(max(components)) if components.count(d)>1]
+    grouped_components=[[k for k,c in enumerate(components) if c == d] for d in range(max(components)+1) if components.count(d)>1]
     return grouped_components
 
 def pruneOutedges(geneinds, outedges, regulation, LEM_scores):
