@@ -81,8 +81,11 @@ def generateResult(threshold=0.1,frontname='yeast25',makegraph=1,saveme=1,onlyla
     return grouped_scc_gene_inds
 
 if __name__ == "__main__":
-    for t in [0.5,0.4,0.1,0.05]:
-        generateResult(threshold=t,saveme=0)
+    # for t in [0.5,0.4,0.1,0.05]:
+    #     generateResult(threshold=t,saveme=0)
 
-    for t in [0.4,0.3,0.2,0.1]:
-        generateResult(threshold=t,saveme=0,frontname='yeast40',LEMfile='/Users/bcummins/ProjectData/yeast/haase-fpkm-p1_yeast_s29_top40dljtk_lem_score_table.txt')
+    # for t in [0.4,0.3,0.2,0.1]:
+    #     generateResult(threshold=t,saveme=0,frontname='yeast40',LEMfile='/Users/bcummins/ProjectData/yeast/haase-fpkm-p1_yeast_s29_top40dljtk_lem_score_table.txt')
+
+    for t in [0.6,0.5,0.4,0.3,0.2,0.1]:
+        generateResult(threshold=t,saveme=0,frontname='mouseliver40',LEMfile='/Users/bcummins/ProjectData/mouseliver/hogenesch-10st2013_livr_top40dljtk_lem_score_table.txt')
