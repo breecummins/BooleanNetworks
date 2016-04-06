@@ -2,6 +2,7 @@ import parseLEMscores
 import pydot
 
 def parseFile(bound=0,fname='/Users/bcummins/ProjectData/yeast/haase-fpkm-p1_yeast_s29_top25dljtk_lem_score_table.txt'):
+    # returns the source, target, and type of regulation sorted by decreasing LEM score (also returned)
     source=[]
     type_reg=[]
     target=[]
