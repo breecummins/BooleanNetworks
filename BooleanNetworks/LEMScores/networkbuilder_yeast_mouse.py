@@ -107,11 +107,11 @@ def getGraphFromNetworkFile(network_filename):
     return node_list,graph,regulation,essential
 
 
-def makeNearbyNetwork(starting_network_filename,LEMfile,ranked_genes_file,new_network_filename,which_edge_to_add=1,add_new_node=True,draw_network=False,which_node_to_add=1,is_new_node_essential=False):
+def makeNearbyNetwork(starting_network_filename,LEMfile,ranked_genes_file,new_network_filename,which_edge_to_add=1,add_new_node=True,draw_network=False,which_node_to_add=1,is_new_node_essential=False,parser=parseLEMfile):
     # if adding a node, two new edges will be added connecting the new node to the graph and which_edge_to_add is ignored
     # if not adding a node, which_node_to_add is ignored and which_edge_to_add is used with existing nodes
     starting_node_list,starting_graph,starting_regulation,essential = getGraphFromNetworkFile(starting_network_filename)
-    source,target,type_reg,lem_score = parseLEMfile(fname=LEMfile)
+    source,target,type_reg,lem_score = parser(fname=LEMfile)
     ranked_genes = parseRankedGenes(fname=ranked_genes_file)
     if add_new_node:
         new_node, best_inedge, best_outedge = addNode(starting_node_list,ranked_genes,source,target,type_reg,which_node_to_add)
