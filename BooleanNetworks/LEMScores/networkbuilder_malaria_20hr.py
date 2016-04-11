@@ -1,5 +1,4 @@
-from math import sqrt
-from parseLEMscores_malaria import parseFile
+from parseLEMscores_malaria_20hr import parseFile
 import networkbuilder_yeast_mouse as NBYM
 
 def parseLEMFile(threshold=0,fname='/Users/bcummins/ProjectData/malaria/wrair2015_pfalcip_harmonicGenes_forNewLEM/wrair2015_pfalc_43tf_lem.allscores.tsv'):
