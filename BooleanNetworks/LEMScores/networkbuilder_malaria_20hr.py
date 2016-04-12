@@ -28,7 +28,7 @@ def rankGenes(genes,LEMfile='/Users/bcummins/ProjectData/malaria/wrair2015_pfalc
             f.write("{}    {}\n".format(r,s))
 
 def makeNearbyNetwork(starting_network_filename,LEMfile,ranked_genes_file,new_network_filename,which_edge_to_add=1,add_new_node=True,draw_network=False,which_node_to_add=1,is_new_node_essential=False,parser=parseLEMfile):
-    NBYM.makeNearbyNetwork(starting_network_filename,LEMfile,ranked_genes_file,new_network_filename,which_edge_to_add,add_new_node,draw_network,which_node_to_add,is_new_node_essential,parser)
+    return NBYM.makeNearbyNetwork(starting_network_filename,LEMfile,ranked_genes_file,new_network_filename,which_edge_to_add,add_new_node,draw_network,which_node_to_add,is_new_node_essential,parser)
 
 if __name__=='__main__':
     # genes_20hr=['PF3D7_1115500','PF3D7_1006100','PF3D7_0504700','PF3D7_0604600','PF3D7_1408400','PF3D7_1027000','PF3D7_1103800','PF3D7_0614800','PF3D7_1435700','PF3D7_1405100','PF3D7_0403500','PF3D7_1301500','PF3D7_1428800','PF3D7_0506700','PF3D7_1350900','PF3D7_0925700','PF3D7_0518400','PF3D7_0529500','PF3D7_0809900','PF3D7_1008000','PF3D7_1009400','PF3D7_1225200','PF3D7_1337400','PF3D7_1437000','PF3D7_0313000','PF3D7_0627300','PF3D7_0629800','PF3D7_0704600','PF3D7_0729000','PF3D7_0812600','PF3D7_0818700','PF3D7_0915100','PF3D7_0919000','PF3D7_0926100','PF3D7_1119400','PF3D7_1138800','PF3D7_1225800','PF3D7_1227400','PF3D7_1233600','PF3D7_1237800','PF3D7_1302500','PF3D7_1406100','PF3D7_1412900']

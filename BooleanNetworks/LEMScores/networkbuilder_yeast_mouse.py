@@ -106,6 +106,38 @@ def getGraphFromNetworkFile(network_filename):
             graph[ind].append(target)  # change inedges to outedges
     return node_list,graph,regulation,essential
 
+def checkEdgeAdmissible(outedges,regulation):
+    # THIS CODE CAN EASILY BECOME OBSOLETE!!!!
+    # The following is based on the files in /data/CHomP/Projects/DSGRN/DB/data/logic/ as of 04/12/16,
+    # and on the choice that activations are ALWAYS summed and repressions are ALWAYS multiplied.
+    inedges = []
+    inreg = []
+    for node in range(len(outedges)):
+        ie = []
+        ir = []
+        for j,(o,r) in enumerate(zip(outedges,regulation)):
+            try:
+                ind = o.index(node)
+            except:
+                ind = None
+            if ind is not None:
+                ie.append(j)
+                ir.append(r[ind])
+        inedges.append(ie)
+        inreg.append(ir)
+    for (ie, oe, ir) in zip(inedges,outedges,inreg):
+        if len(ie) > 4:
+            return False
+        elif len(oe) > 5:
+            return False
+        elif len(ie) == 4: 
+            if len(oe) == 3 and ir.count('a') == 3: # three a's are added, three r's are multiplied
+                return False
+            elif len(oe) == 4 and ir.count('a') > 1:
+                return False
+            elif len(oe) == 5:
+                return False
+    return True
 
 def makeNearbyNetwork(starting_network_filename,LEMfile,ranked_genes_file,new_network_filename,which_edge_to_add=1,add_new_node=True,draw_network=False,which_node_to_add=1,is_new_node_essential=False,parser=parseLEMfile):
     # if adding a node, two new edges will be added connecting the new node to the graph and which_edge_to_add is ignored
@@ -141,9 +173,12 @@ def makeNearbyNetwork(starting_network_filename,LEMfile,ranked_genes_file,new_ne
         else:
             graph[s].append(t)
             regulation[s].append(r)
-    createNetworkFile(node_list,graph,regulation,new_network_filename,essential)
     if draw_network:
         makeGraph(node_list,graph,regulation,new_network_filename.replace(".txt",".pdf"))
+    admissible = checkEdgeAdmissible(graph,regulation)
+    if admissible:
+        createNetworkFile(node_list,graph,regulation,new_network_filename,essential)
+    return admissible
     
 if __name__ == "__main__":
     # starting files

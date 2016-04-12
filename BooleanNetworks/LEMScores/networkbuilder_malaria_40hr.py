@@ -2,7 +2,7 @@ import networkbuilder_yeast_mouse as NBYM
 import parseLEMscores_malaria_40hr as PLS40
 
 def makeNearbyNetwork(starting_network_filename,LEMfile,ranked_genes_file,new_network_filename,which_edge_to_add=1,add_new_node=True,draw_network=False,which_node_to_add=1,is_new_node_essential=False,parser=PLS40.parseLEMfile):
-    NBYM.makeNearbyNetwork(starting_network_filename,LEMfile,ranked_genes_file,new_network_filename,which_edge_to_add,add_new_node,draw_network,which_node_to_add,is_new_node_essential,parser)
+    return NBYM.makeNearbyNetwork(starting_network_filename,LEMfile,ranked_genes_file,new_network_filename,which_edge_to_add,add_new_node,draw_network,which_node_to_add,is_new_node_essential,parser)
 
 
 if __name__ == "__main__":

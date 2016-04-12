@@ -67,10 +67,10 @@ if __name__ == "__main__":
     new_network_path = '/Users/bcummins/GIT/DSGRN/networks/'
     LEMfile='/Users/bcummins/ProjectData/malaria/wrair2015_v2_fpkm-p1_s19_40hr_highest_ranked_genes/wrair2015_v2_fpkm-p1_s19_50tfs_top25_dljtk_lem_score_table.txt'
     makegraph=1
-    saveme=1
-    onlylargestnetwork=1
+    saveme=0
+    onlylargestnetwork=0
     essential=True
 
 
-    for threshold in [0.05]:
+    for threshold in [0.02]:
         generateResult(threshold,frontname,makegraph,saveme,onlylargestnetwork,LEMfile,new_network_path,essential)
