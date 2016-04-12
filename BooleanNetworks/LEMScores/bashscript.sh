@@ -1,5 +1,9 @@
 #!/bin/bash
+
 # command line argument is directory with network files
 
-for i in $( ls $1 ); do
-	qsub python makedatabase $i
+cd /share/data/bcummins/DSGRN/software/Signatures/
+
+for i in $( ls networks/ ); do
+	qsub database_script2.sh ${i%.*};
+done
