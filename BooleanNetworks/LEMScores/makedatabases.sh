@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# command line argument is directory with network files
-
 cd /share/data/bcummins/DSGRN/software/Signatures/
 
 for i in $( ls networks/ ); do
